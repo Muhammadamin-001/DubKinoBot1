@@ -8,6 +8,10 @@ import os
 
 TOKEN = '8355160126:AAEl-Ul_QLI1I7AwkHPfE1_r4a2MUC0MISU'
 ADMIN_ID = "8213048876" #A
+
+TOKEN = os.getenv("TOKEN")
+ADMIN_ID = os.getenv("ADMIN_ID")
+
 CHANNEL_ID = [-1001574709061,  -1003359940811]#Usavyb
 
 bot = telebot.TeleBot(TOKEN)
@@ -514,7 +518,9 @@ def index():
 
 if __name__ == '__main__':
     bot.remove_webhook()
-    bot.set_webhook(url="https://YOUR-RENDER-APP-NAME.onrender.com/" + TOKEN)
+    WEBHOOK_URL= "https://DubKinoBot1.onrender.com/" + TOKEN
+    bot.set_webhook(url=os.getenv("WEBHOOK_URL"))
+
     app.run(host="0.0.0.0", port=5000)
 # ==============================================================#
     
