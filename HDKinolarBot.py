@@ -6,11 +6,11 @@ import requests
 from flask import Flask, request
 import os
 
-TOKEN = '8355160126:AAEl-Ul_QLI1I7AwkHPfE1_r4a2MUC0MISU'
-ADMIN_ID = "8213048876" #A
+#TOKEN = '8355160126:AAEl-Ul_QLI1I7AwkHPfE1_r4a2MUC0MISU'    - Bu kerak emas ekan render com bazasi uchun
 
 TOKEN = os.getenv("TOKEN")
 ADMIN_ID = os.getenv("ADMIN_ID")
+WEBHOOK_URL = os.getenv("WEBHOOK_URL")
 
 CHANNEL_ID = [-1001574709061,  -1003359940811]#Usavyb
 
@@ -518,8 +518,7 @@ def index():
 
 if __name__ == '__main__':
     bot.remove_webhook()
-    WEBHOOK_URL= "https://DubKinoBot1.onrender.com/" + TOKEN
-    bot.set_webhook(url=os.getenv("WEBHOOK_URL"))
+    bot.set_webhook(url=WEBHOOK_URL)
 
     app.run(host="0.0.0.0", port=5000)
 # ==============================================================#
