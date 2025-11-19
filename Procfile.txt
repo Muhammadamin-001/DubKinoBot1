@@ -1,1 +1,1 @@
-web: gunicorn DubKinoBot1:app
+web: gunicorn HDKinolarBot:app
