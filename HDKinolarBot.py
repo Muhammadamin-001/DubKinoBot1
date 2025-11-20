@@ -504,23 +504,24 @@ def universal_handler(msg):
 
 
 
-@app.route('/' + TOKEN, methods=['POST'])
+# --- Webhook route (GET va POST) ---
+@app.route('/' + TOKEN, methods=['GET', 'POST'])
 def webhook():
+    if request.method == "GET":
+        # Brauzerda ochilganda xato bermasligi uchun
+        return "Bot webhook is running!", 200
+
+    # Telegram POST update
     json_str = request.get_data().decode('utf-8')
     update = telebot.types.Update.de_json(json_str)
     bot.process_new_updates([update])
     return "ok", 200
 
-# Just to test server
+# --- Test route ---
 @app.route('/')
 def index():
-    return "Bot is running"
+    return "Bot is running", 200
 
-if __name__ == '__main__':
-    bot.remove_webhook()
-    bot.set_webhook(url=WEBHOOK_URL)
-
-    app.run(host="0.0.0.0", port=5000)
 # ==============================================================#
     
     
