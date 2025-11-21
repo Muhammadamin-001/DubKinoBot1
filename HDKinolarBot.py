@@ -1,9 +1,9 @@
 import telebot
 from telebot import types
-import json
 import time
-import requests
+#import requests
 from flask import Flask, request
+from pymongo import MongoClient
 import os
 
 #TOKEN = '8355160126:AAEl-Ul_QLI1I7AwkHPfE1_r4a2MUC0MISU'    - Bu kerak emas ekan render com bazasi uchun
@@ -11,6 +11,7 @@ import os
 TOKEN = os.getenv("TOKEN")
 ADMIN_ID = os.getenv("ADMIN_ID")
 WEBHOOK_URL = os.getenv("WEBHOOK_URL")
+MONGO_URI =os.getenv("MONGO_URI")
 
 CHANNEL_ID = [-1001574709061,  -1003359940811]#Usavyb
 
@@ -20,14 +21,27 @@ kanal_link="https://t.me/DubHDkinolar"
 
 app = Flask(__name__)
 
-# ====================== DB YUKLASH ============================
-try:
-    with open("db.json", "r", encoding="utf-8") as f:
-        db = json.load(f)
-except:
-    db = {}
-    with open("db.json", "w", encoding="utf-8") as f:
-        json.dump(db, f, indent=4)
+
+
+
+
+client = MongoClient(MONGO_URI)
+
+db = client["TelegramBot"]   # baza nomi
+users_collection = db["users"]       # userlar collection
+movies = db["movies"]     # kinolar collection
+
+
+
+
+
+# try:
+#     with open("db.json", "r", encoding="utf-8") as f:
+#         db = json.load(f)
+# except:
+#     db = {}
+#     with open("db.json", "w", encoding="utf-8") as f:
+#         json.dump(db, f, indent=4)
 
 # =================== STATE (HOLAT) ============================
 state = {}  
@@ -43,21 +57,25 @@ movie_pages = {}
 
 
 def get_movie_page(page=1, per_page=10):
-    movies = list(db.items())  # db — sening bazang
-    total = len(movies)
+    # Barcha kinolarni bazadan o'qish
+    all_movies = list(movies.find({}, {"_id": 0}))  # movies = db["movies"]
+    
+    total = len(all_movies)
     pages = (total - 1) // per_page + 1
 
     start = (page - 1) * per_page
     end = start + per_page
-    page_movies = movies[start:end]
+    page_movies = all_movies[start:end]
 
     text = ""
     c = start + 1
-    for code, info in page_movies:
-        text += f"{c}) {info['name']}------------#-{code}\n"
+    for m in page_movies:
+        # m['code'] va m['name'] MongoDB document ichida bo'lishi kerak
+        text += f"{c}) {m['name']}------------#-{m['code']}\n"
         c += 1
 
     return text, pages
+
 
 
 # =================== OBUNA TEKSHIRISH =========================
@@ -87,16 +105,10 @@ def user_panel(chat_id):
     
 # ====================== SAVE USER ================================
 def save_user(user_id):
-    try:
-        with open("users.json", "r") as f:
-            users = json.load(f)
-    except:
-        users = []
+    # Agar user bazada mavjud bo'lmasa qo'shadi
+    if not users_collection.find_one({"user_id": user_id}):
+        users_collection.insert_one({"user_id": user_id})
 
-    if user_id not in users:
-        users.append(user_id)
-        with open("users.json", "w") as f:
-            json.dump(users, f, indent=4)
 
 
 
@@ -104,8 +116,14 @@ def save_user(user_id):
 @bot.message_handler(commands=['start'])
 def start(msg):
     user = msg.from_user.id
+    chat_id = msg.chat.id          # chat_id aniqlanadi
     
-    save_user(msg.from_user.id)
+    # ====================== Bazaga YUKLASH ============================
+    
+    #kino_list = list(movies.find({}, {"_id": 0}))
+
+    users_collection.insert_one({"user_id": chat_id})
+    save_user(user)
 
 
     if not check_sub(user):
@@ -277,22 +295,21 @@ def movie_url(msg):
     genre = state[user][4]
     formati= msg.text.strip()
 
-    # JSON ga saqlash ko‘rinishi:
-    db[code] = {
+
+    # Kino qo‘shish
+    movies.insert_one({
+        "code": code,
         "file_id": file_id,
         "name": name,
         "formati": formati,
         "genre": genre,
         "url": "@DubHDkinolar",
-        "urlbot":"@DubKinoBot"
-    }
-
-    with open("db.json", "w", encoding="utf-8") as f:
-        json.dump(db, f, indent=4, ensure_ascii=False)
-
+        "urlbot": "@DubKinoBot"
+    })
+    
     bot.send_message(msg.chat.id, "✅ Kino muvaffaqiyatli qo‘shildi!")
-
     del state[user]
+
 
 
 #============ADMIN XABARI===========
@@ -334,11 +351,10 @@ def do_broadcast(msg):
         album_sending[group_id] = "sending"   # <—— LOCK qo‘yildi
     
         # Endi ALBOMNI YUBORAMIZ
-        try:
-            with open("users.json", "r") as f:
-                users = json.load(f)
-        except:
-            users = []
+        
+        users_cursor = users_collection.find({}, {"_id": 0, "user_id": 1})
+        users_list = [u["user_id"] for u in users_cursor]
+
     
         bot.send_message(msg.chat.id, "📤 Albom yuborilmoqda...")
     
@@ -361,7 +377,7 @@ def do_broadcast(msg):
                     )
                 )
     
-        for uid in users:
+        for uid in users_list:
             try:
                 bot.send_media_group(int(uid), media_group)
                 sent += 1
@@ -369,6 +385,7 @@ def do_broadcast(msg):
             except Exception as e:
                 print(e)
                 continue
+
     
         bot.send_message(msg.chat.id, f"✅ Albom {sent} ta foydalanuvchiga yuborildi!")
     
@@ -385,16 +402,14 @@ def do_broadcast(msg):
     # AGAR ODDIY XABAR BO'LSA
     # ——————————————————————
     
-    try:
-        with open("users.json", "r") as f:
-            users = json.load(f)
-    except:
-        users = []
+    users_cursor = users_collection.find({}, {"_id": 0, "user_id": 1})
+    users_list = [u["user_id"] for u in users_cursor]  # agar bo‘sh bo‘lsa → users_list bo‘sh ro‘yxat
+
 
     bot.send_message(msg.chat.id, "⏳ Xabar yuborilmoqda, kuting...")
 
     sent = 0
-    for uid in users:
+    for uid in users_list:
         try:
             bot.copy_message(int(uid), msg.chat.id, msg.message_id)
             sent += 1
@@ -426,21 +441,27 @@ def movie_list(msg):
         bot.send_message(msg.chat.id, text, parse_mode="Markdown")
         return
     
-    if not db:
+        # Baza bo‘shligini tekshirish
+    if movies.count_documents({}) == 0:
         bot.send_message(msg.chat.id, "📂 Bazada kino yo'q.")
         return
     
+    # Kino ro‘yxati uchun sahifa
     text, pages = get_movie_page(page=1)
+    
+    # Inline tugmalar
     markup = types.InlineKeyboardMarkup()
     if pages > 1:
         markup.add(types.InlineKeyboardButton("➡️ Keyingi", callback_data="page_2"))
-
     
+    # Kino ro‘yxatini chiqarish
     text = "🎬 *Kino ro‘yxati:*\n\n"
-    c=1
-    for code, info in db.items():
-        text += f"• {c}) {info['name']}-----------------------------#-{code}\n"
-        c+=1
+    all_movies = list(movies.find({}, {"_id": 0}))
+    c = 1
+    for m in all_movies:
+        text += f"• {c}) {m['name']}-----------------------------#-{m['code']}\n"
+        c += 1
+    
     bot.send_message(msg.chat.id, text, parse_mode="Markdown", reply_markup=markup)
 
 
@@ -457,8 +478,8 @@ def universal_handler(msg):
         file_id = state[user][1]
         db[text] = file_id
 
-        with open("db.json", "w", encoding="utf-8") as f:
-            json.dump(db, f, indent=4)
+        # with open("db.json", "w", encoding="utf-8") as f:
+        #     json.dump(db, f, indent=4)
 
         bot.send_message(msg.chat.id, f"✔ Kino saqlandi!\nKino kodi: {text}")
         del state[user]
@@ -466,35 +487,34 @@ def universal_handler(msg):
 
     # --- 2) Admin kino o‘chirayapti ---
     if user in state and state[user][0] == "waiting_for_delete":
-        if text in db:
-            del db[text]
-            with open("db.json", "w", encoding="utf-8") as f:
-                json.dump(db, f, indent=4)
+        
+        result = movies.delete_one({"code": text})  # text → kino kodi
+        if result.deleted_count:
             bot.send_message(msg.chat.id, "✔ Kino o‘chirildi.")
         else:
             bot.send_message(msg.chat.id, "❌ Bunday kod mavjud emas.")
+    
         del state[user]
         return
+
 
     # --- 3) Oddiy foydalanuvchi kino kodi so‘rayapti ---
     if not check_sub(user):
         bot.send_message(msg.chat.id, "❗ Avval kanalga obuna bo‘ling.")
         return
 
-    if text in db:
-        movie = db[text]       # DICT
+    movie = movies.find_one({"code": text})
+    if movie:
         file_id = movie["file_id"]
-        #code=text 
-        keys = [k for k, v in db.items() if v == movie] # shu koddan foydalanib,
-        key = keys[0] if keys else None                 # kalitni chiqardim.
-        
+        code = movie["code"]  # key
+
         bot.send_video(
             msg.chat.id,
             file_id,
             caption=f"🎬 {movie['name']} \n\t\t-------------------------\n"
                     f"💽Formati: {movie['formati']}\n"
                     f"🎞Janri: {movie['genre']}\n"
-                    f"🆔Kod: #{key}\n" #ishladi
+                    f"🆔Kod: #{code}\n" #ishladi
                     f"\n📹Kanalimiz: {movie['url']}\n"
                     f"🤖Bizning bot: {movie['urlbot']}"
         )
