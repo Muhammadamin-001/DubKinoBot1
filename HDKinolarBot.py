@@ -19,7 +19,9 @@ kanal_link="https://t.me/DubHDkinolar"
 app = Flask(__name__)
 
 
-
+for varname in ["TOKEN", "ADMIN_ID", "WEBHOOK_URL", "MONGO_URI"]:
+    if globals()[varname] is None:
+        print(f"ERROR: {varname} is not set!")
 
 
 client = MongoClient(MONGO_URI)
