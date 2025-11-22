@@ -116,13 +116,7 @@ def save_user(user_id):
 @bot.message_handler(commands=['start'])
 def start(msg):
     user = msg.from_user.id
-    chat_id = msg.chat.id          # chat_id aniqlanadi
     
-    # ====================== Bazaga YUKLASH ============================
-    
-    #kino_list = list(movies.find({}, {"_id": 0}))
-
-    users_collection.insert_one({"user_id": chat_id})
     save_user(user)
 
 
@@ -248,7 +242,7 @@ def movie_code(msg):
     code = msg.text.strip()
     
     # === 1) KOD BORLIGINI TEKSHIRAMIZ ===
-    if code in db:
+    if movies.find_one({"code": code}):
         bot.send_message(
             msg.chat.id,
             f"⚠️ *Bu kod allaqachon mavjud!* #-({code})\nBoshqa kod kiriting:",
@@ -296,16 +290,20 @@ def movie_url(msg):
     formati= msg.text.strip()
 
 
-    # Kino qo‘shish
-    movies.insert_one({
-        "code": code,
-        "file_id": file_id,
-        "name": name,
-        "formati": formati,
-        "genre": genre,
-        "url": "@DubHDkinolar",
-        "urlbot": "@DubKinoBot"
-    })
+    # MongoDB-da code kaliti bo'lib, qiymat dict shaklida saqlaymiz
+    movies.update_one(
+        {"code": code},  # filter
+        {"$set": {
+            "file_id": file_id,
+            "name": name,       
+            "formati": formati,    
+            "genre": genre,      
+            "url": "@DubHDkinolar",
+            "urlbot": "@DubKinoBot"
+        }},
+        upsert=True     #agar code mavjud bo‘lmasa, yangi document yaratadi
+    )
+    
     
     bot.send_message(msg.chat.id, "✅ Kino muvaffaqiyatli qo‘shildi!")
     del state[user]
@@ -447,13 +445,21 @@ def movie_list(msg):
         return
     
     # Kino ro‘yxati uchun sahifa
-    text, pages = get_movie_page(page=1)
     
+    page=1
+    text, pages = get_movie_page(page=page)
     # Inline tugmalar
     markup = types.InlineKeyboardMarkup()
-    if pages > 1:
-        markup.add(types.InlineKeyboardButton("➡️ Keyingi", callback_data="page_2"))
     
+    btns = []
+    if page > 1:
+        btns.append(types.InlineKeyboardButton("⬅️ Oldingi", callback_data=f"page_{page-1}"))
+    if page < pages:
+        btns.append(types.InlineKeyboardButton("➡️ Keyingi", callback_data=f"page_{page+1}"))
+    
+    if btns:
+        markup.row(*btns)
+
     # Kino ro‘yxatini chiqarish
     text = "🎬 *Kino ro‘yxati:*\n\n"
     all_movies = list(movies.find({}, {"_id": 0}))
@@ -476,10 +482,15 @@ def universal_handler(msg):
     # --- 1) Admin kino kodi kiritayapti ---
     if user in state and state[user][0] == "waiting_for_code":
         file_id = state[user][1]
-        db[text] = file_id
+        
+        movies.update_one(
+    {"code": text},      # filter: qaysi document-ni yangilash
+    {"$set": {
+        "file_id": file_id
+    }},
+    upsert=True           # agar document yo‘q bo‘lsa, yangi yaratadi
+)
 
-        # with open("db.json", "w", encoding="utf-8") as f:
-        #     json.dump(db, f, indent=4)
 
         bot.send_message(msg.chat.id, f"✔ Kino saqlandi!\nKino kodi: {text}")
         del state[user]
@@ -487,15 +498,17 @@ def universal_handler(msg):
 
     # --- 2) Admin kino o‘chirayapti ---
     if user in state and state[user][0] == "waiting_for_delete":
-        
-        result = movies.delete_one({"code": text})  # text → kino kodi
-        if result.deleted_count:
-            bot.send_message(msg.chat.id, "✔ Kino o‘chirildi.")
-        else:
-            bot.send_message(msg.chat.id, "❌ Bunday kod mavjud emas.")
-    
-        del state[user]
-        return
+        code = text  # admin kiritgan kino kodi
+
+    result = movies.delete_one({"code": code})
+    if result.deleted_count > 0:
+        bot.send_message(msg.chat.id, f"✔ Kino o‘chirildi. Kod: {code}")
+    else:
+        bot.send_message(msg.chat.id, "❌ Bunday kod mavjud emas.")
+
+    del state[user]
+    return
+
 
 
     # --- 3) Oddiy foydalanuvchi kino kodi so‘rayapti ---
