@@ -1,7 +1,6 @@
 import telebot
 from telebot import types
 import time
-#import requests
 from flask import Flask, request
 from pymongo import MongoClient
 import os
@@ -65,7 +64,7 @@ def get_movie_page(page=1, per_page=10):
 
     boshlash = (page - 1) * per_page
     end = boshlash + per_page
-    page_movies = all_movies[start:end]
+    page_movies = all_movies[boshlash:end]
 
     text = ""
     c = boshlash + 1
@@ -439,7 +438,7 @@ def movie_list(msg):
         bot.send_message(msg.chat.id, text, parse_mode="Markdown")
         return
     
-        # Baza bo‘shligini tekshirish
+    # Baza bo‘shligini tekshirish
     if movies.count_documents({}) == 0:
         bot.send_message(msg.chat.id, "📂 Bazada kino yo'q.")
         return
@@ -469,50 +468,49 @@ def movie_list(msg):
 @bot.message_handler(func=lambda msg: True)
 def universal_handler(msg):
     user = str(msg.from_user.id)
-    text = msg.text.strip()
+    text = msg.text.strip() if msg.text else ""
 
     # --- 1) Admin kino kodi kiritayapti ---
     if user in state and state[user][0] == "waiting_for_code":
         file_id = state[user][1]
         
         movies.update_one(
-    {"code": text},      # filter: qaysi document-ni yangilash
-    {"$set": {
-        "file_id": file_id
-    }},
-    upsert=True           # agar document yo‘q bo‘lsa, yangi yaratadi
-)
+            {"code": text},      # filter: qaysi document-ni yangilash
+            {"$set": {"file_id": file_id}},
+            upsert=True           # agar document yo‘q bo‘lsa, yangi yaratadi
+        )
 
 
         bot.send_message(msg.chat.id, f"✔ Kino saqlandi!\nKino kodi: {text}")
         del state[user]
         return
 
+
     # --- 2) Admin kino o‘chirayapti ---
     if user in state and state[user][0] == "waiting_for_delete":
-        code = text  # admin kiritgan kino kodi
 
-    result = movies.delete_one({"code": code})
-    if result.deleted_count > 0:
-        bot.send_message(msg.chat.id, f"✔ Kino o‘chirildi. Kod: {code}")
-    else:
-        bot.send_message(msg.chat.id, "❌ Bunday kod mavjud emas.")
-
-    del state[user]
-    return
+        result = movies.delete_one({"code": text})
+        
+        if result.deleted_count > 0:
+            bot.send_message(msg.chat.id, f"✔ Kino o‘chirildi. Kod: {text}")
+        else:
+            bot.send_message(msg.chat.id, "❌ Bunday kod mavjud emas.")
+    
+        del state[user]
+        return
 
 
 
     # --- 3) Oddiy foydalanuvchi kino kodi so‘rayapti ---
-    if not check_sub(user):
+    if not check_sub(int(user)):
         bot.send_message(msg.chat.id, "❗ Avval kanalga obuna bo‘ling.")
         return
 
     movie = movies.find_one({"code": text})
     if movie:
-        file_id = movie["file_id"]
-        code = movie["code"]  # key
-
+        file_id = movie.get("file_id")
+        code = movie.get("code", "") 
+        
         bot.send_video(
             msg.chat.id,
             file_id,
