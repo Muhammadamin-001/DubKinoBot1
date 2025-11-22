@@ -63,12 +63,12 @@ def get_movie_page(page=1, per_page=10):
     total = len(all_movies)
     pages = (total - 1) // per_page + 1
 
-    start = (page - 1) * per_page
-    end = start + per_page
+    boshlash = (page - 1) * per_page
+    end = boshlash + per_page
     page_movies = all_movies[start:end]
 
     text = ""
-    c = start + 1
+    c = boshlash + 1
     for m in page_movies:
         # m['code'] va m['name'] MongoDB document ichida bo'lishi kerak
         text += f"{c}) {m['name']}------------#-{m['code']}\n"
@@ -446,19 +446,11 @@ def movie_list(msg):
     
     # Kino ro‘yxati uchun sahifa
     
-    page=1
-    text, pages = get_movie_page(page=page)
-    # Inline tugmalar
+    text, pages = get_movie_page(page=1)
     markup = types.InlineKeyboardMarkup()
-    
-    btns = []
-    if page > 1:
-        btns.append(types.InlineKeyboardButton("⬅️ Oldingi", callback_data=f"page_{page-1}"))
-    if page < pages:
-        btns.append(types.InlineKeyboardButton("➡️ Keyingi", callback_data=f"page_{page+1}"))
-    
-    if btns:
-        markup.row(*btns)
+    if pages > 1:
+        markup.add(types.InlineKeyboardButton("➡️ Keyingi", callback_data="page_2"))
+
 
     # Kino ro‘yxatini chiqarish
     text = "🎬 *Kino ro‘yxati:*\n\n"
