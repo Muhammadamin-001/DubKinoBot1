@@ -5,8 +5,6 @@ from flask import Flask, request
 from pymongo import MongoClient
 import os
 
-#TOKEN = '8355160126:AAEl-Ul_QLI1I7AwkHPfE1_r4a2MUC0MISU'    - Bu kerak emas ekan render com bazasi uchun
-
 TOKEN = os.getenv("TOKEN")
 ADMIN_ID = os.getenv("ADMIN_ID")
 WEBHOOK_URL = os.getenv("WEBHOOK_URL")
@@ -33,24 +31,12 @@ movies = db["movies"]     # kinolar collection
 
 
 
-
-# try:
-#     with open("db.json", "r", encoding="utf-8") as f:
-#         db = json.load(f)
-# except:
-#     db = {}
-#     with open("db.json", "w", encoding="utf-8") as f:
-#         json.dump(db, f, indent=4)
-
 # =================== STATE (HOLAT) ============================
 state = {}  
-# state[user_id] = ["waiting_for_video"]
-# state[user_id] = ["waiting_for_code", file_id]
-# state[user_id] = ["waiting_for_delete"]
+
 
 album_buffer = {}
 album_sending = {}
-# album_sending[user_id] = time.time()
 
 movie_pages = {}
 
@@ -468,7 +454,7 @@ def movie_list(msg):
 @bot.message_handler(func=lambda msg: True)
 def universal_handler(msg):
     user = str(msg.from_user.id)
-    text = msg.text.strip() if msg.text else ""
+    text = msg.text.strip()
 
     # --- 1) Admin kino kodi kiritayapti ---
     if user in state and state[user][0] == "waiting_for_code":
@@ -508,8 +494,8 @@ def universal_handler(msg):
 
     movie = movies.find_one({"code": text})
     if movie:
-        file_id = movie.get("file_id")
-        code = movie.get("code", "") 
+        file_id = movie["file_id"]
+        code = movie["code"]
         
         bot.send_video(
             msg.chat.id,
