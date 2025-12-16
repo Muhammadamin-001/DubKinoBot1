@@ -445,7 +445,7 @@ def movie_list(msg):
     c = 1
     texts=""
     for m in all_movies:
-        text += f"• {c}) {m['name']} ----------------------------- #--{m['code']}\n\n"
+        text += f"• {c}) {m['name']} ----------------------------- #--{m['code']}\n"
         
         if c == 10:
             texts=text[:]
