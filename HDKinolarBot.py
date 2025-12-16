@@ -443,19 +443,14 @@ def movie_list(msg):
     text = "🎬 *Kino ro‘yxati:*\n\n"
     all_movies = list(movies.find({}, {"_id": 0}))
     c = 1
-    texts=[]
+    texts=""
     for m in all_movies:
         text += f"• {c}) {m['name']} ----------------------------- #--{m['code']}\n\n"
         
-        if c % 10 == 0:
-            texts.append(text)
-            text=""
+        if c == 10:
+            texts=text[:]
         c += 1
-    texts.append(text)
-    text=""
-    
-    text=texts[0]
-        
+    text=texts
     bot.send_message(msg.chat.id, text, parse_mode="Markdown", reply_markup=markup)
 
 
