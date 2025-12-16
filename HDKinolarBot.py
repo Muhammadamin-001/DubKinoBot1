@@ -454,7 +454,7 @@ def movie_list(msg):
     texts.append(text)
     text=""
     
-    text=texts[1]
+    text=texts[0]
         
     bot.send_message(msg.chat.id, text, parse_mode="Markdown", reply_markup=markup)
 
