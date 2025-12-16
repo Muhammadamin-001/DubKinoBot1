@@ -445,7 +445,7 @@ def movie_list(msg):
     c = 1
     texts=[]
     for m in all_movies:
-        text += f"• {c}) {m['name']} ----------------------------- #--{m['code']}\n"
+        text += f"• {c}) {m['name']} ----------------------------- #--{m['code']}\n\n"
         
         if c % 10 == 0:
             texts.append(text)
@@ -454,8 +454,9 @@ def movie_list(msg):
     texts.append(text)
     text=""
     
-    for text in texts:
-        bot.send_message(msg.chat.id, text, parse_mode="Markdown", reply_markup=markup)
+    text=texts[1]
+        
+    bot.send_message(msg.chat.id, text, parse_mode="Markdown", reply_markup=markup)
 
 
 # ====================== UMUMIY HANDLER ========================
