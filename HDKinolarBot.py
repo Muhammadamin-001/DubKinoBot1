@@ -82,7 +82,7 @@ def admin_panel(chat_id):
     btn = types.ReplyKeyboardMarkup(resize_keyboard=True)
     btn.add("🎬 Kino yuklash", "📂 Film kodlari")
     btn.add("❌ Film o'chirish", "🔙 Ortga")
-    btn.add("📢 Xabar yuborish")
+    btn.add("📢 Xabar yuborish", "♻️ Statistika")
     bot.send_message(chat_id, "🔐 Admin Paneli", reply_markup=btn)
     
 def user_panel(chat_id):
@@ -444,12 +444,12 @@ def movie_list(msg):
     all_movies = list(movies.find({}, {"_id": 0}))
     c = 1
     for m in all_movies:
-        text += f"• {c}) {m['name']}-----------------------------#-{m['code']}\n"
+        text += f"• {c}) {m['name']} ----------------------------- #--{m['code']}\n"
+        
+        if c % 10 == 0:
+            bot.send_message(msg.chat.id, text, parse_mode="Markdown", reply_markup=markup)
         c += 1
     
-    bot.send_message(msg.chat.id, text, parse_mode="Markdown", reply_markup=markup)
-
-
 
 
 # ====================== UMUMIY HANDLER ========================
@@ -502,7 +502,7 @@ def universal_handler(msg):
         bot.send_video(
             msg.chat.id,
             file_id,
-            caption=f"🎬 {movie['name']} \n\t\t-------------------------\n"
+            caption=f"🎬 {movie['name']} \n\t\t -----------------------------\n"
                     f"💽Formati: {movie['formati']}\n"
                     f"🎞Janri: {movie['genre']}\n"
                     f"🆔Kod: #{code}\n" #ishladi
