@@ -103,9 +103,8 @@ def save_user(user_id):
 @bot.message_handler(commands=['start'])
 def start(msg):
     user = msg.from_user.id
-    
+            
     save_user(user)
-
 
     if not check_sub(user):
         btn = types.InlineKeyboardMarkup()
@@ -420,11 +419,11 @@ def delete_movie(msg):
 # ====================== FILM RO‘YXATI =========================
 @bot.message_handler(func=lambda msg: msg.text == "📂 Film kodlari")
 def movie_list(msg):
-    if str(msg.from_user.id) != ADMIN_ID:
-        text = "🎬 *Kino topish uchun mos #Kodlarni shu kanaldan topasiz:*\n\n"
-        text+="https://t.me/DubHDkinolar"
-        bot.send_message(msg.chat.id, text, parse_mode="Markdown")
-        return
+    # if str(msg.from_user.id) != ADMIN_ID:
+    #     text = "🎬 *Kino topish uchun mos #Kodlarni shu kanaldan topasiz:*\n\n"
+    #     text+="https://t.me/DubHDkinolar"
+    #     bot.send_message(msg.chat.id, text, parse_mode="Markdown")
+    #     return
     
     # Baza bo‘shligini tekshirish
     if movies.count_documents({}) == 0:
@@ -489,33 +488,40 @@ def universal_handler(msg):
         del state[user]
         return
 
-
+    kino_kodi = None
+    if ' ' in msg.text:
+        start_parts = msg.text.split(' ', 1)
+        if start_parts[1].startswith('start='):
+            kino_kodi = start_parts[1].replace('start=', '').strip()
 
     # --- 3) Oddiy foydalanuvchi kino kodi so‘rayapti ---
     if not check_sub(int(user)):
         bot.send_message(msg.chat.id, "❗ Avval kanalga obuna bo‘ling.")
         return
+    
+    if kino_kodi:
+        movie = movies.find_one({"code": text})
+        if movie:
+            file_id = movie["file_id"]
+            code = movie["code"]
+            
+            bot.send_video(
+                msg.chat.id,
+                file_id,
+                caption=f"🎬 {movie['name']} \n\t\t -----------------------------\n"
+                        f"💽Formati: {movie['formati']}\n"
+                        f"🎞Janri: {movie['genre']}\n"
+                        f"🆔Kod: #{code}\n" #ishladi
+                        f"\n📹Kanalimiz: {movie['url']}\n"
+                        f"🤖Bizning bot: {movie['urlbot']}"
+            )
+        else:
+            bot.send_message(msg.chat.id, "❌ Bunday kod bo‘yicha kino topilmadi.")
 
-    movie = movies.find_one({"code": text})
-    if movie:
-        file_id = movie["file_id"]
-        code = movie["code"]
-        
-        bot.send_video(
-            msg.chat.id,
-            file_id,
-            caption=f"🎬 {movie['name']} \n\t\t -----------------------------\n"
-                    f"💽Formati: {movie['formati']}\n"
-                    f"🎞Janri: {movie['genre']}\n"
-                    f"🆔Kod: #{code}\n" #ishladi
-                    f"\n📹Kanalimiz: {movie['url']}\n"
-                    f"🤖Bizning bot: {movie['urlbot']}"
-        )
-    else:
-        bot.send_message(msg.chat.id, "❌ Bunday kod bo‘yicha kino topilmadi.")
 
-
-
+    # Kino kodi berilmagan bo'lsa oddiy start-qiluvchi javob qismi.
+    bot.send_message(msg.chat.id, "🎬 Kino kodini kiriting:")
+    
 
 @app.route('/' + TOKEN, methods=['POST'])
 def webhook():
