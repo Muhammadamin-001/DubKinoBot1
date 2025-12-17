@@ -81,8 +81,8 @@ def check_sub(user_id):
 def admin_panel(chat_id):
     btn = types.ReplyKeyboardMarkup(resize_keyboard=True)
     btn.add("🎬 Kino yuklash", "📂 Film kodlari")
-    btn.add("❌ Film o'chirish", "🔙 Ortga")
-    btn.add("📢 Xabar yuborish", "♻️ Statistika")
+    btn.add("❌ Film o'chirish", "♻️ Statistika")
+    btn.add("📢 Xabar yuborish", "🔙 Ortga")
     bot.send_message(chat_id, "🔐 Admin Paneli", reply_markup=btn)
     
 def user_panel(chat_id):
@@ -480,6 +480,26 @@ def movie_list(msg):
     text=texts
     bot.send_message(msg.chat.id, text, parse_mode="Markdown", reply_markup=markup)
 
+
+# Statistika ko'rsatuvchi tugma ("♻️ Statistika")
+@bot.message_handler(func=lambda msg: msg.text == "♻️ Statistika")
+def show_statistics(msg):
+    # Faqat admin kirishi mumkin
+    if str(msg.from_user.id) != ADMIN_ID:
+        bot.send_message(msg.chat.id, "❌ Siz admin emassiz.")
+        return
+    
+    # MongoDB Atlas bazasidan foydalanuvchilar va kinolar sonini olib kelish
+    user_count = users_collection.count_documents({})  # Foydalanuvchilar soni
+    movie_count = movies.count_documents({})  # Kinolar soni
+    
+    # Javob statistika xabari
+    stats_text = (
+        f"📊 *Statistika:*\n\n"
+        f"👤 Foydalanuvchilar soni: *{user_count}*\n"
+        f"🎬 Kinolar soni: *{movie_count}*\n"
+    )
+    bot.send_message(msg.chat.id, stats_text, parse_mode="Markdown")
 
 # ====================== UMUMIY HANDLER ========================
 @bot.message_handler(func=lambda msg: True)
