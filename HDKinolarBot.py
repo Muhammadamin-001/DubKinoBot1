@@ -281,7 +281,7 @@ def panel(msg):
         
 @bot.message_handler(commands=['kodlar'])
 def kodlar(msg):
-    if str(msg.from_user.id) == ADMIN_ID:
+    if (str(msg.from_user.id) == ADMIN_ID or is_admin(msg.from_user.id)):
         bot.send_message(msg.chat.id, "❗ Bu komanda admin uchun emas.")
         return
     
