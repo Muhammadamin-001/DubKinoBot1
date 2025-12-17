@@ -96,14 +96,38 @@ def save_user(user_id):
     if not users_collection.find_one({"user_id": user_id}):
         users_collection.insert_one({"user_id": user_id})
 
-
+def send_movie_info(chat_id, kino_kodi):
+    movie = movies.find_one({"code": kino_kodi})  # Kino kodi bo'yicha ma'lumot
+    if movie:
+        file_id = movie["file_id"]
+        code = movie["code"]
+        
+        # Kino haqida ma'lumot yuboriladi
+        bot.send_video(
+            chat_id,
+            file_id,
+            caption=f"🎬 {movie['name']} \n"
+                    f"💽 Formati: {movie['formati']}\n"
+                    f"🎞 Janri: {movie['genre']}\n"
+                    f"🆔 Kod: #{code}\n"
+                    f"\n📹 Kanalimiz: {movie['url']}\n"
+                    f"🤖 Botimiz: {movie['urlbot']}"
+        )
+    else:
+        bot.send_message(chat_id, "❌ Bunday kod bo‘yicha kino topilmadi.")
 
 
 # ====================== START ================================
 @bot.message_handler(commands=['start'])
 def start(msg):
     user = msg.from_user.id
-            
+    
+    # "start=kino_kodi" formatida yuborilgan parametrni olish
+    kino_kodi = None  # Boshlang'ich qiymat
+    if ' ' in msg.text:  # Agar `/start kino_kod` xabar formatida bo'lsa
+        start_parts = msg.text.split(' ', 1)  # Bo'shliqdan ajratamiz
+        kino_kodi = start_parts[1].strip()  # Kino kodini ajratamiz
+        
     save_user(user)
 
     if not check_sub(user):
@@ -117,6 +141,10 @@ def start(msg):
             "❗ Botdan foydalanish uchun kanalga obuna bo'ling!",
             reply_markup=btn
         )
+        return
+    
+    if kino_kodi:
+        send_movie_info(msg.chat.id, kino_kodi)  # Kino haqida ma'lumotni yuborish uchun funksiya chaqiriladi
         return
 
 
@@ -488,39 +516,14 @@ def universal_handler(msg):
         del state[user]
         return
 
-    kino_kodi = None
-    if ' ' in msg.text:
-        start_parts = msg.text.split(' ', 1)
-        if start_parts[1].startswith('start='):
-            kino_kodi = start_parts[1].replace('start=', '').strip()
 
     # --- 3) Oddiy foydalanuvchi kino kodi so‘rayapti ---
     if not check_sub(int(user)):
         bot.send_message(msg.chat.id, "❗ Avval kanalga obuna bo‘ling.")
         return
     
-    if kino_kodi:
-        movie = movies.find_one({"code": text})
-        if movie:
-            file_id = movie["file_id"]
-            code = movie["code"]
-            
-            bot.send_video(
-                msg.chat.id,
-                file_id,
-                caption=f"🎬 {movie['name']} \n\t\t -----------------------------\n"
-                        f"💽Formati: {movie['formati']}\n"
-                        f"🎞Janri: {movie['genre']}\n"
-                        f"🆔Kod: #{code}\n" #ishladi
-                        f"\n📹Kanalimiz: {movie['url']}\n"
-                        f"🤖Bizning bot: {movie['urlbot']}"
-            )
-        else:
-            bot.send_message(msg.chat.id, "❌ Bunday kod bo‘yicha kino topilmadi.")
-
-
-    # Kino kodi berilmagan bo'lsa oddiy start-qiluvchi javob qismi.
-    bot.send_message(msg.chat.id, "🎬 Kino kodini kiriting:")
+    movie_code = msg.text.strip()
+    send_movie_info(msg.chat.id, movie_code)
     
 
 @app.route('/' + TOKEN, methods=['POST'])
