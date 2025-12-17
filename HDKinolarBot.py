@@ -177,24 +177,36 @@ def add_admin(msg):
     
 
 @bot.message_handler(func=lambda msg: str(msg.from_user.id) in state 
-                     and state[str(msg.from_user.id)][0] == "waiting_for_new_admin")
-def save_new_admin(msg):
-    admin_id = msg.text.strip()  # Yangi admin ID sini olish
+                     and state[str(msg.from_user.id)][0] == "waiting_for_admin_id")
+def save_admin_id(msg):
+    admin_id = msg.text.strip()
 
-    if not admin_id.isdigit():
-        bot.send_message(msg.chat.id, "❌ Foydalanuvchi ID faqat raqamlardan iborat bo'lishi kerak.")
+    if not admin_id.isdigit():  # Faqat raqamlarni qabul qilish
+        bot.send_message(msg.chat.id, "❌ Admin ID faqat raqamlardan iborat bo'lishi kerak.")
         return
 
-    # Yangi adminni bazaga qo'shish
+    # Admin ID saqlanadi va nomni kiritish so'raladi
+    state[str(msg.from_user.id)] = ["waiting_for_admin_name", admin_id]
+    bot.send_message(msg.chat.id, f"✅ Admin ID ({admin_id}) qabul qilindi. Endi uning nomini kiriting.")
+    
+
+@bot.message_handler(func=lambda msg: str(msg.from_user.id) in state 
+                     and state[str(msg.from_user.id)][0] == "waiting_for_admin_name")
+def save_admin_name(msg):
+    admin_name = msg.text.strip()
+    admin_id = state[str(msg.from_user.id)][1]  # Oldindan kiritilgan ID'ni olish
+
+    # Adminni MongoDB kolleksiyasiga qo‘shish
     if admins_collection.find_one({"user_id": int(admin_id)}):
         bot.send_message(msg.chat.id, "❗ Bu foydalanuvchi allaqachon admin.")
     else:
-        admins_collection.insert_one({"user_id": int(admin_id)})
-        bot.send_message(msg.chat.id, f"✅ Foydalanuvchi {admin_id} admin qilindi!")
+        admins_collection.insert_one({
+            "user_id": int(admin_id),
+            "name": admin_name
+        })
+        bot.send_message(msg.chat.id, f"✅ Yangi admin qo'shildi:\n🆔 ID: {admin_id}\n👤 Ismi: {admin_name}")
 
-    # Holatni tozalash
-    del state[str(msg.from_user.id)]
-    
+    del state[str(msg.from_user.id)]  # Holatni tozalash
 
 @bot.message_handler(func=lambda msg: msg.text == "🚫 Adminni olish")
 def remove_admin(msg):
@@ -262,7 +274,7 @@ def page_switch(call):
 # ====================== ADMIN PANEL ===========================
 @bot.message_handler(commands=['panel'])
 def panel(msg):
-    if str(msg.from_user.id) == ADMIN_ID or str(msg.from_user.id)==is_admin(msg.from_user.id):
+    if str(msg.from_user.id) == ADMIN_ID or is_admin(msg.from_user.id):
         admin_panel(msg.chat.id)
     else:
         bot.send_message(msg.chat.id, "❌ Siz admin emassiz.")
@@ -279,7 +291,7 @@ def kodlar(msg):
 # ====================== ORTGA QAYTISH =========================
 @bot.message_handler(func=lambda msg: msg.text == "🔙 Ortga")
 def back(msg):
-    if str(msg.from_user.id) != ADMIN_ID or str(msg.from_user.id)!=is_admin(msg.from_user.id):
+    if not str(msg.from_user.id) == ADMIN_ID or is_admin(msg.from_user.id):
         return
     
     state.pop(str(msg.from_user.id), None)
@@ -303,7 +315,7 @@ def back_user(msg):
 # ====================== KINO YUKLASH ==========================
 @bot.message_handler(func=lambda msg: msg.text == "🎬 Kino yuklash")
 def upload_movie(msg):
-    if str(msg.from_user.id) != ADMIN_ID or str(msg.from_user.id) != is_admin(msg.from_user.id):
+    if not str(msg.from_user.id) == ADMIN_ID or is_admin(msg.from_user.id):
         return
 
     bot.send_message(msg.chat.id, "🎬 Video yuboring (video fayl ko‘rinishida).")
@@ -398,7 +410,7 @@ def movie_url(msg):
 #============ADMIN XABARI===========
 @bot.message_handler(func=lambda msg: msg.text == "📢 Xabar yuborish")
 def ask_broadcast(msg):
-    if str(msg.from_user.id) != ADMIN_ID:
+    if not str(msg.from_user.id) == ADMIN_ID:
         bot.send_message(msg.chat.id, "📢 Sizga xabar yuborish uchun ruxsat berilmagan!!!")
         return
     bot.send_message(msg.chat.id, "📢 Yuboriladigan xabarni kiriting:")
@@ -511,7 +523,7 @@ def do_broadcast(msg):
 # ====================== FILM O‘CHIRISH ========================
 @bot.message_handler(func=lambda msg: msg.text == "❌ Film o'chirish")
 def delete_movie(msg):
-    if str(msg.from_user.id) != ADMIN_ID or str(msg.from_user.id) != is_admin(msg.from_user.id):
+    if not str(msg.from_user.id) == ADMIN_ID or is_admin(msg.from_user.id):
         return
     state[str(msg.from_user.id)] = ["waiting_for_delete"]
     bot.send_message(msg.chat.id, "❌ O‘chirmoqchi bo‘lgan kino kodini yuboring.")
@@ -557,13 +569,16 @@ def movie_list(msg):
 @bot.message_handler(func=lambda msg: msg.text == "♻️ Statistika")
 def show_statistics(msg):
     # Faqat admin kirishi mumkin
-    if str(msg.from_user.id) != ADMIN_ID or str(msg.from_user.id) != is_admin(msg.from_user.id):
+    if not str(msg.from_user.id) == ADMIN_ID or is_admin(msg.from_user.id):
         bot.send_message(msg.chat.id, "❌ Siz admin emassiz.")
         return
     
     # MongoDB Atlas bazasidan foydalanuvchilar va kinolar sonini olib kelish
     user_count = users_collection.count_documents({})  # Foydalanuvchilar soni
     movie_count = movies.count_documents({})  # Kinolar soni
+    # Adminlar soni va nomlarini olish
+    admins = list(admins_collection.find({}, {"_id": 0, "user_id": 1, "name": 1}))  # Tayinlangan adminlar
+    admin_count = len(admins)
     
     # Javob statistika xabari
     stats_text = (
@@ -571,6 +586,14 @@ def show_statistics(msg):
         f"👤 Foydalanuvchilar soni: *{user_count}*\n"
         f"🎬 Kinolar soni: *{movie_count}*\n"
     )
+    # Super Admin uchun tayinlangan adminlar sonini ko‘rsatish
+    if str(msg.from_user.id) == ADMIN_ID:  # Foydalanuvchi Super Admin bo'lsa
+        stats_text += f"🏷 Tayinlangan adminlar soni: *{admin_count}*\n"
+        if admins:
+            stats_text += "📋 Adminlar ro'yxati:\n"
+            for admin in admins:
+                stats_text += f"  - 🆔 {admin['user_id']}, 👤 {admin['name']}\n"
+                
     bot.send_message(msg.chat.id, stats_text, parse_mode="Markdown")
 
 # ====================== UMUMIY HANDLER ========================
