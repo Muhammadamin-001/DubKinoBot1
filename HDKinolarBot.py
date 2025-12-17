@@ -274,7 +274,7 @@ def page_switch(call):
 # ====================== ADMIN PANEL ===========================
 @bot.message_handler(commands=['panel'])
 def panel(msg):
-    if str(msg.from_user.id) == ADMIN_ID or is_admin(msg.from_user.id):
+    if (str(msg.from_user.id) == ADMIN_ID or is_admin(msg.from_user.id)):
         admin_panel(msg.chat.id)
     else:
         bot.send_message(msg.chat.id, "❌ Siz admin emassiz.")
@@ -291,7 +291,7 @@ def kodlar(msg):
 # ====================== ORTGA QAYTISH =========================
 @bot.message_handler(func=lambda msg: msg.text == "🔙 Ortga")
 def back(msg):
-    if not str(msg.from_user.id) == ADMIN_ID or is_admin(msg.from_user.id):
+    if not (str(msg.from_user.id) == ADMIN_ID or is_admin(msg.from_user.id)):
         return
     
     state.pop(str(msg.from_user.id), None)
@@ -300,7 +300,7 @@ def back(msg):
 # --- USER uchun ORTGA tugmasi (ADMIN bo'lmaganlar uchun) ---
 @bot.message_handler(func=lambda m: m.text == "🔙")
 def back_user(msg):
-    if str(msg.from_user.id) == ADMIN_ID:
+    if (str(msg.from_user.id) == ADMIN_ID or is_admin(msg.from_user.id)):
         return
     
     state.pop(str(msg.from_user.id), None)
@@ -315,7 +315,7 @@ def back_user(msg):
 # ====================== KINO YUKLASH ==========================
 @bot.message_handler(func=lambda msg: msg.text == "🎬 Kino yuklash")
 def upload_movie(msg):
-    if not str(msg.from_user.id) == ADMIN_ID or is_admin(msg.from_user.id):
+    if not (str(msg.from_user.id) == ADMIN_ID or is_admin(msg.from_user.id)):
         return
 
     bot.send_message(msg.chat.id, "🎬 Video yuboring (video fayl ko‘rinishida).")
@@ -523,7 +523,7 @@ def do_broadcast(msg):
 # ====================== FILM O‘CHIRISH ========================
 @bot.message_handler(func=lambda msg: msg.text == "❌ Film o'chirish")
 def delete_movie(msg):
-    if not str(msg.from_user.id) == ADMIN_ID or is_admin(msg.from_user.id):
+    if not (str(msg.from_user.id) == ADMIN_ID or is_admin(msg.from_user.id)):
         return
     state[str(msg.from_user.id)] = ["waiting_for_delete"]
     bot.send_message(msg.chat.id, "❌ O‘chirmoqchi bo‘lgan kino kodini yuboring.")
@@ -531,7 +531,7 @@ def delete_movie(msg):
 # ====================== FILM RO‘YXATI =========================
 @bot.message_handler(func=lambda msg: msg.text == "📂 Film kodlari")
 def movie_list(msg):
-    # if str(msg.from_user.id) != ADMIN_ID:
+    # if (str(msg.from_user.id) != ADMIN_ID or is_admin(msg.from_user.id)):   #Buni ochsak, ro'yxat faqat adminlarga ko'rinadi
     #     text = "🎬 *Kino topish uchun mos #Kodlarni shu kanaldan topasiz:*\n\n"
     #     text+="https://t.me/DubHDkinolar"
     #     bot.send_message(msg.chat.id, text, parse_mode="Markdown")
@@ -569,7 +569,7 @@ def movie_list(msg):
 @bot.message_handler(func=lambda msg: msg.text == "♻️ Statistika")
 def show_statistics(msg):
     # Faqat admin kirishi mumkin
-    if not str(msg.from_user.id) == ADMIN_ID or is_admin(msg.from_user.id):
+    if not (str(msg.from_user.id) == ADMIN_ID or is_admin(msg.from_user.id)):
         bot.send_message(msg.chat.id, "❌ Siz admin emassiz.")
         return
     
