@@ -173,7 +173,7 @@ def add_admin(msg):
 
     # Yangi admin "user_id"ni kiritishni so'raymiz
     bot.send_message(msg.chat.id, "👤 Admin tayinlash uchun foydalanuvchining ID sini yuboring.")
-    state[str(msg.from_user.id)] = ["waiting_for_new_admin"]  # Holatni saqlash
+    state[str(msg.from_user.id)] = ["waiting_for_admin_id"]  # Holatni saqlash
     
 
 @bot.message_handler(func=lambda msg: str(msg.from_user.id) in state 
