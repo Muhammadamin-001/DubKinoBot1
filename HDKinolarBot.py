@@ -25,11 +25,10 @@ for varname in ["TOKEN", "ADMIN_ID", "WEBHOOK_URL", "MONGO_URI"]:
 
 
 client = MongoClient(MONGO_URI)
-
 db = client["TelegramBot"]   # baza nomi
 users_collection = db["users"]       # userlar collection
 movies = db["movies"]     # kinolar collection
-
+admins_collection = db["admins"]  # Adminlarni saqlash kolleksiyasi
 
 
 
@@ -42,6 +41,11 @@ album_sending = {}
 
 movie_pages = {}
 
+
+# === is_admin funksiyasi ===
+def is_admin(user_id):
+    # Foydalanuvchi admin bo'lsa, True qaytaradi
+    return admins_collection.find_one({"user_id": int(user_id)}) is not None
 
 def get_movie_page(page=1, per_page=10):
     # Barcha kinolarni bazadan o'qish
@@ -83,6 +87,7 @@ def admin_panel(chat_id):
     btn.add("🎬 Kino yuklash", "📂 Film kodlari")
     btn.add("❌ Film o'chirish", "♻️ Statistika")
     btn.add("📢 Xabar yuborish", "🔙 Ortga")
+    btn.add("🏷 Admin tayinlash", "🚫 Adminni olish")  # Yangi tugmalar
     bot.send_message(chat_id, "🔐 Admin Paneli", reply_markup=btn)
     
 def user_panel(chat_id):
@@ -159,6 +164,72 @@ def check(call):
         bot.answer_callback_query(call.id, "❗ Hali obuna bo‘lmagansiz!")
         
 
+
+@bot.message_handler(func=lambda msg: msg.text == "🏷 Admin tayinlash")
+def add_admin(msg):
+    if str(msg.from_user.id) != ADMIN_ID:  # Faqat superadmin kirishi mumkin
+        bot.send_message(msg.chat.id, "❌ Siz superadmin emassiz.")
+        return
+
+    # Yangi admin "user_id"ni kiritishni so'raymiz
+    bot.send_message(msg.chat.id, "👤 Admin tayinlash uchun foydalanuvchining ID sini yuboring.")
+    state[str(msg.from_user.id)] = ["waiting_for_new_admin"]  # Holatni saqlash
+    
+
+@bot.message_handler(func=lambda msg: str(msg.from_user.id) in state 
+                     and state[str(msg.from_user.id)][0] == "waiting_for_new_admin")
+def save_new_admin(msg):
+    admin_id = msg.text.strip()  # Yangi admin ID sini olish
+
+    if not admin_id.isdigit():
+        bot.send_message(msg.chat.id, "❌ Foydalanuvchi ID faqat raqamlardan iborat bo'lishi kerak.")
+        return
+
+    # Yangi adminni bazaga qo'shish
+    if admins_collection.find_one({"user_id": int(admin_id)}):
+        bot.send_message(msg.chat.id, "❗ Bu foydalanuvchi allaqachon admin.")
+    else:
+        admins_collection.insert_one({"user_id": int(admin_id)})
+        bot.send_message(msg.chat.id, f"✅ Foydalanuvchi {admin_id} admin qilindi!")
+
+    # Holatni tozalash
+    del state[str(msg.from_user.id)]
+    
+
+@bot.message_handler(func=lambda msg: msg.text == "🚫 Adminni olish")
+def remove_admin(msg):
+    if str(msg.from_user.id) != ADMIN_ID:  # Faqat superadmin kirishi mumkin
+        bot.send_message(msg.chat.id, "❌ Siz superadmin emassiz.")
+        return
+
+    # Adminni bekor qilish uchun ID kiritishni so'rash
+    bot.send_message(msg.chat.id, "👤 Adminlikni olib tashlash uchun foydalanuvchining ID sini yuboring.")
+    state[str(msg.from_user.id)] = ["waiting_for_remove_admin"]  # Holatni saqlash
+    
+
+@bot.message_handler(func=lambda msg: str(msg.from_user.id) in state 
+                     and state[str(msg.from_user.id)][0] == "waiting_for_remove_admin")
+def delete_admin(msg):
+    admin_id = msg.text.strip()  # O'chiriladigan admin ID sini olish
+
+    if not admin_id.isdigit():
+        bot.send_message(msg.chat.id, "❌ Foydalanuvchi ID faqat raqamlardan iborat bo'lishi kerak.")
+        return
+
+    # Admin bazadan o'chiriladi
+    result = admins_collection.delete_one({"user_id": int(admin_id)})
+    if result.deleted_count > 0:
+        bot.send_message(msg.chat.id, f"✅ Foydalanuvchi {admin_id} adminlikdan o'chirildi.")
+    else:
+        bot.send_message(msg.chat.id, "❌ Bu foydalanuvchi admin emas.")
+
+    # Holatni tozalash
+    del state[str(msg.from_user.id)]
+    
+    
+    
+    
+
 @bot.callback_query_handler(func=lambda c: c.data.startswith("page_"))
 def page_switch(call):
     page = int(call.data.split("_")[1])
@@ -191,7 +262,7 @@ def page_switch(call):
 # ====================== ADMIN PANEL ===========================
 @bot.message_handler(commands=['panel'])
 def panel(msg):
-    if str(msg.from_user.id) == ADMIN_ID:
+    if str(msg.from_user.id) == ADMIN_ID or str(msg.from_user.id)==is_admin(msg.from_user.id):
         admin_panel(msg.chat.id)
     else:
         bot.send_message(msg.chat.id, "❌ Siz admin emassiz.")
@@ -208,7 +279,7 @@ def kodlar(msg):
 # ====================== ORTGA QAYTISH =========================
 @bot.message_handler(func=lambda msg: msg.text == "🔙 Ortga")
 def back(msg):
-    if str(msg.from_user.id) != ADMIN_ID:
+    if str(msg.from_user.id) != ADMIN_ID or str(msg.from_user.id)!=is_admin(msg.from_user.id):
         return
     
     state.pop(str(msg.from_user.id), None)
@@ -232,7 +303,7 @@ def back_user(msg):
 # ====================== KINO YUKLASH ==========================
 @bot.message_handler(func=lambda msg: msg.text == "🎬 Kino yuklash")
 def upload_movie(msg):
-    if str(msg.from_user.id) != ADMIN_ID:
+    if str(msg.from_user.id) != ADMIN_ID or str(msg.from_user.id) != is_admin(msg.from_user.id):
         return
 
     bot.send_message(msg.chat.id, "🎬 Video yuboring (video fayl ko‘rinishida).")
@@ -328,6 +399,7 @@ def movie_url(msg):
 @bot.message_handler(func=lambda msg: msg.text == "📢 Xabar yuborish")
 def ask_broadcast(msg):
     if str(msg.from_user.id) != ADMIN_ID:
+        bot.send_message(msg.chat.id, "📢 Sizga xabar yuborish uchun ruxsat berilmagan!!!")
         return
     bot.send_message(msg.chat.id, "📢 Yuboriladigan xabarni kiriting:")
     state[str(msg.from_user.id)] = ["waiting_for_broadcast"]
@@ -439,7 +511,7 @@ def do_broadcast(msg):
 # ====================== FILM O‘CHIRISH ========================
 @bot.message_handler(func=lambda msg: msg.text == "❌ Film o'chirish")
 def delete_movie(msg):
-    if str(msg.from_user.id) != ADMIN_ID:
+    if str(msg.from_user.id) != ADMIN_ID or str(msg.from_user.id) != is_admin(msg.from_user.id):
         return
     state[str(msg.from_user.id)] = ["waiting_for_delete"]
     bot.send_message(msg.chat.id, "❌ O‘chirmoqchi bo‘lgan kino kodini yuboring.")
@@ -485,7 +557,7 @@ def movie_list(msg):
 @bot.message_handler(func=lambda msg: msg.text == "♻️ Statistika")
 def show_statistics(msg):
     # Faqat admin kirishi mumkin
-    if str(msg.from_user.id) != ADMIN_ID:
+    if str(msg.from_user.id) != ADMIN_ID or str(msg.from_user.id) != is_admin(msg.from_user.id):
         bot.send_message(msg.chat.id, "❌ Siz admin emassiz.")
         return
     
