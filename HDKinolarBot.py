@@ -149,14 +149,38 @@ def send_movie_info(chat_id, kino_kodi):
 
 
 #======== Foydalanuvchi kinoni O'chirib yuborsa======
+# Video xabarida o'chirish tugmasini tasdiqlash
 @bot.callback_query_handler(func=lambda call: call.data == "delete_movie")
+def confirm_delete_movie(call):
+    # Tasdiqlash uchun inline tugmalar
+    markup = types.InlineKeyboardMarkup()
+    markup.add(
+        types.InlineKeyboardButton("✅ Ha, o'chir", callback_data="delete_movie_yes"),
+        types.InlineKeyboardButton("❌ Yo'q", callback_data="delete_movie_no")
+    )
+    
+    bot.send_message(
+        call.message.chat.id,
+        "⚠️ Rostdan ham bu video xabarini o'chirasiz?",
+        reply_markup=markup
+    )
+
+@bot.callback_query_handler(func=lambda call: call. data == "delete_movie_yes")
 def delete_movie_message(call):
     try:
         bot.delete_message(call.message.chat.id, call.message.message_id)
         bot.answer_callback_query(call.id, "✅ Video o'chirildi!")
     except Exception as e:
-        print(f"Xatolik: {e}")
-        bot.answer_callback_query(call.id, "❌ Video o'chirilmadi.")   
+        print(f"Xatolik:  {e}")
+        bot.answer_callback_query(call.id, "❌ Video o'chirilmadi.")
+
+@bot.callback_query_handler(func=lambda call: call. data == "delete_movie_no")
+def cancel_delete_movie(call):
+    bot.answer_callback_query(call.id, "❌ O'chirish bekor qilindi.")
+    bot.delete_message(call.message.chat.id, call.message.message_id)  
+    
+    
+    
         
 
 @bot.callback_query_handler(func=lambda c: c.data.startswith("page_"))
@@ -173,7 +197,7 @@ def page_switch(call):
         
         
     if page > 1 and page < pages:
-        btns.append(types.InlineKeyboardButton("📌 Oxirgi", callback_data=f"page_{pages}"))
+        btns.append(types.InlineKeyboardButton("📌 Last", callback_data=f"page_{pages}"))
         
     if page < pages:
         btns.append(types.InlineKeyboardButton("➡️ Next", callback_data=f"page_{page+1}"))
@@ -213,12 +237,13 @@ def start(msg):
     
     # "start=kino_kodi" formatida yuborilgan parametrni olish
     kino_kodi = None
-    if ' ' in msg.text:
+    if ' ' in msg. text:
         start_parts = msg.text.split(' ', 1)
         kino_kodi = start_parts[1]. strip()
-        
+    
     save_user(user)
 
+    # Obunani tekshirish
     if not check_sub(user):
         # MongoDB'dan barcha kanallarni olish
         channels = list(channels_collection.find({}, {"_id": 0, "link": 1}))
@@ -227,30 +252,29 @@ def start(msg):
         
         # Agar kanallar qo'shilgan bo'lsa, ularni tugma sifatida qo'shish
         if channels: 
-            for channel in channels:
-                btn.add(types.InlineKeyboardButton("📌 Kanalga obuna bo'lish", url=channel['link']))
-        
-        # Agar kolektsiya bo'sh bo'lsa, standart kanal linkini qo'shish
-        if not channels:
-            btn.add(types.InlineKeyboardButton("📌 Kanalga obuna bo'lish", url="https://t.me/USAVYBE"))
+            for channel in channels: 
+                btn.add(types.InlineKeyboardButton("📌 Kanalga obuna bo'lish", url=channel["link"]))
+        else:
+            # Agar kolektsiya bo'sh bo'lsa, standart kanal linkini qo'shish
             btn.add(types.InlineKeyboardButton("📌 Kanalga obuna bo'lish", url=kanal_link))
         
         # Tekshirish tugmasi
         btn.add(types.InlineKeyboardButton("♻️ Tekshirish", callback_data="check"))
         
         bot.send_message(
-            msg.chat.id,
+            msg.chat. id,
             "❗ Botdan foydalanish uchun kanalga obuna bo'ling!",
             reply_markup=btn
         )
         return
     
-    if kino_kodi:
-        send_movie_info(msg. chat.id, kino_kodi)
+    # Agar kino kodi yuborilgan bo'lsa
+    if kino_kodi: 
+        send_movie_info(msg.chat.id, kino_kodi)
         return
 
+    # Oddiy boshlash
     bot.send_message(msg.chat.id, "🎬 Kino kodini kiriting:")
-    
     
 
 @bot.callback_query_handler(func=lambda call: call.data == "check")
@@ -749,8 +773,8 @@ def movie_list(msg):
     text, pages = get_movie_page(page=1)
     markup = types.InlineKeyboardMarkup()
     if pages > 1:
-        markup.add(types.InlineKeyboardButton("➡️ Keyingi", callback_data="page_2"))
-        markup.add(types.InlineKeyboardButton("📌 Oxirgi", callback_data=f"page_{pages}"))
+        markup.add(types.InlineKeyboardButton("➡️ Next", callback_data="page_2"))
+        markup.add(types.InlineKeyboardButton("📌 Last", callback_data=f"page_{pages}"))
     # O'chirish tugmasi
     markup.add(types.InlineKeyboardButton("❌", callback_data="delete_movies_list")) 
     
