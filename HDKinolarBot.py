@@ -85,14 +85,12 @@ def check_sub(user_id):
             print(f"MongoDB'dan kanallar olindy: {channels_to_check}")  # Debug
         
         # Agar MongoDB'da kanal bo'lmasa, standart kanallarni ishlatish
-        if not channels_to_check:
-            channels_to_check = CHANNEL_ID
-            print(f"Standart kanallar ishlatilmoqda: {channels_to_check}")  # Debug
+        channels_to_check.append(CHANNEL_ID)
         
         # Barcha kanallarni tekshirish
         for channel in channels_to_check:
             try:
-                member = bot. get_chat_member(channel, user_id)
+                member = bot.get_chat_member(channel, user_id)
                 if member.status not in ["member", "administrator", "creator"]:
                     print(f"Foydalanuvchi {user_id} kanalni {channel} obuna emas")  # Debug
                     return False
@@ -184,7 +182,7 @@ def confirm_delete_movie(call):
         reply_markup=markup
     )
 
-@bot.callback_query_handler(func=lambda call: call. data == "delete_movie_yes")
+@bot.callback_query_handler(func=lambda call: call.data == "delete_movie_yes")
 def delete_movie_message(call):
     try:
         bot.delete_message(call.message.chat.id, call.message.message_id)
@@ -193,7 +191,7 @@ def delete_movie_message(call):
         print(f"Xatolik:  {e}")
         bot.answer_callback_query(call.id, "❌ Video o'chirilmadi.")
 
-@bot.callback_query_handler(func=lambda call: call. data == "delete_movie_no")
+@bot.callback_query_handler(func=lambda call: call.data == "delete_movie_no")
 def cancel_delete_movie(call):
     bot.answer_callback_query(call.id, "❌ O'chirish bekor qilindi.")
     bot.delete_message(call.message.chat.id, call.message.message_id)  
@@ -252,7 +250,7 @@ def delete_movies_list(call):
 # ====================== START ================================
 @bot.message_handler(commands=['start'])
 def start(msg):
-    user = msg.from_user. id
+    user = msg.from_user.id
     
     # "start=kino_kodi" formatida yuborilgan parametrni olish
     kino_kodi = None
@@ -262,7 +260,6 @@ def start(msg):
     
     save_user(user)
     
-    print(f"🔍 /start tekshirilmoqda:  user_id={user}, kino_kodi={kino_kodi}")  # Debug
 
     # Obunani tekshirish
     if not check_sub(user):
