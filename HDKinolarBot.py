@@ -80,7 +80,7 @@ def check_sub(user_id):
         
         # Agar MongoDB'da kanal bo'lsa, ularni qo'shish
         if channels:
-            channels_to_check = [ch["id"] for ch in channels if "id" in ch]
+            channels_to_check.append([ch["id"] for ch in channels if "id" in ch])
             print(f"MongoDB'dan kanallar olindy: {channels_to_check}")  # Debug
         
 
@@ -102,6 +102,8 @@ def check_sub(user_id):
     except Exception as e: 
         print(f"check_sub xatosi: {e}")
         return False
+
+
 
 # =================== ADMIN PANEL =============================
 
@@ -245,6 +247,7 @@ def delete_movies_list(call):
         bot.answer_callback_query(call.id, "❌ Ro'yxat o'chirilmadi.")
         
 
+
 # ====================== START ================================
 @bot.message_handler(commands=['start'])
 def start(msg):
@@ -315,6 +318,7 @@ def check(call):
 # ====================== ADMIN PANEL ===========================
 @bot.message_handler(commands=['panel'])
 def panel(msg):
+    start(msg)
     if (str(msg.from_user.id) == ADMIN_ID or is_admin(msg.from_user.id)):
         admin_panel(msg.chat.id)
     else:
@@ -322,6 +326,7 @@ def panel(msg):
         
 @bot.message_handler(commands=['kodlar'])
 def kodlar(msg):
+    start(msg)
     if (str(msg.from_user.id) == ADMIN_ID or is_admin(msg.from_user.id)):
         bot.send_message(msg.chat.id, "❗ Bu komanda admin uchun emas.")
         return
