@@ -10,7 +10,7 @@ ADMIN_ID = os.getenv("ADMIN_ID")
 WEBHOOK_URL = os.getenv("WEBHOOK_URL")
 MONGO_URI =os.getenv("MONGO_URI")
 
-
+CHANNEL_ID = [-1003359940811]
 bot = telebot.TeleBot(TOKEN)
 
 kanal_link="https://t.me/DubHDkinolar"
@@ -70,41 +70,40 @@ def get_movie_page(page=1, per_page=10):
 
 # =================== OBUNA TEKSHIRISH =========================
 def check_sub(user_id):
-    """Faqat MongoDB'dagi kanallarga obunani tekshirish"""
+    """MongoDB'dagi va standart kanallarni tekshirish"""
     try:
         # MongoDB'dan kanallarni olish
         channels = list(channels_collection.find({}, {"_id": 0, "id": 1, "link": 1}))
         
-        # Agar MongoDB'da kanal bo'lmasa, True qaytarish (hamma ruxsatli)
-        if not channels:
-            print(f"⚠️ MongoDB'da kanal yo'q, foydalanuvchi {user_id} kirishi ruxsat")  # Debug
-            return True
-        
         # Tekshirilayotgan kanal ID'lari ro'yxati
-        channels_to_check = [ch["id"] for ch in channels if "id" in ch]
-        print(f"📺 MongoDB'dan {len(channels_to_check)} ta kanal olindy:  {channels_to_check}")  # Debug
+        channels_to_check = []
         
-        # Agar kanal ID'lari bo'lmasa, True qaytarish
+        # Agar MongoDB'da kanal bo'lsa, ularni qo'shish
+        if channels:
+            channels_to_check = [ch["id"] for ch in channels if "id" in ch]
+            print(f"MongoDB'dan kanallar olindy: {channels_to_check}")  # Debug
+        
+        # Agar MongoDB'da kanal bo'lmasa, standart kanallarni ishlatish
         if not channels_to_check:
-            print(f"⚠️ Kanal ID'lari topilmadi, foydalanuvchi {user_id} kirishi ruxsat")  # Debug
-            return True
+            channels_to_check = CHANNEL_ID
+            print(f"Standart kanallar ishlatilmoqda: {channels_to_check}")  # Debug
         
         # Barcha kanallarni tekshirish
         for channel in channels_to_check:
-            try: 
-                member = bot.get_chat_member(channel, user_id)
+            try:
+                member = bot. get_chat_member(channel, user_id)
                 if member.status not in ["member", "administrator", "creator"]:
-                    print(f"❌ Foydalanuvchi {user_id} kanalni {channel} obuna emas")  # Debug
+                    print(f"Foydalanuvchi {user_id} kanalni {channel} obuna emas")  # Debug
                     return False
-            except Exception as e: 
-                print(f"❌ Kanal tekshirish xatosi ({channel}): {e}")
+            except Exception as e:
+                print(f"Kanal tekshirish xatosi ({channel}): {e}")
                 return False
         
-        print(f"✅ Foydalanuvchi {user_id} barcha kanallarga obuna")  # Debug
+        print(f"Foydalanuvchi {user_id} barcha kanallarga obuna")  # Debug
         return True
     
-    except Exception as e:  
-        print(f"❌ check_sub xatosi: {e}")
+    except Exception as e: 
+        print(f"check_sub xatosi: {e}")
         return False
 
 
@@ -254,9 +253,9 @@ def delete_movies_list(call):
 # ====================== START ================================
 @bot.message_handler(commands=['start'])
 def start(msg):
-    user = msg.from_user.id
+    user = msg.from_user. id
     
-    # "start kino_kodi" formatida yuborilgan parametrni olish
+    # "start=kino_kodi" formatida yuborilgan parametrni olish
     kino_kodi = None
     if ' ' in msg.text:
         start_parts = msg.text.split(' ', 1)
@@ -264,14 +263,14 @@ def start(msg):
     
     save_user(user)
     
-    print(f"🔍 /start tekshirilmoqda: user_id={user}, kino_kodi={kino_kodi}")  # Debug
+    print(f"🔍 /start tekshirilmoqda:  user_id={user}, kino_kodi={kino_kodi}")  # Debug
 
     # Obunani tekshirish
     if not check_sub(user):
         print(f"❌ Foydalanuvchi {user} obuna emas")  # Debug
         
         # MongoDB'dan barcha kanallarni olish
-        channels = list(channels_collection.find({}, {"_id":  0, "link": 1}))
+        channels = list(channels_collection.find({}, {"_id": 0, "link": 1}))
         
         btn = types.InlineKeyboardMarkup()
         
@@ -279,11 +278,14 @@ def start(msg):
         if channels:  
             print(f"📺 {len(channels)} ta kanal ko'rinadi")  # Debug
             for channel in channels:  
-                btn. add(types.InlineKeyboardButton("📌 Kanalga obuna bo'lish", url=channel["link"]))
-            
+                btn.add(types.InlineKeyboardButton("📌 Kanalga obuna bo'lish", url=channel["link"]))
+        else:
+            # Agar kolektsiya bo'sh bo'lsa, standart kanal linkini qo'shish
+           
+            btn.add(types.InlineKeyboardButton("📌 Kanalga obuna bo'lish", url=kanal_link))
         
         # Tekshirish tugmasi
-        btn.add(types. InlineKeyboardButton("♻️ Tekshirish", callback_data="check"))
+        btn.add(types.InlineKeyboardButton("♻️ Tekshirish", callback_data="check"))
         
         bot.send_message(
             msg.chat.id,
@@ -298,31 +300,22 @@ def start(msg):
     # Agar kino kodi yuborilgan bo'lsa
     if kino_kodi:  
         print(f"🎬 Kino yuborilmoqda: {kino_kodi}")  # Debug
-        send_movie_info(msg.chat. id, kino_kodi)
+        send_movie_info(msg.chat.id, kino_kodi)
         return
 
     # Oddiy boshlash
     
-    bot.send_message(msg.chat.id, "🎬 Kino kodini kiriting:")
+    bot.send_message(msg. chat.id, "🎬 Kino kodini kiriting:")
 
 
-@bot.callback_query_handler(func=lambda call: call. data == "check")
+@bot.callback_query_handler(func=lambda call: call.data == "check")
 def check(call):
-    user_id = call.from_user.id
-    
-    print(f"🔄 Obuna tekshirilmoqda: user_id={user_id}")  # Debug
-    
-    if check_sub(user_id):
-        print(f"✅ Obuna tasdiqlandi:  {user_id}")  # Debug
+    if check_sub(call.from_user.id):
         bot.delete_message(call.message.chat.id, call.message.message_id)
-        bot.send_message(
-            call.message.chat.id,
-            "✔️ Obuna tasdiqlandi!\n\n🎬 Kino kodini yuboring:"
-        )
-        bot.answer_callback_query(call.id, "✅ Muvaffaqiyatli!")
+        bot.send_message(call.message.chat.id, "✔ Obuna tasdiqlandi!\n\nKino kodini yuboring:")
     else:
-        print(f"❌ Obuna tasdiqlanmadi: {user_id}")  # Debug
-        bot.answer_callback_query(call.id, "❗ Hali obuna bo'lmagansiz!", show_alert=True)
+        bot.answer_callback_query(call.id, "❗ Hali obuna bo‘lmagansiz!")
+        
 
 
     
