@@ -259,6 +259,9 @@ def page_switch(call):
         
     if page > 1 and page < pages:
         btns.append(types.InlineKeyboardButton("📌 Oxirgi", callback_data=f"page_{pages}"))
+     
+    # O'chirish tugmasi qo'shish
+    btns.append(types.InlineKeyboardButton("❌ O'chirish", callback_data="delete_movies_list"))
        
     if btns:
         markup.row(*btns)
@@ -274,6 +277,17 @@ def page_switch(call):
     except:
         pass
 
+# O'chirish tugmasi uchun callback handler
+@bot.callback_query_handler(func=lambda call: call.data == "delete_movies_list")
+def delete_movies_list(call):
+    try:
+        bot.delete_message(call.message.chat.id, call.message.message_id)
+        bot.answer_callback_query(call.id, "✅ Ro'yxat o'chirildi!")
+    except Exception as e:
+        print(f"Xatolik:  {e}")
+        bot.answer_callback_query(call.id, "❌ Ro'yxat o'chirilmadi.")
+        
+        
 
 # ====================== ADMIN PANEL ===========================
 @bot.message_handler(commands=['panel'])
@@ -598,7 +612,22 @@ def show_statistics(msg):
             for admin in admins:
                 stats_text += f"  - 🆔 {admin['user_id']}, 👤 {admin['name']}\n"
                 
-    bot.send_message(msg.chat.id, stats_text, parse_mode="Markdown")
+    # Xabarni o'chirish tugmasi qo'shish
+    markup = types.InlineKeyboardMarkup()
+    markup.add(types. InlineKeyboardButton("❌ O'chirish", callback_data="delete_stats"))
+    
+    bot.send_message(msg.chat.id, stats_text, parse_mode="Markdown", reply_markup=markup)
+
+# Xabarni o'chirish callback handler
+@bot.callback_query_handler(func=lambda call: call.data == "delete_stats")
+def delete_stats_message(call):
+    try:
+        bot.delete_message(call.message.chat.id, call.message.message_id)
+        bot.answer_callback_query(call.id, "✅ Xabar o'chirildi!")
+    except Exception as e:
+        print(f"Xatolik:  {e}")
+        bot.answer_callback_query(call.id, "❌ Xabar o'chirilmadi.")
+                
 
 # ====================== UMUMIY HANDLER ========================
 @bot.message_handler(func=lambda msg: True)
