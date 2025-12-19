@@ -209,7 +209,7 @@ def delete_movies_list(call):
 # ====================== START ================================
 @bot.message_handler(commands=['start'])
 def start(msg):
-    user = msg.from_user. id
+    user = msg.from_user.id
     
     # "start=kino_kodi" formatida yuborilgan parametrni olish
     kino_kodi = None
