@@ -10,7 +10,7 @@ ADMIN_ID = os.getenv("ADMIN_ID")
 WEBHOOK_URL = os.getenv("WEBHOOK_URL")
 MONGO_URI =os.getenv("MONGO_URI")
 
-CHANNEL_ID = [-1001574709061,  -1003359940811]#Usavyb
+CHANNEL_ID = [-1003359940811]#DubHDkinolar
 
 bot = telebot.TeleBot(TOKEN)
 
@@ -29,7 +29,7 @@ db = client["TelegramBot"]   # baza nomi
 users_collection = db["users"]       # userlar collection
 movies = db["movies"]     # kinolar collection
 admins_collection = db["admins"]  # Adminlarni saqlash kolleksiyasi
-
+channels_collection = db["channels"]  # Kanallar kolleksiyasi
 
 
 # =================== STATE (HOLAT) ============================
@@ -71,8 +71,15 @@ def get_movie_page(page=1, per_page=10):
 
 # =================== OBUNA TEKSHIRISH =========================
 def check_sub(user_id):
-    for channel in CHANNEL_ID: 
+    """MongoDB'dagi kanallarni tekshirish"""
+    # MongoDB'dan kanallarni olish
+    channels = list(channels_collection.find({}, {"_id": 0, "link":  1}))
     
+    # Agar MongoDB'da kanal bo'lmasa, standart kanallarni tekshirish
+    if not channels:
+        channels_to_check = CHANNEL_ID  # Yoki o'zingizning ID'laringiz
+    
+    for channel in channels_to_check:
         try:
             member = bot.get_chat_member(channel, user_id)
             if member.status not in ["member", "administrator", "creator"]:
@@ -88,7 +95,9 @@ def super_admin_panel(chat_id):
     """Super Admin uchun maxsus panel"""
     btn = types.ReplyKeyboardMarkup(resize_keyboard=True)
     btn.add("📢 Xabar yuborish", "🏷 Admin tayinlash")
-    btn.add("🚫 Adminni olish", "🔙 Ortga")
+    btn.add("🚫 Adminni olish", "📺 Kanal qo'shish")
+    btn.add("❌ Kanal o'chirish", "📋 Kanallar ro'yxati")  # Ixtiyoriy
+    btn. add("🔙 Ortga")
     bot.send_message(chat_id, "👑 Super Admin Paneli", reply_markup=btn)
 
 def admin_panel(chat_id):
@@ -200,20 +209,33 @@ def delete_movies_list(call):
 # ====================== START ================================
 @bot.message_handler(commands=['start'])
 def start(msg):
-    user = msg.from_user.id
+    user = msg.from_user. id
     
     # "start=kino_kodi" formatida yuborilgan parametrni olish
-    kino_kodi = None  # Boshlang'ich qiymat
-    if ' ' in msg.text:  # Agar `/start kino_kod` xabar formatida bo'lsa
-        start_parts = msg.text.split(' ', 1)  # Bo'shliqdan ajratamiz
-        kino_kodi = start_parts[1].strip()  # Kino kodini ajratamiz
+    kino_kodi = None
+    if ' ' in msg.text:
+        start_parts = msg.text.split(' ', 1)
+        kino_kodi = start_parts[1]. strip()
         
     save_user(user)
 
     if not check_sub(user):
+        # MongoDB'dan barcha kanallarni olish
+        channels = list(channels_collection.find({}, {"_id": 0, "link": 1}))
+        
         btn = types.InlineKeyboardMarkup()
-        btn.add(types.InlineKeyboardButton("📌 Kanalga obuna bo'lish", url="https://t.me/USAVYBE"))
-        btn.add(types.InlineKeyboardButton("📌 Kanalga obuna bo'lish", url=kanal_link))
+        
+        # Agar kanallar qo'shilgan bo'lsa, ularni tugma sifatida qo'shish
+        if channels: 
+            for channel in channels:
+                btn.add(types.InlineKeyboardButton("📌 Kanalga obuna bo'lish", url=channel['link']))
+        
+        # Agar kolektsiya bo'sh bo'lsa, standart kanal linkini qo'shish
+        if not channels:
+            btn.add(types.InlineKeyboardButton("📌 Kanalga obuna bo'lish", url="https://t.me/USAVYBE"))
+            btn.add(types.InlineKeyboardButton("📌 Kanalga obuna bo'lish", url=kanal_link))
+        
+        # Tekshirish tugmasi
         btn.add(types.InlineKeyboardButton("♻️ Tekshirish", callback_data="check"))
         
         bot.send_message(
@@ -224,11 +246,12 @@ def start(msg):
         return
     
     if kino_kodi:
-        send_movie_info(msg.chat.id, kino_kodi)  # Kino haqida ma'lumotni yuborish uchun funksiya chaqiriladi
+        send_movie_info(msg. chat.id, kino_kodi)
         return
 
-
     bot.send_message(msg.chat.id, "🎬 Kino kodini kiriting:")
+    
+    
 
 @bot.callback_query_handler(func=lambda call: call.data == "check")
 def check(call):
@@ -241,9 +264,7 @@ def check(call):
 
 
     
-
-
-        
+ 
 
 # ====================== ADMIN PANEL ===========================
 @bot.message_handler(commands=['panel'])
@@ -280,6 +301,117 @@ def open_super_admin_panel(msg):
     
     # Super Admin Panel ochiladi
     super_admin_panel(msg.chat.id)
+    
+ #=======****=====
+@bot.message_handler(func=lambda msg: msg.text == "📺 Kanal qo'shish")
+def add_channel(msg):
+    if str(msg.from_user. id) != ADMIN_ID:
+        bot.send_message(msg.chat.id, "❌ Bu buyruq siz uchun emas.")
+        return
+    
+    bot.send_message(msg.chat.id, "📺 Kanal linkini kiriting (masalan:  https://t.me/channel_name yoki @channel_name):")
+    state[str(msg. from_user.id)] = ["waiting_for_channel_link"]
+
+@bot.message_handler(func=lambda msg: str(msg.from_user.id) in state 
+                     and state[str(msg.from_user.id)][0] == "waiting_for_channel_link")
+def save_channel_link(msg):
+    channel_link = msg.text.strip()
+    
+    # Kanal linki to'g'ri formatda ekanligini tekshirish
+    if not (channel_link.startswith("https://t.me/") or channel_link.startswith("@")):
+        bot.send_message(msg.chat.id, "❌ Kanal linki noto'g'ri.  Masalan: https://t.me/channel_name yoki @channel_name")
+        return
+    
+    # Kanal linki allaqachon mavjud ekanligini tekshirish
+    if channels_collection.find_one({"link": channel_link}):
+        bot.send_message(msg.chat.id, "⚠️ Bu kanal allaqachon qo'shilgan.")
+        del state[str(msg.from_user.id)]
+        return
+    
+    # MongoDB'ga kanal linkini saqlash
+    channels_collection. insert_one({
+        "link": channel_link,
+        "added_date": time.time()
+    })
+    
+    bot.send_message(msg.chat.id, f"✅ Kanal qo'shildi: {channel_link}")
+    del state[str(msg.from_user.id)]
+
+
+
+@bot.message_handler(func=lambda msg: msg.text == "❌ Kanal o'chirish")
+def delete_channel_menu(msg):
+    if str(msg.from_user.id) != ADMIN_ID:
+        bot.send_message(msg. chat.id, "❌ Bu buyruq siz uchun emas.")
+        return
+    
+    # Barcha kanallarni olish
+    channels = list(channels_collection.find({}, {"_id": 0, "link": 1}))
+    
+    if not channels:
+        bot.send_message(msg.chat.id, "📺 Hech qanday kanal qo'shilmagan.")
+        return
+    
+    # Inline tugmalar bilan kanallar ro'yxatini chiqarish
+    markup = types.InlineKeyboardMarkup()
+    for idx, channel in enumerate(channels):
+        btn_text = f"❌ {channel['link']}"
+        markup.add(types.InlineKeyboardButton(btn_text, callback_data=f"delete_channel_{idx}"))
+    
+    bot.send_message(msg.chat.id, "📺 O'chirmoqchi bo'lgan kanalni tanlang:", reply_markup=markup)
+
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith("delete_channel_"))
+def delete_channel(call):
+    if str(call.from_user. id) != ADMIN_ID:
+        bot.answer_callback_query(call.id, "❌ Bu buyruq siz uchun emas.")
+        return
+    
+    try:
+        # O'chirilayotgan kanal indexini olish
+        channel_idx = int(call.data.split("_")[2])
+        channels = list(channels_collection.find({}, {"_id": 0, "link": 1}))
+        
+        if channel_idx >= len(channels):
+            bot.answer_callback_query(call. id, "❌ Kanal topilmadi.")
+            return
+        
+        # Kanal linkini olish
+        channel_link = channels[channel_idx]["link"]
+        
+        # MongoDB'dan o'chirish
+        channels_collection.delete_one({"link":  channel_link})
+        
+        bot.answer_callback_query(call.id, f"✅ Kanal o'chirildi: {channel_link}")
+        bot.edit_message_text(
+            f"✅ '{channel_link}' kanali o'chirildi.",
+            call.message. chat.id,
+            call.message.message_id
+        )
+    except Exception as e:
+        print(f"Xatolik:  {e}")
+        bot.answer_callback_query(call.id, "❌ Xatolik yuz berdi.")
+        
+        
+
+@bot.message_handler(func=lambda msg: msg.text == "📋 Kanallar ro'yxati")
+def show_channels(msg):
+    if str(msg.from_user. id) != ADMIN_ID:
+        bot.send_message(msg.chat.id, "❌ Bu buyruq siz uchun emas.")
+        return
+    
+    channels = list(channels_collection.find({}, {"_id": 0, "link": 1}))
+    
+    if not channels: 
+        bot.send_message(msg.chat.id, "📺 Hech qanday kanal qo'shilmagan.")
+        return
+    
+    text = "📺 *Qo'shilgan Kanallar: *\n\n"
+    for idx, channel in enumerate(channels, 1):
+        text += f"{idx}. {channel['link']}\n"
+    
+    bot.send_message(msg. chat.id, text, parse_mode="Markdown")
+
 
 @bot.message_handler(func=lambda msg: msg.text == "🏷 Admin tayinlash")
 def add_admin(msg):
