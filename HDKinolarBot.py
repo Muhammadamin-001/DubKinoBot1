@@ -82,14 +82,24 @@ def check_sub(user_id):
     return True
 
 # =================== ADMIN PANEL =============================
+
+
+def super_admin_panel(chat_id):
+    """Super Admin uchun maxsus panel"""
+    btn = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    btn.add("📢 Xabar yuborish", "🏷 Admin tayinlash")
+    btn.add("🚫 Adminni olish", "🔙 Ortga")
+    bot.send_message(chat_id, "👑 Super Admin Paneli", reply_markup=btn)
+
 def admin_panel(chat_id):
+    """Admin Panel (Oddiy Admin va Super Admin uchun)"""
     btn = types.ReplyKeyboardMarkup(resize_keyboard=True)
     btn.add("🎬 Kino yuklash", "📂 Film kodlari")
     btn.add("❌ Film o'chirish", "♻️ Statistika")
-    btn.add("📢 Xabar yuborish", "🔙 Ortga")
-    btn.add("🏷 Admin tayinlash", "🚫 Adminni olish")  # Yangi tugmalar
+    btn.add("🏷 Super Admin", "⏻ Exit")
     bot.send_message(chat_id, "🔐 Admin Paneli", reply_markup=btn)
-    
+
+
 def user_panel(chat_id):
     btn = types.ReplyKeyboardMarkup(resize_keyboard=True)
     btn.add("📂 Film kodlari", "🔙")
@@ -241,7 +251,7 @@ def panel(msg):
     if (str(msg.from_user.id) == ADMIN_ID or is_admin(msg.from_user.id)):
         admin_panel(msg.chat.id)
     else:
-        bot.send_message(msg.chat.id, "❌ Siz admin emassiz.")
+        bot.send_message(msg.chat.id, "❌ Diqqat! Bu admin uchun.\n# /kodlar komandasi orqali kinolar ro'yxatini ko'ra olasiz !")
         
 @bot.message_handler(commands=['kodlar'])
 def kodlar(msg):
@@ -251,7 +261,25 @@ def kodlar(msg):
     
     user_panel(msg.chat.id)
     
+@bot.message_handler(func=lambda msg: msg.text == "🔙 Ortga")
+def back(msg):
+    if str(msg.from_user. id) != ADMIN_ID:
+        return
+    
+    state. pop(str(msg.from_user.id), None)  # Holatni tozalash
+    
+    # Super Admin panelidan kelgan bo'lsa → Admin panelga qaytarish
+    admin_panel(msg.chat.id)
 
+@bot.message_handler(func=lambda msg: msg.text == "🏷 Super Admin")
+def open_super_admin_panel(msg):
+    # Faqat Super Admin uchun
+    if str(msg.from_user.id) != ADMIN_ID:
+        bot.send_message(msg.chat.id, "❌ Bu buyruq siz uchun emas.")
+        return
+    
+    # Super Admin Panel ochiladi
+    super_admin_panel(msg.chat.id)
 
 @bot.message_handler(func=lambda msg: msg.text == "🏷 Admin tayinlash")
 def add_admin(msg):
@@ -331,8 +359,8 @@ def delete_admin(msg):
 
 
 # ====================== ORTGA QAYTISH =========================
-@bot.message_handler(func=lambda msg: msg.text == "🔙 Ortga")
-def back(msg):
+@bot.message_handler(func=lambda msg: msg.text == "⏻ Exit")
+def back_panel(msg):
     if not (str(msg.from_user.id) == ADMIN_ID or is_admin(msg.from_user.id)):
         return
     
