@@ -106,7 +106,8 @@ def send_movie_info(chat_id, kino_kodi):
     if movie:
         file_id = movie["file_id"]
         code = movie["code"]
-        
+        markup = types.InlineKeyboardMarkup()
+        markup.add(types.InlineKeyboardButton("❌", callback_data="delete_stats"))
         # Kino haqida ma'lumot yuboriladi
         bot.send_video(
             chat_id,
@@ -118,6 +119,7 @@ def send_movie_info(chat_id, kino_kodi):
                     f"\n📹 Kanalimiz: {movie['url']}\n"
                     f"🤖 Botimiz: {movie['urlbot']}"
         )
+    
     else:
         bot.send_message(chat_id, "❌ Bunday kod bo‘yicha kino topilmadi.")
 
@@ -238,8 +240,15 @@ def delete_admin(msg):
     # Holatni tozalash
     del state[str(msg.from_user.id)]
     
-    
-    
+#======== Foydalanuvchi kinoni O'chirib yuborsa======
+@bot.callback_query_handler(func=lambda call: call.data == "delete_movie")
+def delete_movie_message(call):
+    try:
+        bot.delete_message(call.message.chat.id, call.message.message_id)
+        bot.answer_callback_query(call.id, "✅ Video o'chirildi!")
+    except Exception as e:
+        print(f"Xatolik: {e}")
+        bot.answer_callback_query(call.id, "❌ Video o'chirilmadi.")    
     
 
 @bot.callback_query_handler(func=lambda c: c.data.startswith("page_"))
@@ -616,7 +625,7 @@ def show_statistics(msg):
                 
     # Xabarni o'chirish tugmasi qo'shish
     markup = types.InlineKeyboardMarkup()
-    markup.add(types. InlineKeyboardButton("❌ O'chirish", callback_data="delete_stats"))
+    markup.add(types.InlineKeyboardButton("❌", callback_data="delete_stats"))
     
     bot.send_message(msg.chat.id, stats_text, parse_mode="Markdown", reply_markup=markup)
 
@@ -629,6 +638,8 @@ def delete_stats_message(call):
     except Exception as e:
         print(f"Xatolik:  {e}")
         bot.answer_callback_query(call.id, "❌ Xabar o'chirilmadi.")
+        
+
                 
 
 # ====================== UMUMIY HANDLER ========================
