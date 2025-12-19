@@ -253,13 +253,13 @@ def page_switch(call):
 
     if page > 1:
         btns.append(types.InlineKeyboardButton("⬅️ Oldingi", callback_data=f"page_{page-1}"))
-        btns.append(types.InlineKeyboardButton("❌", callback_data=f"page_{pages.pop(call.message.message_id, None)}"))
+        
     if page < pages:
         btns.append(types.InlineKeyboardButton("➡️ Keyingi", callback_data=f"page_{page+1}"))
-        btns.append(types.InlineKeyboardButton("❌", callback_data=f"page_{pages.pop(call.message.message_id, None)}"))
+        
     if page > 1 and page < pages:
         btns.append(types.InlineKeyboardButton("📌 Oxirgi", callback_data=f"page_{pages}"))
-        btns.append(types.InlineKeyboardButton("❌", callback_data=f"page_{pages.pop(call.message.message_id, None)}"))
+       
     if btns:
         markup.row(*btns)
 
