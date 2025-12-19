@@ -85,20 +85,20 @@ def check_sub(user_id):
         
 
         
-        # Barcha kanallarni tekshirish
-        for channel in channels_to_check:
-            try:
-                member = bot.get_chat_member(channel, user_id)
-                if member.status not in ["member", "administrator", "creator"]:
-                    print(f"Foydalanuvchi {user_id} kanalni {channel} obuna emas")  # Debug
+            # Barcha kanallarni tekshirish
+            for channel in channels_to_check:
+                try:
+                    member = bot.get_chat_member(channel, user_id)
+                    if member.status not in ["member", "administrator", "creator"]:
+                        print(f"Foydalanuvchi {user_id} kanalni {channel} obuna emas")  # Debug
+                        return False
+                except Exception as e:
+                    print(f"Kanal tekshirish xatosi ({channel}): {e}")
                     return False
-            except Exception as e:
-                print(f"Kanal tekshirish xatosi ({channel}): {e}")
-                return False
+            
+            print(f"Foydalanuvchi {user_id} barcha kanallarga obuna")  # Debug
+            return True
         
-        print(f"Foydalanuvchi {user_id} barcha kanallarga obuna")  # Debug
-        return True
-    
     except Exception as e: 
         print(f"check_sub xatosi: {e}")
         return False
