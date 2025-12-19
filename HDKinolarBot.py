@@ -252,16 +252,16 @@ def page_switch(call):
     btns = []
 
     if page > 1:
-        btns.append(types.InlineKeyboardButton("⬅️ Oldingi", callback_data=f"page_{page-1}"))
+        btns.append(types.InlineKeyboardButton("⬅️ Back", callback_data=f"page_{page-1}"))
         
     if page < pages:
-        btns.append(types.InlineKeyboardButton("➡️ Keyingi", callback_data=f"page_{page+1}"))
+        btns.append(types.InlineKeyboardButton("➡️ Next", callback_data=f"page_{page+1}"))
         
     if page > 1 and page < pages:
         btns.append(types.InlineKeyboardButton("📌 Oxirgi", callback_data=f"page_{pages}"))
      
     # O'chirish tugmasi qo'shish
-    btns.append(types.InlineKeyboardButton("❌ O'chirish", callback_data="delete_movies_list"))
+    btns.append(types.InlineKeyboardButton("❌", callback_data="delete_movies_list"))
        
     if btns:
         markup.row(*btns)
@@ -566,8 +566,10 @@ def movie_list(msg):
     markup = types.InlineKeyboardMarkup()
     if pages > 1:
         markup.add(types.InlineKeyboardButton("➡️ Keyingi", callback_data="page_2"))
-
-
+        markup.add(types.InlineKeyboardButton("📌 Oxirgi", callback_data=f"page_{pages}"))
+    # O'chirish tugmasi
+    markup.add(types.InlineKeyboardButton("❌", callback_data="delete_movies_list")) 
+    
     # Kino ro‘yxatini chiqarish
     text = "🎬 *Kino ro‘yxati:*\n\n"
     all_movies = list(movies.find({}, {"_id": 0}))
