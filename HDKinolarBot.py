@@ -152,12 +152,13 @@ def page_switch(call):
     if page > 1:
         btns.append(types.InlineKeyboardButton("⬅️ Back", callback_data=f"page_{page-1}"))
         
-    if page < pages:
-        btns.append(types.InlineKeyboardButton("➡️ Next", callback_data=f"page_{page+1}"))
         
     if page > 1 and page < pages:
         btns.append(types.InlineKeyboardButton("📌 Oxirgi", callback_data=f"page_{pages}"))
-     
+        
+    if page < pages:
+        btns.append(types.InlineKeyboardButton("➡️ Next", callback_data=f"page_{page+1}"))
+        
     # O'chirish tugmasi qo'shish
     btns.append(types.InlineKeyboardButton("❌", callback_data="delete_movies_list"))
        
