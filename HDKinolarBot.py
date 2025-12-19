@@ -107,7 +107,7 @@ def send_movie_info(chat_id, kino_kodi):
         file_id = movie["file_id"]
         code = movie["code"]
         markup = types.InlineKeyboardMarkup()
-        markup.add(types.InlineKeyboardButton("❌", callback_data="delete_stats"))
+        markup.add(types.InlineKeyboardButton("❌", callback_data="delete_movie"))
         # Kino haqida ma'lumot yuboriladi
         bot.send_video(
             chat_id,
