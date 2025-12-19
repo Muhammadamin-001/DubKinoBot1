@@ -107,17 +107,21 @@ def send_movie_info(chat_id, kino_kodi):
         file_id = movie["file_id"]
         code = movie["code"]
         markup = types.InlineKeyboardMarkup()
+        markup.add(types.InlineKeyboardButton("🎬 Boshqa kinolar", url = kanal_link))  # Kanal linki
         markup.add(types.InlineKeyboardButton("❌", callback_data="delete_movie"))
         # Kino haqida ma'lumot yuboriladi
+        caption_text = (
+                f"🎬 {movie['name']} \n"
+                f"💽 Formati: {movie['formati']}\n"
+                f"🎞 Janri: {movie['genre']}\n"
+                f"🆔 Kod: {code}\n\n"
+                f"🤖 Botimiz: {movie['urlbot']}"
+        )
         bot.send_video(
             chat_id,
             file_id,
-            caption=f"🎬 {movie['name']} \n"
-                    f"💽 Formati: {movie['formati']}\n"
-                    f"🎞 Janri: {movie['genre']}\n"
-                    f"🆔 Kod: #{code}\n"
-                    f"\n📹 Kanalimiz: {movie['url']}\n"
-                    f"🤖 Botimiz: {movie['urlbot']}"
+            caption = caption_text,
+            reply_markup=markup
         )
     
     else:
