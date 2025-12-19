@@ -10,7 +10,6 @@ ADMIN_ID = os.getenv("ADMIN_ID")
 WEBHOOK_URL = os.getenv("WEBHOOK_URL")
 MONGO_URI =os.getenv("MONGO_URI")
 
-CHANNEL_ID = [-1003359940811]#DubHDkinolar
 
 bot = telebot.TeleBot(TOKEN)
 
@@ -84,8 +83,7 @@ def check_sub(user_id):
             channels_to_check = [ch["id"] for ch in channels if "id" in ch]
             print(f"MongoDB'dan kanallar olindy: {channels_to_check}")  # Debug
         
-        # Agar MongoDB'da kanal bo'lmasa, standart kanallarni ishlatish
-        channels_to_check.append(CHANNEL_ID)
+
         
         # Barcha kanallarni tekshirish
         for channel in channels_to_check:
@@ -270,15 +268,13 @@ def start(msg):
         
         btn = types.InlineKeyboardMarkup()
         
+        
         # Agar kanallar qo'shilgan bo'lsa, ularni tugma sifatida qo'shish
         if channels:  
             print(f"📺 {len(channels)} ta kanal ko'rinadi")  # Debug
             for channel in channels:  
                 btn.add(types.InlineKeyboardButton("📌 Kanalga obuna bo'lish", url=channel["link"]))
-        else:
-            # Agar kolektsiya bo'sh bo'lsa, standart kanal linkini qo'shish
-
-            btn.add(types.InlineKeyboardButton("📌 Kanalga obuna bo'lish", url=kanal_link))
+        
         
         # Tekshirish tugmasi
         btn.add(types.InlineKeyboardButton("♻️ Tekshirish", callback_data="check"))
