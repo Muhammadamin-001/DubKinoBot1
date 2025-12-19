@@ -124,122 +124,7 @@ def send_movie_info(chat_id, kino_kodi):
         bot.send_message(chat_id, "❌ Bunday kod bo‘yicha kino topilmadi.")
 
 
-# ====================== START ================================
-@bot.message_handler(commands=['start'])
-def start(msg):
-    user = msg.from_user.id
-    
-    # "start=kino_kodi" formatida yuborilgan parametrni olish
-    kino_kodi = None  # Boshlang'ich qiymat
-    if ' ' in msg.text:  # Agar `/start kino_kod` xabar formatida bo'lsa
-        start_parts = msg.text.split(' ', 1)  # Bo'shliqdan ajratamiz
-        kino_kodi = start_parts[1].strip()  # Kino kodini ajratamiz
-        
-    save_user(user)
 
-    if not check_sub(user):
-        btn = types.InlineKeyboardMarkup()
-        btn.add(types.InlineKeyboardButton("📌 Kanalga obuna bo'lish", url="https://t.me/USAVYBE"))
-        btn.add(types.InlineKeyboardButton("📌 Kanalga obuna bo'lish", url=kanal_link))
-        btn.add(types.InlineKeyboardButton("♻️ Tekshirish", callback_data="check"))
-        
-        bot.send_message(
-            msg.chat.id,
-            "❗ Botdan foydalanish uchun kanalga obuna bo'ling!",
-            reply_markup=btn
-        )
-        return
-    
-    if kino_kodi:
-        send_movie_info(msg.chat.id, kino_kodi)  # Kino haqida ma'lumotni yuborish uchun funksiya chaqiriladi
-        return
-
-
-    bot.send_message(msg.chat.id, "🎬 Kino kodini kiriting:")
-
-@bot.callback_query_handler(func=lambda call: call.data == "check")
-def check(call):
-    if check_sub(call.from_user.id):
-        bot.delete_message(call.message.chat.id, call.message.message_id)
-        bot.send_message(call.message.chat.id, "✔ Obuna tasdiqlandi!\n\nKino kodini yuboring:")
-    else:
-        bot.answer_callback_query(call.id, "❗ Hali obuna bo‘lmagansiz!")
-        
-
-
-@bot.message_handler(func=lambda msg: msg.text == "🏷 Admin tayinlash")
-def add_admin(msg):
-    if str(msg.from_user.id) != ADMIN_ID:  # Faqat superadmin kirishi mumkin
-        bot.send_message(msg.chat.id, "❌ Siz superadmin emassiz.")
-        return
-
-    # Yangi admin "user_id"ni kiritishni so'raymiz
-    bot.send_message(msg.chat.id, "👤 Admin tayinlash uchun foydalanuvchining ID sini yuboring.")
-    state[str(msg.from_user.id)] = ["waiting_for_admin_id"]  # Holatni saqlash
-    
-
-@bot.message_handler(func=lambda msg: str(msg.from_user.id) in state 
-                     and state[str(msg.from_user.id)][0] == "waiting_for_admin_id")
-def save_admin_id(msg):
-    admin_id = msg.text.strip()
-
-    if not admin_id.isdigit():  # Faqat raqamlarni qabul qilish
-        bot.send_message(msg.chat.id, "❌ Admin ID faqat raqamlardan iborat bo'lishi kerak.")
-        return
-
-    # Admin ID saqlanadi va nomni kiritish so'raladi
-    state[str(msg.from_user.id)] = ["waiting_for_admin_name", admin_id]
-    bot.send_message(msg.chat.id, f"✅ Admin ID ({admin_id}) qabul qilindi. Endi uning nomini kiriting.")
-    
-
-@bot.message_handler(func=lambda msg: str(msg.from_user.id) in state 
-                     and state[str(msg.from_user.id)][0] == "waiting_for_admin_name")
-def save_admin_name(msg):
-    admin_name = msg.text.strip()
-    admin_id = state[str(msg.from_user.id)][1]  # Oldindan kiritilgan ID'ni olish
-
-    # Adminni MongoDB kolleksiyasiga qo‘shish
-    if admins_collection.find_one({"user_id": int(admin_id)}):
-        bot.send_message(msg.chat.id, "❗ Bu foydalanuvchi allaqachon admin.")
-    else:
-        admins_collection.insert_one({
-            "user_id": int(admin_id),
-            "name": admin_name
-        })
-        bot.send_message(msg.chat.id, f"✅ Yangi admin qo'shildi:\n🆔 ID: {admin_id}\n👤 Ismi: {admin_name}")
-
-    del state[str(msg.from_user.id)]  # Holatni tozalash
-
-@bot.message_handler(func=lambda msg: msg.text == "🚫 Adminni olish")
-def remove_admin(msg):
-    if str(msg.from_user.id) != ADMIN_ID:  # Faqat superadmin kirishi mumkin
-        bot.send_message(msg.chat.id, "❌ Siz superadmin emassiz.")
-        return
-
-    # Adminni bekor qilish uchun ID kiritishni so'rash
-    bot.send_message(msg.chat.id, "👤 Adminlikni olib tashlash uchun foydalanuvchining ID sini yuboring.")
-    state[str(msg.from_user.id)] = ["waiting_for_remove_admin"]  # Holatni saqlash
-    
-
-@bot.message_handler(func=lambda msg: str(msg.from_user.id) in state 
-                     and state[str(msg.from_user.id)][0] == "waiting_for_remove_admin")
-def delete_admin(msg):
-    admin_id = msg.text.strip()  # O'chiriladigan admin ID sini olish
-
-    if not admin_id.isdigit():
-        bot.send_message(msg.chat.id, "❌ Foydalanuvchi ID faqat raqamlardan iborat bo'lishi kerak.")
-        return
-
-    # Admin bazadan o'chiriladi
-    result = admins_collection.delete_one({"user_id": int(admin_id)})
-    if result.deleted_count > 0:
-        bot.send_message(msg.chat.id, f"✅ Foydalanuvchi {admin_id} adminlikdan o'chirildi.")
-    else:
-        bot.send_message(msg.chat.id, "❌ Bu foydalanuvchi admin emas.")
-
-    # Holatni tozalash
-    del state[str(msg.from_user.id)]
-    
 #======== Foydalanuvchi kinoni O'chirib yuborsa======
 @bot.callback_query_handler(func=lambda call: call.data == "delete_movie")
 def delete_movie_message(call):
@@ -248,8 +133,8 @@ def delete_movie_message(call):
         bot.answer_callback_query(call.id, "✅ Video o'chirildi!")
     except Exception as e:
         print(f"Xatolik: {e}")
-        bot.answer_callback_query(call.id, "❌ Video o'chirilmadi.")    
-    
+        bot.answer_callback_query(call.id, "❌ Video o'chirilmadi.")   
+        
 
 @bot.callback_query_handler(func=lambda c: c.data.startswith("page_"))
 def page_switch(call):
@@ -296,6 +181,53 @@ def delete_movies_list(call):
         print(f"Xatolik:  {e}")
         bot.answer_callback_query(call.id, "❌ Ro'yxat o'chirilmadi.")
         
+
+# ====================== START ================================
+@bot.message_handler(commands=['start'])
+def start(msg):
+    user = msg.from_user.id
+    
+    # "start=kino_kodi" formatida yuborilgan parametrni olish
+    kino_kodi = None  # Boshlang'ich qiymat
+    if ' ' in msg.text:  # Agar `/start kino_kod` xabar formatida bo'lsa
+        start_parts = msg.text.split(' ', 1)  # Bo'shliqdan ajratamiz
+        kino_kodi = start_parts[1].strip()  # Kino kodini ajratamiz
+        
+    save_user(user)
+
+    if not check_sub(user):
+        btn = types.InlineKeyboardMarkup()
+        btn.add(types.InlineKeyboardButton("📌 Kanalga obuna bo'lish", url="https://t.me/USAVYBE"))
+        btn.add(types.InlineKeyboardButton("📌 Kanalga obuna bo'lish", url=kanal_link))
+        btn.add(types.InlineKeyboardButton("♻️ Tekshirish", callback_data="check"))
+        
+        bot.send_message(
+            msg.chat.id,
+            "❗ Botdan foydalanish uchun kanalga obuna bo'ling!",
+            reply_markup=btn
+        )
+        return
+    
+    if kino_kodi:
+        send_movie_info(msg.chat.id, kino_kodi)  # Kino haqida ma'lumotni yuborish uchun funksiya chaqiriladi
+        return
+
+
+    bot.send_message(msg.chat.id, "🎬 Kino kodini kiriting:")
+
+@bot.callback_query_handler(func=lambda call: call.data == "check")
+def check(call):
+    if check_sub(call.from_user.id):
+        bot.delete_message(call.message.chat.id, call.message.message_id)
+        bot.send_message(call.message.chat.id, "✔ Obuna tasdiqlandi!\n\nKino kodini yuboring:")
+    else:
+        bot.answer_callback_query(call.id, "❗ Hali obuna bo‘lmagansiz!")
+        
+
+
+    
+
+
         
 
 # ====================== ADMIN PANEL ===========================
@@ -314,6 +246,84 @@ def kodlar(msg):
     
     user_panel(msg.chat.id)
     
+
+
+@bot.message_handler(func=lambda msg: msg.text == "🏷 Admin tayinlash")
+def add_admin(msg):
+    if str(msg.from_user.id) != ADMIN_ID:  # Faqat superadmin kirishi mumkin
+        bot.send_message(msg.chat.id, "❌ Siz superadmin emassiz.")
+        return
+
+    # Yangi admin "user_id"ni kiritishni so'raymiz
+    bot.send_message(msg.chat.id, "👤 Admin tayinlash uchun foydalanuvchining ID sini yuboring.")
+    state[str(msg.from_user.id)] = ["waiting_for_admin_id"]  # Holatni saqlash
+    
+
+@bot.message_handler(func=lambda msg: str(msg.from_user.id) in state 
+                     and state[str(msg.from_user.id)][0] == "waiting_for_admin_id")
+def save_admin_id(msg):
+    admin_id = msg.text.strip()
+
+    if not admin_id.isdigit():  # Faqat raqamlarni qabul qilish
+        bot.send_message(msg.chat.id, "❌ Admin ID faqat raqamlardan iborat bo'lishi kerak.")
+        return
+
+    # Admin ID saqlanadi va nomni kiritish so'raladi
+    state[str(msg.from_user.id)] = ["waiting_for_admin_name", admin_id]
+    bot.send_message(msg.chat.id, f"✅ Admin ID ({admin_id}) qabul qilindi. Endi uning nomini kiriting.")
+    
+
+@bot.message_handler(func=lambda msg: str(msg.from_user.id) in state 
+                     and state[str(msg.from_user.id)][0] == "waiting_for_admin_name")
+def save_admin_name(msg):
+    admin_name = msg.text.strip()
+    admin_id = state[str(msg.from_user.id)][1]  # Oldindan kiritilgan ID'ni olish
+
+    # Adminni MongoDB kolleksiyasiga qo‘shish
+    if admins_collection.find_one({"user_id": int(admin_id)}):
+        bot.send_message(msg.chat.id, "❗ Bu foydalanuvchi allaqachon admin.")
+    else:
+        admins_collection.insert_one({
+            "user_id": int(admin_id),
+            "name": admin_name
+        })
+        bot.send_message(msg.chat.id, f"✅ Yangi admin qo'shildi:\n🆔 ID: {admin_id}\n👤 Ismi: {admin_name}")
+
+    del state[str(msg.from_user.id)]  # Holatni tozalash
+    
+  #===== Adminni o'chirish=====
+
+@bot.message_handler(func=lambda msg: msg.text == "🚫 Adminni olish")
+def remove_admin(msg):
+    if str(msg.from_user.id) != ADMIN_ID:  # Faqat superadmin kirishi mumkin
+        bot.send_message(msg.chat.id, "❌ Siz superadmin emassiz.")
+        return
+
+    # Adminni bekor qilish uchun ID kiritishni so'rash
+    bot.send_message(msg.chat.id, "👤 Adminlikni olib tashlash uchun foydalanuvchining ID sini yuboring.")
+    state[str(msg.from_user.id)] = ["waiting_for_remove_admin"]  # Holatni saqlash
+    
+
+@bot.message_handler(func=lambda msg: str(msg.from_user.id) in state 
+                     and state[str(msg.from_user.id)][0] == "waiting_for_remove_admin")
+def delete_admin(msg):
+    admin_id = msg.text.strip()  # O'chiriladigan admin ID sini olish
+
+    if not admin_id.isdigit():
+        bot.send_message(msg.chat.id, "❌ Foydalanuvchi ID faqat raqamlardan iborat bo'lishi kerak.")
+        return
+
+    # Admin bazadan o'chiriladi
+    result = admins_collection.delete_one({"user_id": int(admin_id)})
+    if result.deleted_count > 0:
+        bot.send_message(msg.chat.id, f"✅ Foydalanuvchi {admin_id} adminlikdan o'chirildi.")
+    else:
+        bot.send_message(msg.chat.id, "❌ Bu foydalanuvchi admin emas.")
+
+    # Holatni tozalash
+    del state[str(msg.from_user.id)]
+
+
 
 # ====================== ORTGA QAYTISH =========================
 @bot.message_handler(func=lambda msg: msg.text == "🔙 Ortga")
