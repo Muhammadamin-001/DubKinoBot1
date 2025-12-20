@@ -205,11 +205,86 @@ def send_movie_info(chat_id, kino_kodi):
 #===== START UCHUN =======
 @bot.callback_query_handler(func=lambda call: call.data == "check")
 def check(call):
-    if check_sub(call.from_user.id):
-        bot.delete_message(call.message.chat.id, call.message.message_id)
-        bot.send_message(call.message.chat.id, "✔ Obuna tasdiqlandi!\n\nKino kodini yuboring:")
+    user_id = call.from_user.id
+    chat_id = call.message.chat.id
+    message_id = call.message.message_id
+    
+    if check_sub(user_id):
+        # ✅ OBUNA BO'LSA
+        try:
+            bot.delete_message(chat_id, message_id)
+        except:
+            pass
+        
+        bot.send_message(
+            chat_id, 
+            "✔ Obuna tasdiqlandi! ✅\n\n🎬 Kino kodini yuboring:"
+        )
+        bot.answer_callback_query(call.id, "✅ Tasdiqlandi!")
+    
     else:
-        bot.answer_callback_query(call.id, "❗ Hali obuna bo‘lmagansiz!")
+        # ❌ OBUNA BO'LMAGAN BO'LSA
+        try:
+            bot.delete_message(chat_id, message_id)
+        except:
+            pass
+        
+        # ✅ YANA OBUNA XABARI JO'NATISH (faqat obuna bo'lmagan kanallar bilan)
+        send_subscription_request(call.message, user_id)
+        
+        bot.answer_callback_query(
+            call.id, 
+            "❗ Obuna bo'lmagansiz! ",
+            show_alert=True
+        )
+
+def send_subscription_request(msg, user_id):
+    """
+    Obuna so'rash xabari - faqat obuna bo'lmagan kanallarni ko'rsatish
+    """
+    channels = list(channels_collection.find({}, {"_id": 0, "id": 1, "link": 1}))
+    
+    if not channels:
+        return
+    
+    btn = types.InlineKeyboardMarkup()
+    
+    # ✅ FAQAT OBUNA BO'LMAGAN KANALLARNI TOPISH
+    for channel in channels: 
+        try:
+            member = bot.get_chat_member(channel["id"], user_id)
+            # Agar obuna bo'lmagan bo'lsa → tugma qo'shish
+            if member.status not in ["member", "administrator", "creator"]:
+                btn.add(
+                    types.InlineKeyboardButton(
+                        f"📌 Kanalga obuna bo'lish - {channel['link']}", 
+                        url=channel["link"]
+                    )
+                )
+        except:
+            # Kanal tekshirish qila olmasa → tugma qo'shish (xavfsizlik uchun)
+            btn.add(
+                types.InlineKeyboardButton(
+                    "📌 Kanalga obuna bo'lish", 
+                    url=channel["link"]
+                )
+            )
+    
+    # ✅ TEKSHIRISH TUGMASI
+    btn.add(
+        types.InlineKeyboardButton(
+            "♻️ Tekshirish", 
+            callback_data="check"
+        )
+    )
+    
+    # ✅ XABAR JO'NATISH
+    bot.send_message(
+        msg.chat.id,
+        "❗ Botdan foydalanish uchun quyidagi kanallarga obuna bo'ling!\n\n"
+        "⏳ Obuna bo'lgandan keyin 'Tekshirish' tugmasini bosing.",
+        reply_markup=btn
+    )
         
         
 
