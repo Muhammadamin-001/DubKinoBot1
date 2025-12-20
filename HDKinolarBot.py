@@ -402,6 +402,23 @@ def delete_channel(call):
         bot.answer_callback_query(call.id, "❌ Xatolik yuz berdi.")
 
 
+
+
+# ✅ ADMIN ID'NI NUSXALASH CALLBACK
+@bot.callback_query_handler(func=lambda call: call.data.startswith("copy_admin_"))
+def copy_admin_id(call):
+    admin_id = call.data.split("_")[-1]
+    
+    # ✅ ID'NI CODE FORMATIDA KO'RSATISH (nusxalash mumkin)
+    bot.send_message(
+        call.message.chat.id,
+        f"`{admin_id}`",
+        parse_mode="Markdown"
+    )
+    
+    bot.answer_callback_query(call.id, "✅ ID nusxalandi!")
+
+
 # Xabarni o'chirish callback handler
 @bot.callback_query_handler(func=lambda call: call.data == "delete_stats")
 def delete_stats_message(call):
@@ -1009,16 +1026,24 @@ def show_statistics(msg):
         f"👤 Foydalanuvchilar soni: *{user_count}*\n"
         f"🎬 Kinolar soni: *{movie_count}*\n"
     )
+    markup = types.InlineKeyboardMarkup()
     # Super Admin uchun tayinlangan adminlar sonini ko‘rsatish
     if str(msg.from_user.id) == ADMIN_ID:  # Foydalanuvchi Super Admin bo'lsa
         stats_text += f"🏷 Tayinlangan adminlar soni: *{admin_count}*\n"
         if admins:
             stats_text += "📋 Adminlar ro'yxati:\n"
             for admin in admins:
-                stats_text += f"  - 🆔 {admin['user_id']}, 👤 {admin['name']}\n"
+                admin_id = admin['user_id']
+                
+                stats_text += f"  - 🆔 {admin_id}, 👤 {admin['name']}\n"
+                # ✅ HAR BIR ADMIN ID'SI UCHUN ALOHIDA CALLBACK TUGMA
+
+                markup.add(types.InlineKeyboardButton("📋", callback_data=f"copy_admin_{admin_id}"
+                    )
+                )
                 
     # Xabarni o'chirish tugmasi qo'shish
-    markup = types.InlineKeyboardMarkup()
+    
     markup.add(types.InlineKeyboardButton("❌", callback_data="delete_stats"))
     
     bot.send_message(msg.chat.id, stats_text, parse_mode="Markdown", reply_markup=markup)
