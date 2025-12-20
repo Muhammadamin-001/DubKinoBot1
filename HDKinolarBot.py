@@ -403,22 +403,6 @@ def delete_channel(call):
 
 
 
-
-# ✅ ADMIN ID'NI NUSXALASH CALLBACK
-@bot.callback_query_handler(func=lambda call: call.data.startswith("copy_admin_"))
-def copy_admin_id(call):
-    admin_id = call.data.split("_")[-1]
-    
-    # ✅ ID'NI CODE FORMATIDA KO'RSATISH (nusxalash mumkin)
-    bot.send_message(
-        call.message.chat.id,
-        f"`{admin_id}`",
-        parse_mode="Markdown"
-    )
-    
-    bot.answer_callback_query(call.id, "✅ ID nusxalandi!")
-
-
 # Xabarni o'chirish callback handler
 @bot.callback_query_handler(func=lambda call: call.data == "delete_stats")
 def delete_stats_message(call):
@@ -1034,13 +1018,8 @@ def show_statistics(msg):
             stats_text += "📋 Adminlar ro'yxati:\n"
             for admin in admins:
                 admin_id = admin['user_id']
-                
-                stats_text += f"  - 🆔 {admin_id}, 👤 {admin['name']}\n"
-                # ✅ HAR BIR ADMIN ID'SI UCHUN ALOHIDA CALLBACK TUGMA
+                stats_text += f"  - 🆔 `{admin_id}`, 👤 {admin['name']}\n"
 
-                markup.add(types.InlineKeyboardButton("📋", callback_data=f"copy_admin_{admin_id}"
-                    )
-                )
                 
     # Xabarni o'chirish tugmasi qo'shish
     
