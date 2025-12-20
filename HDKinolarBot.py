@@ -186,7 +186,7 @@ def send_movie_info(chat_id, kino_kodi):
                 f"🆔 Kod: {code}\n\n"
                 f"🤖 Botimiz: {movie['urlbot']}"
         )
-        bot.send_video(
+        msg = bot.send_video(
             chat_id,
             file_id,
             caption = caption_text,
@@ -216,7 +216,7 @@ def check(call):
 @bot.callback_query_handler(func=lambda call: call.data == "delete_movie")
 def confirm_delete_movie(call):
     
-    #movie_msg_id = call.data.split(":")[1]
+    movie_msg_id = call.data.split(":")[1]
     # Tasdiqlash uchun inline tugmalar
     markup = types.InlineKeyboardMarkup()
     markup.add(
