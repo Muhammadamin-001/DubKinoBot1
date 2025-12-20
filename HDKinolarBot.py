@@ -529,7 +529,6 @@ def delete_channel_menu(msg):
     for idx, channel in enumerate(channels):
         btn_text = f"❌ {channel['link']}"
         markup.add(types.InlineKeyboardButton(btn_text, callback_data=f"delete_channel_{idx}"))
-    markup = types.InlineKeyboardMarkup()
     markup.add(types.InlineKeyboardButton("❌", callback_data="delete_channels_back"))
     bot.send_message(msg.chat.id, "📺 O'chirmoqchi bo'lgan kanalni tanlang:", reply_markup=markup)
 
@@ -549,12 +548,12 @@ def show_channels(msg):
     if not channels: 
         bot.send_message(msg.chat.id, "📺 Hech qanday kanal qo'shilmagan.")
         return
-    
+    markup = types.InlineKeyboardMarkup()
     text = "📺 *Qo'shilgan Kanallar: *\n\n"
     for idx, channel in enumerate(channels, 1):
         text += f"{idx}. {channel['link']}\n"
     
-    markup = types.InlineKeyboardMarkup()
+    
     markup.add(types.InlineKeyboardButton("❌", callback_data="delete_channels_list"))
     bot.send_message(msg. chat.id, text, parse_mode="Markdown")
 
