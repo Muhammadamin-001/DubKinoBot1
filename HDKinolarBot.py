@@ -177,7 +177,7 @@ def send_movie_info(chat_id, kino_kodi):
         code = movie["code"]
         markup = types.InlineKeyboardMarkup()
         markup.add(types.InlineKeyboardButton("🎬 Boshqa kinolar", url = kanal_link))  # Kanal linki
-       # markup.add(types.InlineKeyboardButton("❌", callback_data="delete_movie:{msg.message_id}"))
+        markup.add(types.InlineKeyboardButton("❌", callback_data="delete_movie"))
         # Kino haqida ma'lumot yuboriladi
         caption_text = (
                 f"🎬 {movie['name']} \n-----------------------\n"
@@ -186,18 +186,13 @@ def send_movie_info(chat_id, kino_kodi):
                 f"🆔 Kod: {code}\n\n"
                 f"🤖 Botimiz: {movie['urlbot']}"
         )
-        msg = bot.send_video(
+        bot.send_video(
             chat_id,
             file_id,
             caption = caption_text,
             reply_markup=markup
         )
-        markup.add(types.InlineKeyboardButton("❌", callback_data="delete_movie:{msg.message_id}"))
-        bot.edit_message_reply_markup(
-    chat_id,
-    msg.message_id,
-    reply_markup=markup
-)
+        
     else:
         bot.send_message(chat_id, "❌ Bunday kod bo‘yicha kino topilmadi.")
         
@@ -218,18 +213,13 @@ def check(call):
 
 #======== Foydalanuvchi kinoni O'chirib yuborsa======
 # Video xabarida o'chirish tugmasini tasdiqlash
-@bot.callback_query_handler(func=lambda call: call.data.startswith == "delete_movie:")
+@bot.callback_query_handler(func=lambda call: call.data == "delete_movie")
 def confirm_delete_movie(call):
-    
-    parts = call.data.split(":")
-    if len(parts) != 2 or not parts[1].isdigit():
-        return
 
-    movie_id = int(parts[1])
     # Tasdiqlash uchun inline tugmalar
     markup = types.InlineKeyboardMarkup()
     markup.add(
-        types.InlineKeyboardButton("✅ Ha, o'chir", callback_data="delete_movie_yes:{movie_id}"),
+        types.InlineKeyboardButton("✅ Ha, o'chir", callback_data="delete_movie_yes"),
         types.InlineKeyboardButton("❌ Yo'q", callback_data="delete_movie_no")
     )
     
@@ -239,12 +229,9 @@ def confirm_delete_movie(call):
         reply_markup=markup
     )
 
-@bot.callback_query_handler(func=lambda call: call.data.startswith == "delete_movie_yes:")
+@bot.callback_query_handler(func=lambda call: call.data == "delete_movie_yes")
 def delete_movie_message(call):
-    movie_id = int(call.data.split(":")[1])
-    
     try:
-        bot.delete_message(call.message.chat.id, movie_id)
         bot.delete_message(call.message.chat.id, call.message.message_id)
         bot.answer_callback_query(call.id, "✅ Video o'chirildi!")
     except Exception as e:
