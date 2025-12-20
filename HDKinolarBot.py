@@ -293,12 +293,12 @@ def send_subscription_request(msg, user_id):
 def delete_movie_warning(call):
     markup = InlineKeyboardMarkup()
     markup.add(
-        InlineKeyboardButton("❌ Tasdiqlash", callback_data="delete_movie_confirm")
+        InlineKeyboardButton("❌ O'chirish", callback_data="delete_movie_confirm")
     )
 
     bot.answer_callback_query(
         call.id,
-        "⚠️ Rostdan ham kinoni o‘chirmoqchimisiz?\n\nYana bir marta bosing",
+        "⚠️ Rostdan ham kinoni o‘chirmoqchimisiz?\n\nYana bir marta bosing ...❌",
         show_alert=True
     )
 
@@ -533,7 +533,7 @@ def add_channel(msg):
         bot.send_message(msg.chat.id, "❌ Bu buyruq siz uchun emas.")
         return
     
-    bot.send_message(msg.chat.id, "📺 Kanal linkini kiriting (masalan: https://t.me/channel_name yoki @channel_name):")
+    bot.send_message(msg.chat.id, "📺 Kanal linkini kiriting (masalan: https://t.me/channel_name yoki @channel_name):\n⚠️ Bot kanalga admin bo'lishi shart.")
     state[str(msg.from_user.id)] = ["waiting_for_channel_link"]
 
 @bot.message_handler(func=lambda msg: str(msg.from_user.id) in state 
@@ -969,7 +969,7 @@ def movie_list(msg):
     markup = types.InlineKeyboardMarkup()
     if pages > 1:
         markup.add(types.InlineKeyboardButton("➡️ Next", callback_data="page_2"))
-        markup.add(types.InlineKeyboardButton("📌 Last", callback_data=f"page_{pages}"))
+        #markup.add(types.InlineKeyboardButton("📌 Last", callback_data=f"page_{pages}"))
     # O'chirish tugmasi
     markup.add(types.InlineKeyboardButton("❌", callback_data="delete_movies_list")) 
     
