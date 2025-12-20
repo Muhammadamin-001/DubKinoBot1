@@ -11,7 +11,7 @@ ADMIN_ID = os.getenv("ADMIN_ID")
 WEBHOOK_URL = os.getenv("WEBHOOK_URL")
 MONGO_URI =os.getenv("MONGO_URI")
 
-CHANNEL_ID = [-1003359940811]
+#CHANNEL_ID = [-1003359940811]
 bot = telebot.TeleBot(TOKEN)
 
 kanal_link="https://t.me/DubHDkinolar"
@@ -92,8 +92,8 @@ def check_sub(user_id):
             
         
         # Agar kanal ID'lari bo'lmasa
-        if not channels_to_check:
-            channels_to_check = CHANNEL_ID
+        # if not channels_to_check:
+        #     channels_to_check = CHANNEL_ID
         
         print(f"🔍 Tekshirilayotgan kanallar: {channels_to_check}")  # Debug
         
@@ -122,15 +122,14 @@ def upload_mdb(msg):
     btn = types.InlineKeyboardMarkup()
     
     # Agar kanallar qo'shilgan bo'lsa, ularni tugma sifatida qo'shish
-    if channels:  
+    if not channels:
+        return  # ✅ barchaga ruxsat
+    
+    else:
         print(f"📺 {len(channels)} ta kanal ko'rinadi")  # Debug
         for channel in channels:  
             btn.add(types.InlineKeyboardButton("📌 Kanalga obuna bo'lish", url=channel["link"]))
-    else:
-        # Agar kolektsiya bo'sh bo'lsa, standart kanal linkini qo'shish
-       
-        btn.add(types.InlineKeyboardButton("📌 Kanalga obuna bo'lish", url=kanal_link))
-    
+            
     # Tekshirish tugmasi
     btn.add(types.InlineKeyboardButton("♻️ Tekshirish", callback_data="check"))
     
@@ -990,8 +989,11 @@ def universal_handler(msg):
 
 
     # --- 3) Oddiy foydalanuvchi kino kodi so‘rayapti ---
-    if not check_sub(int(user)):
-        bot.send_message(msg.chat.id, "❗ Avval kanalga obuna bo‘ling.")
+    if not check_sub(user):
+        # Obunani tekshirish
+        upload_mdb(msg)
+            
+        #bot.send_message(msg.chat.id, "❗ Avval kanalga obuna bo‘ling.")
         return
     
     movie_code = msg.text.strip()
