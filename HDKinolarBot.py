@@ -34,6 +34,7 @@ channels_collection = db["channels"]  # Kanallar kolleksiyasi
 # =================== STATE (HOLAT) ============================
 state = {}  
 
+user_clicks = {}  # {user_id: bosish_soni}
 
 album_buffer = {}
 album_sending = {}
@@ -177,7 +178,7 @@ def send_movie_info(chat_id, kino_kodi):
         code = movie["code"]
         markup = types.InlineKeyboardMarkup()
         markup.add(types.InlineKeyboardButton("🎬 Boshqa kinolar", url = kanal_link))  # Kanal linki
-        markup.add(types.InlineKeyboardButton("❌", callback_data="delete_movie"))
+        markup.add(types.InlineKeyboardButton("❌", callback_data="delete_movie:{msg.message_id}"))
         # Kino haqida ma'lumot yuboriladi
         caption_text = (
                 f"🎬 {movie['name']} \n-----------------------\n"
@@ -186,7 +187,7 @@ def send_movie_info(chat_id, kino_kodi):
                 f"🆔 Kod: {code}\n\n"
                 f"🤖 Botimiz: {movie['urlbot']}"
         )
-        bot.send_video(
+        msg = bot.send_video(
             chat_id,
             file_id,
             caption = caption_text,
@@ -196,6 +197,7 @@ def send_movie_info(chat_id, kino_kodi):
     else:
         bot.send_message(chat_id, "❌ Bunday kod bo‘yicha kino topilmadi.")
         
+    bot.edit_message_reply_markup(chat_id, msg.message_id, reply_markup=markup)   
 
 
 
@@ -212,36 +214,40 @@ def check(call):
         
 
 #======== Foydalanuvchi kinoni O'chirib yuborsa======
-# Video xabarida o'chirish tugmasini tasdiqlash
-@bot.callback_query_handler(func=lambda call: call.data == "delete_movie")
-def confirm_delete_movie(call):
+@bot.callback_query_handler(func=lambda call: call.data.startswith("delete_movie:"))
+def delete_movie_handler(call):
+    uid = call.from_user.id
+    movie_msg_id = int(call.data.split(":")[1])
 
-    # Tasdiqlash uchun inline tugmalar
-    markup = types.InlineKeyboardMarkup()
-    markup.add(
-        types.InlineKeyboardButton("✅ Ha, o'chir", callback_data="delete_movie_yes"),
-        types.InlineKeyboardButton("❌ Yo'q", callback_data="delete_movie_no")
-    )
-    
-    bot.send_message(
-        call.message.chat.id,
-        "⚠️ Rostdan ham bu video xabarini o'chirasiz?",
-        reply_markup=markup
-    )
+    # Foydalanuvchining bosish sonini oling
+    clicks = user_clicks.get(uid, 0)
+    clicks += 1
+    user_clicks[uid] = clicks
 
-@bot.callback_query_handler(func=lambda call: call.data == "delete_movie_yes")
-def delete_movie_message(call):
-    try:
-        bot.delete_message(call.message.chat.id, call.message.message_id)
-        bot.answer_callback_query(call.id, "✅ Video o'chirildi!")
-    except Exception as e:
-        print(f"Xatolik:  {e}")
-        bot.answer_callback_query(call.id, "❌ Video o'chirilmadi.")
-
-@bot.callback_query_handler(func=lambda call: call.data == "delete_movie_no")
-def cancel_delete_movie(call):
-    bot.answer_callback_query(call.id, "❌ O'chirish bekor qilindi.")
-    bot.delete_message(call.message.chat.id, call.message.message_id)  
+    if clicks == 1:
+        # 1-bosish: ogohlantirish popup
+        bot.answer_callback_query(
+            call.id,
+            "⚠️ Videoni o‘chirish uchun yana bir marta ❌ tugmani bosing",
+            show_alert=True
+        )
+    elif clicks == 2:
+        # 2-bosish: yana popup
+        bot.answer_callback_query(
+            call.id,
+            "⚠️ Oxirgi ogohlantirish! Keyingi bosishda video o‘chadi",
+            show_alert=True
+        )
+    else:
+        # 3-bosish: video o'chadi
+        try:
+            bot.delete_message(call.message.chat.id, movie_msg_id)
+            bot.answer_callback_query(call.id, "✅ Video o‘chirildi!")
+        except Exception as e:
+            print(f"Xatolik: {e}")
+            bot.answer_callback_query(call.id, "❌ Video o‘chirilmadi.")
+        # Bosish sanagini tiklash
+        user_clicks.pop(uid)
     
     
     
