@@ -555,7 +555,7 @@ def show_channels(msg):
     
     
     markup.add(types.InlineKeyboardButton("❌", callback_data="delete_channels_list"))
-    bot.send_message(msg. chat.id, text, parse_mode="Markdown")
+    bot.send_message(msg.chat.id, text, parse_mode="Markdown", reply_markup=markup)
 
 
 @bot.message_handler(func=lambda msg: msg.text == "🏷 Admin tayinlash")
