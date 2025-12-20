@@ -4,6 +4,7 @@ import time
 from flask import Flask, request
 from pymongo import MongoClient
 import os
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 TOKEN = os.getenv("TOKEN")
 ADMIN_ID = os.getenv("ADMIN_ID")
@@ -215,19 +216,35 @@ def check(call):
 
 #======== Foydalanuvchi kinoni O'chirib yuborsa======
 @bot.callback_query_handler(func=lambda call: call.data == "delete_movie")
-def confirm_delete_movie(call):
+def delete_movie_warning(call):
+    markup = InlineKeyboardMarkup()
+    markup.add(
+        InlineKeyboardButton("❌ Tasdiqlash", callback_data="delete_movie_confirm")
+    )
+
     bot.answer_callback_query(
         call.id,
-        "⚠️ Rostdan ham videoni o‘chirmoqchimisiz?\n\nAgar ha bo‘lsa, yana ❌ tugmani bosing",
+        "⚠️ Rostdan ham kinoni o‘chirmoqchimisiz?\n\nYana bir marta bosing",
         show_alert=True
     )
+
+    # ❗ XABAR O‘CHMAYDI
+    # faqat tugma o‘zgaradi
+    bot.edit_message_reply_markup(
+        call.message.chat.id,
+        call.message.message_id,
+        reply_markup=markup
+    )
+    
+@bot.callback_query_handler(func=lambda call: call.data == "delete_movie_confirm")
+def delete_movie_confirm(call):
     try:
         bot.delete_message(call.message.chat.id, call.message.message_id)
-        bot.answer_callback_query(call.id, "✅ Video o'chirildi!")
+        bot.answer_callback_query(call.id, "✅ Kino o‘chirildi")
     except Exception as e:
-        print(f"Xatolik: {e}")
-        bot.answer_callback_query(call.id, "❌ Video o'chirilmadi.")
-    
+        print(e)
+        bot.answer_callback_query(call.id, "❌ Xatolik yuz berdi")
+
     
     
         
