@@ -70,42 +70,48 @@ def get_movie_page(page=1, per_page=10):
 
 # =================== OBUNA TEKSHIRISH =========================
 def check_sub(user_id):
-    """MongoDB'dagi va standart kanallarni tekshirish"""
+    """Faqat MongoDB'dagi kanallarga obunani tekshirish"""
     try:
         # MongoDB'dan kanallarni olish
         channels = list(channels_collection.find({}, {"_id": 0, "id": 1, "link": 1}))
         
+        # Agar MongoDB'da kanal bo'lmasa, True qaytarish (hamma ruxsatli)
+        if not channels: 
+            print(f"⚠️ MongoDB'da kanal yo'q, foydalanuvchi {user_id} kirishi ruxsat")  # Debug
+            return True
+        
         # Tekshirilayotgan kanal ID'lari ro'yxati
         channels_to_check = []
         
-        # Agar MongoDB'da kanal bo'lsa, ularni qo'shish
-        if channels:
-            channels_to_check = [ch["id"] for ch in channels if "id" in ch]
-            print(f"MongoDB'dan kanallar olindy: {channels_to_check}")  # Debug
+        # MongoDB'dan kanal ID'larini olish
+        for ch in channels:
+            if "id" in ch and ch["id"] is not None:
+                channels_to_check.append(ch["id"])
+            
         
-        # Agar MongoDB'da kanal bo'lmasa, standart kanallarni ishlatish
+        # Agar kanal ID'lari bo'lmasa
         if not channels_to_check:
             channels_to_check = CHANNEL_ID
-            print(f"Standart kanallar ishlatilmoqda: {channels_to_check}")  # Debug
+        
+        print(f"🔍 Tekshirilayotgan kanallar: {channels_to_check}")  # Debug
         
         # Barcha kanallarni tekshirish
         for channel in channels_to_check:
             try:
-                member = bot. get_chat_member(channel, user_id)
+                member = bot.get_chat_member(channel, user_id)
                 if member.status not in ["member", "administrator", "creator"]:
-                    print(f"Foydalanuvchi {user_id} kanalni {channel} obuna emas")  # Debug
+                    print(f"❌ Foydalanuvchi {user_id} kanalni {channel} obuna emas")  # Debug
                     return False
             except Exception as e:
-                print(f"Kanal tekshirish xatosi ({channel}): {e}")
+                print(f"❌ Kanal tekshirish xatosi ({channel}): {e}")
                 return False
         
-        print(f"Foydalanuvchi {user_id} barcha kanallarga obuna")  # Debug
+        print(f"✅ Foydalanuvchi {user_id} barcha kanallarga obuna")  # Debug
         return True
     
     except Exception as e: 
-        print(f"check_sub xatosi: {e}")
+        print(f"❌ check_sub xatosi: {e}")
         return False
-
 
 # =================== ADMIN PANEL =============================
 
@@ -314,6 +320,7 @@ def check(call):
         bot.delete_message(call.message.chat.id, call.message.message_id)
         bot.send_message(call.message.chat.id, "✔ Obuna tasdiqlandi!\n\nKino kodini yuboring:")
     else:
+        
         bot.answer_callback_query(call.id, "❗ Hali obuna bo‘lmagansiz!")
         
 
@@ -362,17 +369,17 @@ def open_super_admin_panel(msg):
  #=======****=====
 @bot.message_handler(func=lambda msg: msg.text == "📺 Kanal qo'shish")
 def add_channel(msg):
-    if str(msg.from_user. id) != ADMIN_ID:
+    if str(msg.from_user.id) != ADMIN_ID:
         bot.send_message(msg.chat.id, "❌ Bu buyruq siz uchun emas.")
         return
     
-    bot.send_message(msg.chat.id, "📺 Kanal linkini kiriting (masalan:  https://t.me/channel_name yoki @channel_name):")
-    state[str(msg. from_user.id)] = ["waiting_for_channel_link"]
+    bot.send_message(msg.chat.id, "📺 Kanal linkini kiriting (masalan: https://t.me/channel_name yoki @channel_name):")
+    state[str(msg.from_user.id)] = ["waiting_for_channel_link"]
 
 @bot.message_handler(func=lambda msg: str(msg.from_user.id) in state 
                      and state[str(msg.from_user.id)][0] == "waiting_for_channel_link")
 def save_channel_link(msg):
-    channel_link = msg.text.strip()
+    channel_link = msg.text. strip()
     
     # Kanal linki to'g'ri formatda ekanligini tekshirish
     if not (channel_link.startswith("https://t.me/") or channel_link.startswith("@")):
@@ -385,15 +392,37 @@ def save_channel_link(msg):
         del state[str(msg.from_user.id)]
         return
     
-    # MongoDB'ga kanal linkini saqlash
-    channels_collection. insert_one({
+    # Kanal ID'sini so'rash
+    bot.send_message(msg.chat.id, "🆔 Kanal ID'sini kiriting (masalan: -1001234567890):\n\n💡 Kanal ID'sini qanday topish:\n1. @username_to_id_bot ga /start yuboring\n2. Kanal nomini kiriting\n3. Bot kanal ID'sini beradi")
+    state[str(msg. from_user.id)] = ["waiting_for_channel_id", channel_link]
+
+@bot. message_handler(func=lambda msg: str(msg.from_user.id) in state 
+                     and state[str(msg. from_user.id)][0] == "waiting_for_channel_id")
+def save_channel_id(msg):
+    channel_id_text = msg.  text.strip()
+    channel_link = state[str(msg.from_user.id)][1]
+    
+    # Kanal ID'sini tekshirish
+    try:
+        channel_id = int(channel_id_text)
+    except ValueError:
+        bot. send_message(msg.chat. id, "❌ Kanal ID raqam bo'lishi kerak. Masalan: -1001234567890")
+        return
+    
+    # MongoDB'ga kanal linkini va ID'sini saqlash
+    channels_collection.insert_one({
         "link": channel_link,
+        "id": channel_id,  # ⭐ MUHIM:  Kanal ID'sini saqlash
         "added_date": time.time()
     })
     
-    bot.send_message(msg.chat.id, f"✅ Kanal qo'shildi: {channel_link}")
+    print(f"✅ Kanal qo'shildi: link={channel_link}, id={channel_id}")  # Debug
+    
+    bot.send_message(
+        msg.chat.id, 
+        f"✅ Kanal qo'shildi:\n📺 Link: {channel_link}\n🆔 ID: {channel_id}"
+    )
     del state[str(msg.from_user.id)]
-
 
 
 @bot.message_handler(func=lambda msg: msg.text == "❌ Kanal o'chirish")
@@ -403,7 +432,7 @@ def delete_channel_menu(msg):
         return
     
     # Barcha kanallarni olish
-    channels = list(channels_collection.find({}, {"_id": 0, "link": 1}))
+    channels = list(channels_collection.find({}, {"_id": 0, "link": 1, "id": 1}))
     
     if not channels:
         bot.send_message(msg.chat.id, "📺 Hech qanday kanal qo'shilmagan.")
@@ -427,7 +456,7 @@ def delete_channel(call):
     try:
         # O'chirilayotgan kanal indexini olish
         channel_idx = int(call.data.split("_")[2])
-        channels = list(channels_collection.find({}, {"_id": 0, "link": 1}))
+        channels = list(channels_collection.find({}, {"_id": 0, "link": 1, "id": 1}))
         
         if channel_idx >= len(channels):
             bot.answer_callback_query(call. id, "❌ Kanal topilmadi.")
@@ -457,7 +486,7 @@ def show_channels(msg):
         bot.send_message(msg.chat.id, "❌ Bu buyruq siz uchun emas.")
         return
     
-    channels = list(channels_collection.find({}, {"_id": 0, "link": 1}))
+    channels = list(channels_collection.find({}, {"_id": 0, "link": 1, "id": 1}))
     
     if not channels: 
         bot.send_message(msg.chat.id, "📺 Hech qanday kanal qo'shilmagan.")
