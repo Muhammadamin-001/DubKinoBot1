@@ -339,7 +339,27 @@ def delete_stats_message(call):
         bot.answer_callback_query(call.id, "❌ Xabar o'chirilmadi.")
         
         
+@bot.callback_query_handler(func=lambda call: call.data == "delete_channels_back")
+def delete_channels_back(call):
+    try:
+        bot.delete_message(call.message.chat.id, call.message.message_id)
+        bot.answer_callback_query(call.id, "✅ Xabar o'chirildi!")
+    except Exception as e:
+        print(f"Xatolik:  {e}")
+        bot.answer_callback_query(call.id, "❌ Xabar o'chirilmadi.")
         
+
+
+@bot.callback_query_handler(func=lambda call: call.data == "delete_channels_list")
+def delete_channels_list(call):
+    try:
+        bot.delete_message(call.message.chat.id, call.message.message_id)
+        bot.answer_callback_query(call.id, "✅ Ro'yxat o'chirildi!")
+    except Exception as e:
+        print(f"Xatolik:  {e}")
+        bot.answer_callback_query(call.id, "❌ Ro'yxat o'chirilmadi.")
+
+
 
 # ====================== START ================================
 @bot.message_handler(commands=['start'])
@@ -509,7 +529,8 @@ def delete_channel_menu(msg):
     for idx, channel in enumerate(channels):
         btn_text = f"❌ {channel['link']}"
         markup.add(types.InlineKeyboardButton(btn_text, callback_data=f"delete_channel_{idx}"))
-    
+    markup = types.InlineKeyboardMarkup()
+    markup.add(types.InlineKeyboardButton("❌", callback_data="delete_channels_back"))
     bot.send_message(msg.chat.id, "📺 O'chirmoqchi bo'lgan kanalni tanlang:", reply_markup=markup)
 
 
@@ -533,6 +554,8 @@ def show_channels(msg):
     for idx, channel in enumerate(channels, 1):
         text += f"{idx}. {channel['link']}\n"
     
+    markup = types.InlineKeyboardMarkup()
+    markup.add(types.InlineKeyboardButton("❌", callback_data="delete_channels_list"))
     bot.send_message(msg. chat.id, text, parse_mode="Markdown")
 
 
