@@ -113,6 +113,31 @@ def check_sub(user_id):
         print(f"❌ check_sub xatosi: {e}")
         return False
 
+def upload_mdb(msg):
+    # MongoDB'dan barcha kanallarni olish
+    channels = list(channels_collection.find({}, {"_id": 0, "link": 1}))
+    
+    btn = types.InlineKeyboardMarkup()
+    
+    # Agar kanallar qo'shilgan bo'lsa, ularni tugma sifatida qo'shish
+    if channels:  
+        print(f"📺 {len(channels)} ta kanal ko'rinadi")  # Debug
+        for channel in channels:  
+            btn.add(types.InlineKeyboardButton("📌 Kanalga obuna bo'lish", url=channel["link"]))
+    else:
+        # Agar kolektsiya bo'sh bo'lsa, standart kanal linkini qo'shish
+       
+        btn.add(types.InlineKeyboardButton("📌 Kanalga obuna bo'lish", url=kanal_link))
+    
+    # Tekshirish tugmasi
+    btn.add(types.InlineKeyboardButton("♻️ Tekshirish", callback_data="check"))
+    
+    bot.send_message(
+        msg.chat.id,
+        "❗ Botdan foydalanish uchun kanalga obuna bo'ling!",
+        reply_markup=btn
+    )
+
 # =================== ADMIN PANEL =============================
 
 
@@ -259,7 +284,7 @@ def delete_movies_list(call):
 # ====================== START ================================
 @bot.message_handler(commands=['start'])
 def start(msg):
-    user = msg.from_user. id
+    user = msg.from_user.id
     
     # "start=kino_kodi" formatida yuborilgan parametrni olish
     kino_kodi = None
@@ -274,30 +299,8 @@ def start(msg):
     # Obunani tekshirish
     if not check_sub(user):
         print(f"❌ Foydalanuvchi {user} obuna emas")  # Debug
+        upload_mdb(msg)
         
-        # MongoDB'dan barcha kanallarni olish
-        channels = list(channels_collection.find({}, {"_id": 0, "link": 1}))
-        
-        btn = types.InlineKeyboardMarkup()
-        
-        # Agar kanallar qo'shilgan bo'lsa, ularni tugma sifatida qo'shish
-        if channels:  
-            print(f"📺 {len(channels)} ta kanal ko'rinadi")  # Debug
-            for channel in channels:  
-                btn.add(types.InlineKeyboardButton("📌 Kanalga obuna bo'lish", url=channel["link"]))
-        else:
-            # Agar kolektsiya bo'sh bo'lsa, standart kanal linkini qo'shish
-           
-            btn.add(types.InlineKeyboardButton("📌 Kanalga obuna bo'lish", url=kanal_link))
-        
-        # Tekshirish tugmasi
-        btn.add(types.InlineKeyboardButton("♻️ Tekshirish", callback_data="check"))
-        
-        bot.send_message(
-            msg.chat.id,
-            "❗ Botdan foydalanish uchun kanalga obuna bo'ling!",
-            reply_markup=btn
-        )
         return
     
     # ✅ Foydalanuvchi obuna bo'lsa
@@ -314,6 +317,37 @@ def start(msg):
     bot.send_message(msg. chat.id, "🎬 Kino kodini kiriting:")
 
 
+
+    
+ 
+
+# ====================== ADMIN PANEL ===========================
+@bot.message_handler(commands=['panel'])
+def panel(msg):
+    user = msg.from_user.id
+    if not check_sub(user):
+        upload_mdb(msg)
+        return
+    
+    if (str(msg.from_user.id) == ADMIN_ID or is_admin(msg.from_user.id)):
+        admin_panel(msg.chat.id)
+    else:
+        bot.send_message(msg.chat.id, "❌ Diqqat! Bu admin uchun.\n# /kodlar komandasi orqali kinolar ro'yxatini ko'ra olasiz !")
+        
+@bot.message_handler(commands=['kodlar'])
+def kodlar(msg):
+    user = msg.from_user.id
+    if not check_sub(user):
+        upload_mdb(msg)
+        return
+    if (str(msg.from_user.id) == ADMIN_ID or is_admin(msg.from_user.id)):
+        bot.send_message(msg.chat.id, "❗ Bu komanda admin uchun emas.")
+        return
+    
+    user_panel(msg.chat.id)
+ 
+    
+ 
 @bot.callback_query_handler(func=lambda call: call.data == "check")
 def check(call):
     if check_sub(call.from_user.id):
@@ -322,29 +356,10 @@ def check(call):
     else:
         
         bot.answer_callback_query(call.id, "❗ Hali obuna bo‘lmagansiz!")
-        
 
 
-    
- 
 
-# ====================== ADMIN PANEL ===========================
-@bot.message_handler(commands=['panel'])
-def panel(msg):
-    start(msg)
-    if (str(msg.from_user.id) == ADMIN_ID or is_admin(msg.from_user.id)):
-        admin_panel(msg.chat.id)
-    else:
-        bot.send_message(msg.chat.id, "❌ Diqqat! Bu admin uchun.\n# /kodlar komandasi orqali kinolar ro'yxatini ko'ra olasiz !")
-        
-@bot.message_handler(commands=['kodlar'])
-def kodlar(msg):
-    start(msg)
-    if (str(msg.from_user.id) == ADMIN_ID or is_admin(msg.from_user.id)):
-        bot.send_message(msg.chat.id, "❗ Bu komanda admin uchun emas.")
-        return
-    
-    user_panel(msg.chat.id)
+
     
 @bot.message_handler(func=lambda msg: msg.text == "🔙 Ortga")
 def back(msg):
