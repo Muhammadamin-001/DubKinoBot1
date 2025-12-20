@@ -177,10 +177,10 @@ def send_movie_info(chat_id, kino_kodi):
         code = movie["code"]
         markup = types.InlineKeyboardMarkup()
         markup.add(types.InlineKeyboardButton("🎬 Boshqa kinolar", url = kanal_link))  # Kanal linki
-        markup.add(types.InlineKeyboardButton("❌", callback_data="delete_movie"))
+        markup.add(types.InlineKeyboardButton("❌", callback_data="delete_movie:{msg.message_id}"))
         # Kino haqida ma'lumot yuboriladi
         caption_text = (
-                f"🎬 {movie['name']} \n"
+                f"🎬 {movie['name']} \n-----------------------\n"
                 f"💽 Formati: {movie['formati']}\n"
                 f"🎞 Janri: {movie['genre']}\n"
                 f"🆔 Kod: {code}\n\n"
@@ -195,17 +195,32 @@ def send_movie_info(chat_id, kino_kodi):
     
     else:
         bot.send_message(chat_id, "❌ Bunday kod bo‘yicha kino topilmadi.")
+        
 
 
+
+
+#===== START UCHUN =======
+@bot.callback_query_handler(func=lambda call: call.data == "check")
+def check(call):
+    if check_sub(call.from_user.id):
+        bot.delete_message(call.message.chat.id, call.message.message_id)
+        bot.send_message(call.message.chat.id, "✔ Obuna tasdiqlandi!\n\nKino kodini yuboring:")
+    else:
+        bot.answer_callback_query(call.id, "❗ Hali obuna bo‘lmagansiz!")
+        
+        
 
 #======== Foydalanuvchi kinoni O'chirib yuborsa======
 # Video xabarida o'chirish tugmasini tasdiqlash
 @bot.callback_query_handler(func=lambda call: call.data == "delete_movie")
 def confirm_delete_movie(call):
+    
+    #movie_msg_id = call.data.split(":")[1]
     # Tasdiqlash uchun inline tugmalar
     markup = types.InlineKeyboardMarkup()
     markup.add(
-        types.InlineKeyboardButton("✅ Ha, o'chir", callback_data="delete_movie_yes"),
+        types.InlineKeyboardButton("✅ Ha, o'chir", callback_data="delete_movie_yes:{movie_msg_id}"),
         types.InlineKeyboardButton("❌ Yo'q", callback_data="delete_movie_no")
     )
     
@@ -217,7 +232,10 @@ def confirm_delete_movie(call):
 
 @bot.callback_query_handler(func=lambda call: call.data == "delete_movie_yes")
 def delete_movie_message(call):
+    movie_id = int(call.data.split(":")[1])
+    
     try:
+        bot.delete_message(call.message.chat.id, movie_id)
         bot.delete_message(call.message.chat.id, call.message.message_id)
         bot.answer_callback_query(call.id, "✅ Video o'chirildi!")
     except Exception as e:
@@ -280,6 +298,50 @@ def delete_movies_list(call):
         bot.answer_callback_query(call.id, "❌ Ro'yxat o'chirilmadi.")
         
 
+@bot.callback_query_handler(func=lambda call: call.data.startswith("delete_channel_"))
+def delete_channel(call):
+    if str(call.from_user. id) != ADMIN_ID:
+        bot.answer_callback_query(call.id, "❌ Bu buyruq siz uchun emas.")
+        return
+    
+    try:
+        # O'chirilayotgan kanal indexini olish
+        channel_idx = int(call.data.split("_")[2])
+        channels = list(channels_collection.find({}, {"_id": 0, "link": 1, "id": 1}))
+        
+        if channel_idx >= len(channels):
+            bot.answer_callback_query(call. id, "❌ Kanal topilmadi.")
+            return
+        
+        # Kanal linkini olish
+        channel_link = channels[channel_idx]["link"]
+        
+        # MongoDB'dan o'chirish
+        channels_collection.delete_one({"link":  channel_link})
+        
+        bot.answer_callback_query(call.id, f"✅ Kanal o'chirildi: {channel_link}")
+        bot.edit_message_text(
+            f"✅ '{channel_link}' kanali o'chirildi.",
+            call.message. chat.id,
+            call.message.message_id
+        )
+    except Exception as e:
+        print(f"Xatolik:  {e}")
+        bot.answer_callback_query(call.id, "❌ Xatolik yuz berdi.")
+
+
+# Xabarni o'chirish callback handler
+@bot.callback_query_handler(func=lambda call: call.data == "delete_stats")
+def delete_stats_message(call):
+    try:
+        bot.delete_message(call.message.chat.id, call.message.message_id)
+        bot.answer_callback_query(call.id, "✅ Xabar o'chirildi!")
+    except Exception as e:
+        print(f"Xatolik:  {e}")
+        bot.answer_callback_query(call.id, "❌ Xabar o'chirilmadi.")
+        
+        
+        
 
 # ====================== START ================================
 @bot.message_handler(commands=['start'])
@@ -315,6 +377,7 @@ def start(msg):
     # Oddiy boshlash
     
     bot.send_message(msg. chat.id, "🎬 Kino kodini kiriting:")
+    
 
 
 
@@ -346,16 +409,6 @@ def kodlar(msg):
     
     user_panel(msg.chat.id)
  
-    
- 
-@bot.callback_query_handler(func=lambda call: call.data == "check")
-def check(call):
-    if check_sub(call.from_user.id):
-        bot.delete_message(call.message.chat.id, call.message.message_id)
-        bot.send_message(call.message.chat.id, "✔ Obuna tasdiqlandi!\n\nKino kodini yuboring:")
-    else:
-        
-        bot.answer_callback_query(call.id, "❗ Hali obuna bo‘lmagansiz!")
 
 
 
@@ -411,7 +464,7 @@ def save_channel_link(msg):
     bot.send_message(msg.chat.id, "🆔 Kanal ID'sini kiriting (masalan: -1001234567890):\n\n💡 Kanal ID'sini qanday topish:\n1. @username_to_id_bot ga /start yuboring\n2. Kanal nomini kiriting\n3. Bot kanal ID'sini beradi")
     state[str(msg. from_user.id)] = ["waiting_for_channel_id", channel_link]
 
-@bot. message_handler(func=lambda msg: str(msg.from_user.id) in state 
+@bot.message_handler(func=lambda msg: str(msg.from_user.id) in state 
                      and state[str(msg. from_user.id)][0] == "waiting_for_channel_id")
 def save_channel_id(msg):
     channel_id_text = msg.  text.strip()
@@ -462,36 +515,7 @@ def delete_channel_menu(msg):
     bot.send_message(msg.chat.id, "📺 O'chirmoqchi bo'lgan kanalni tanlang:", reply_markup=markup)
 
 
-@bot.callback_query_handler(func=lambda call: call.data.startswith("delete_channel_"))
-def delete_channel(call):
-    if str(call.from_user. id) != ADMIN_ID:
-        bot.answer_callback_query(call.id, "❌ Bu buyruq siz uchun emas.")
-        return
-    
-    try:
-        # O'chirilayotgan kanal indexini olish
-        channel_idx = int(call.data.split("_")[2])
-        channels = list(channels_collection.find({}, {"_id": 0, "link": 1, "id": 1}))
-        
-        if channel_idx >= len(channels):
-            bot.answer_callback_query(call. id, "❌ Kanal topilmadi.")
-            return
-        
-        # Kanal linkini olish
-        channel_link = channels[channel_idx]["link"]
-        
-        # MongoDB'dan o'chirish
-        channels_collection.delete_one({"link":  channel_link})
-        
-        bot.answer_callback_query(call.id, f"✅ Kanal o'chirildi: {channel_link}")
-        bot.edit_message_text(
-            f"✅ '{channel_link}' kanali o'chirildi.",
-            call.message. chat.id,
-            call.message.message_id
-        )
-    except Exception as e:
-        print(f"Xatolik:  {e}")
-        bot.answer_callback_query(call.id, "❌ Xatolik yuz berdi.")
+
         
         
 
@@ -591,7 +615,7 @@ def delete_admin(msg):
 
 
 
-# ====================== ORTGA QAYTISH =========================
+# ====================== PANELNI YOPISH =========================
 @bot.message_handler(func=lambda msg: msg.text == "⏻ Exit")
 def back_panel(msg):
     if not (str(msg.from_user.id) == ADMIN_ID or is_admin(msg.from_user.id)):
@@ -905,15 +929,6 @@ def show_statistics(msg):
     
     bot.send_message(msg.chat.id, stats_text, parse_mode="Markdown", reply_markup=markup)
 
-# Xabarni o'chirish callback handler
-@bot.callback_query_handler(func=lambda call: call.data == "delete_stats")
-def delete_stats_message(call):
-    try:
-        bot.delete_message(call.message.chat.id, call.message.message_id)
-        bot.answer_callback_query(call.id, "✅ Xabar o'chirildi!")
-    except Exception as e:
-        print(f"Xatolik:  {e}")
-        bot.answer_callback_query(call.id, "❌ Xabar o'chirilmadi.")
         
 
                 
@@ -981,5 +996,4 @@ if __name__ == "__main__":
     app.run(host="0.0.0.0", port=PORT)
 
 # ==============================================================#
-    
     
