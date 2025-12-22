@@ -48,7 +48,7 @@ def is_admin(user_id):
     # Foydalanuvchi admin bo'lsa, True qaytaradi
     return admins_collection.find_one({"user_id": int(user_id)}) is not None
 
-def get_movie_page(page=1, per_page=10):
+def get_movie_page(page=1, per_page=5):
     # Barcha kinolarni bazadan o'qish
     all_movies = list(movies.find({}, {"_id": 0}))  # movies = db["movies"]
     
