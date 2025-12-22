@@ -41,6 +41,7 @@ album_sending = {}
 
 movie_pages = {}
 user_pages = {}  # ← QO'SHILDI:  Qidirish ma'lumotlarini saqlash uchun
+search_cache = {} # Qidiruv natijalarini
 
 # === is_admin funksiyasi ===
 def is_admin(user_id):
@@ -394,26 +395,25 @@ def page_switch(call):
 
 
 
-@bot.callback_query_handler(func=lambda c: c.data.startswith("search_"))
+@bot.callback_query_handler(func=lambda c: c.data. startswith("search_"))
 def search_page_switch(call):
     """Qidirish natijalari sahifalarini chiqarish"""
     try:
-        # "search_nomiovolov_page_2" → ['search', 'nomiovolov', 'page_2']
-        parts = call.data.split("_", 1)  # ["search", "nomiovolov_page_2"]
-        remaining = parts[1]. rsplit("_", 1)  # ["nomiovolov", "page_2"]
-        search_query = remaining[0]
-        page = int(remaining[1])
+        # "search_123456789_page_2" → user_id va page
+        parts = call.data.split("_page_")
+        user_id = int(parts[0]. replace("search_", ""))
+        page = int(parts[1])
         
-        # Qidirish natijalarini qayta hisoblash
-        result = search_movie_by_code_or_name(search_query)
-        
-        if result[0] != "name_found":
-            bot.answer_callback_query(call.id, "❌ Kino topilmadi.")
+        # Cache'dan ma'lumotlarni olish
+        if user_id not in search_cache:
+            bot.answer_callback_query(call.id, "❌ Qidirish natijalari o'chirib yuborildi.")
             return
         
-        filtered_movies = result[1]
-        pages = result[2]
-        total = result[3]
+        cached = search_cache[user_id]
+        filtered_movies = cached["movies"]
+        pages = cached["pages"]
+        total = cached["total"]
+        search_query = cached["query"]
         
         # Sahifa ma'lumotlarini hisoblash
         boshlash = (page - 1) * 5
@@ -428,7 +428,7 @@ def search_page_switch(call):
         for m in page_movies:
             code = m['code']
             text += f"**{c}. {m['name']}**\n"
-            text += f"🆔 Kod:  `{code}`\n"
+            text += f"🆔 Kod: `{code}`\n"
             text += f"[▶️ Kinoni yuklash](https://t.me/DubKinoBot?start={code})\n"
             text += f"*{'─' * 35}*\n"
             c += 1
@@ -438,17 +438,17 @@ def search_page_switch(call):
         btns = []
         
         if page > 1:
-            btns.append(types.InlineKeyboardButton("⬅️ Orqaga", callback_data=f"search_{search_query}_page_{page-1}"))
+            btns.append(types.InlineKeyboardButton("⬅️ Orqaga", callback_data=f"search_{user_id}_page_{page-1}"))
         
         if page < pages:
-            btns.append(types.InlineKeyboardButton("➡️ Keyingi", callback_data=f"search_{search_query}_page_{page+1}"))
+            btns.append(types.InlineKeyboardButton("➡️ Keyingi", callback_data=f"search_{user_id}_page_{page+1}"))
         
         btns.append(types.InlineKeyboardButton("❌", callback_data="delete_msg_list"))
         
         if btns:
             markup.row(*btns)
         
-        bot.edit_message_text(
+        bot. edit_message_text(
             text,
             chat_id=call.message.chat.id,
             message_id=call.message.message_id,
@@ -456,10 +456,9 @@ def search_page_switch(call):
             reply_markup=markup
         )
         
-    except Exception as e:
+    except Exception as e: 
         print(f"Xatolik:  {e}")
         bot.answer_callback_query(call.id, "❌ Xatolik yuz berdi.")
-
 
 
 
@@ -1177,15 +1176,22 @@ def universal_handler(msg):
         bot.send_message(msg.chat.id, "❌ Kamida 3 ta belgi kiriting!")
     
     elif result[0] == "name_found":
-        # ✅ NOMGA MOS KINOLAR TOPILDI - RO'YXAT CHIQARISH
+    # ✅ NOMGA MOS KINOLAR TOPILDI - RO'YXAT CHIQARISH
         filtered_movies = result[1]
         pages = result[2]
         total = result[3]
         
+        # ⭐ CACHE'GA SAQLANG
+        search_cache[user] = {
+            "query": query,
+            "movies": filtered_movies,
+            "total": total,
+            "pages":  pages
+        }
+        
         # Birinchi sahifani chiqarish
-        page = 1
-        boshlash = (page - 1) * 5
-        end = boshlash + 5
+        boshlash = 0
+        end = 5
         page_movies = filtered_movies[boshlash:end]
         
         text = f"🎬 **Qidirish natijalari:  '{query}'**\n\n"
@@ -1194,9 +1200,9 @@ def universal_handler(msg):
         c = 1
         for m in page_movies:
             code = m['code']
-            text += f"**{c}. {m['name']}**\n"
+            text += f"**{c}.  {m['name']}**\n"
             text += f"🆔 Kod: `{code}`\n"
-            text += f"[▶️ Kinoni yuklash](https://t.me/DubKinoBot?start={code})\n"
+            text += f"[▶️ Kinoni yuklash](https://t.me/DubKinoBot? start={code})\n"
             text += f"*{'─' * 35}*\n"
             c += 1
         
@@ -1205,8 +1211,7 @@ def universal_handler(msg):
         btns = []
         
         if pages > 1:
-            btns.append(types.InlineKeyboardButton("➡️ Keyingi", callback_data=f"search_{query}_page_2"))
-        
+            btns.append(types.InlineKeyboardButton("➡️ Keyingi", callback_data=f"search_{user}_page_2"))
         btns.append(types.InlineKeyboardButton("❌", callback_data="delete_msg_list"))
         
         if btns:
