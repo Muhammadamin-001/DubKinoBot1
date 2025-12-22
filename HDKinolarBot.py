@@ -175,13 +175,18 @@ def save_user(user_id):
 
 
 def search_movie_by_code_or_name(query):
-    """Kino kodi yoki nomiga asosan qidirish"""
-    # Birinchi:  Exact kod bo'yicha qidirish
-    movie_by_code = movies.find_one({"code": query})
+    """Kino kodi yoki nomiga asosan qidirish (minimal 3 belgi)"""
+    query = query.strip()
+    # Birinchi: Exact kod bo'yicha qidirish
+    movie_by_code = movies.find_one({"code":  query})
     
     if movie_by_code: 
         # Kod topildi → to'g'ridan-to'g'ri shu kinoni qaytarish
         return "code_found", [movie_by_code], 1
+    
+    # Agar 3 harfdan kam bo'lsa
+    if len(query) < 3:
+        return "too_short", None, 0
     
     # Ikkinchi: Nom bo'yicha qidirish (partial match)
     search_name = query.lower()
@@ -1168,6 +1173,9 @@ def universal_handler(msg):
         movie = result[1][0]
         send_movie_info(msg.chat.id, movie['code'])
         
+    elif result[0] == "too_short":
+        bot.send_message(msg.chat.id, "❌ Kamida 3 ta belgi kiriting!")
+    
     elif result[0] == "name_found":
         # ✅ NOMGA MOS KINOLAR TOPILDI - RO'YXAT CHIQARISH
         filtered_movies = result[1]
@@ -1175,9 +1183,9 @@ def universal_handler(msg):
         total = result[3]
         
         # Birinchi sahifani chiqarish
-        #page = 1
-        boshlash = 0
-        end = 5
+        page = 1
+        boshlash = (page - 1) * 5
+        end = boshlash + 5
         page_movies = filtered_movies[boshlash:end]
         
         text = f"🎬 **Qidirish natijalari:  '{query}'**\n\n"
