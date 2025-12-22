@@ -64,7 +64,7 @@ def get_movie_page(page=1, per_page=5):
     for m in page_movies:
         # m['code'] va m['name'] MongoDB document ichida bo'lishi kerak
         code = m['code']
-        text += f"**{c}.  {m['name']}**\n"
+        text += f"*{c}.  {m['name']}*\n"
         text += f"🆔 Kod: `{code}`\n"
         text += f"[▶️ Kinoni yuklash](https://t.me/DubKinoBot?start={code})\n"
         text += f"*{'─' * 10}*\n"
@@ -178,7 +178,6 @@ def save_user(user_id):
         users_collection.insert_one({"user_id": user_id})
 
 
-
 def search_movie_by_code_or_name(query):
     """Kino kodi yoki nomiga asosan qidirish (minimal 3 belgi)"""
     query = query.strip()
@@ -215,11 +214,12 @@ def send_movie_info(chat_id, kino_kodi):
         file_id = movie["file_id"]
         code = movie["code"]
         markup = types.InlineKeyboardMarkup()
-        markup.add(types.InlineKeyboardButton("🎬 Boshqa kinolar", url = kanal_link))  # Kanal linki
+        markup.add(types.InlineKeyboardButton("🎬 Kanalimiz", url = kanal_link))  # Kanal linki
         markup.add(types.InlineKeyboardButton("❌", callback_data="delete_movie"))
         # Kino haqida ma'lumot yuboriladi
         caption_text = (
-                f"🎬 {movie['name']} \n*-----------------------*\n"
+                f"🎬 {movie['name']} \n"
+                f"*{'─' * 15}*\n"
                 f"💽 Formati: {movie['formati']}\n"
                 f"🎞 Janri: {movie['genre']}\n"
                 f"🆔 Kod: {code}\n\n"
@@ -364,9 +364,13 @@ def delete_movie_confirm(call):
 @bot.callback_query_handler(func=lambda c: c.data.startswith("page_"))
 def page_switch(call):
     page = int(call.data.split("_")[1])
-
+    all_movies = list(movies.find({}, {"_id": 0}))
+    total = len(all_movies)
     text, pages = get_movie_page(page)
-
+    text = "*🎬 Kinolar ro'yxati*\n\n"
+    text += f"📊 Topildi: {total} ta kino | Sahifa: {page}/{pages}\n\n"
+    
+    
     markup = types.InlineKeyboardMarkup()
     btns = []
 
@@ -388,7 +392,7 @@ def page_switch(call):
 
     try:
         bot.edit_message_text(
-            "🎬 *Kino ro‘yxati:*\n\n" + text,
+            text,
             chat_id=call.message.chat.id,
             message_id=call.message.message_id,
             parse_mode="Markdown",
@@ -431,9 +435,9 @@ def search_page_switch(call):
         c = boshlash + 1
         for m in page_movies:
             code = m['code']
-            text += f"**{c}. {m['name']}**\n"
+            text += f"*•{c}. {m['name']}*\n"
             text += f"🆔 Kod: `{code}`\n"
-            text += f"[▶️ Kinoni yuklash](https://t.me/DubKinoBot?start={code})\n"
+            text += f"*[▶️ Kinoni yuklash]*(https://t.me/DubKinoBot?start={code})\n"
             text += f"*{'─' * 35}*\n"
             c += 1
         
@@ -1061,20 +1065,21 @@ def movie_list(msg):
         #markup.add(types.InlineKeyboardButton("📌 Last", callback_data=f"page_{pages}"))
     # O'chirish tugmasi
     markup.add(types.InlineKeyboardButton("❌", callback_data="delete_msg_list")) 
-    
+    page = 1
     # Kino ro‘yxatini chiqarish
     text = "🎬 *Kinolar ro‘yxati:*\n\n"
-    
     all_movies = list(movies.find({}, {"_id": 0}))
     total = len(all_movies)
-    text += f"📊 Topildi: {total} ta kino\n\n"
+    text, pages = get_movie_page(page)
+    text = "*🎬 Kinolar ro'yxati*\n\n"
+    text += f"📊 Topildi: {total} ta kino | Sahifa: {page}/{pages}\n\n"
     c = 1
     texts=""
     for m in all_movies:
         code = m['code']
-        text += f"**{c}.  {m['name']}**\n"
+        text += f"*•{c}.  {m['name']}*\n"
         text += f"🆔 Kod: `{code}`\n"
-        text += f"[▶️ Kinoni yuklash](https://t.me/DubKinoBot?start={code})\n"
+        text += f"*[▶️ Kinoni yuklash]*(https://t.me/DubKinoBot?start={code})\n"
         text += f"*{'─' * 10}*\n"
         if c == 5:
             texts=text[:]
@@ -1201,19 +1206,20 @@ def universal_handler(msg):
         }
         
         # Birinchi sahifani chiqarish
+        page = 1
         boshlash = 0
         end = 5
         page_movies = filtered_movies[boshlash:end]
         
         text = f"🎬 **Qidirish natijalari: '{query}'**\n\n"
-        text += f"📊 Topildi: {total} ta kino\n\n"
+        text += f"*📊 Topildi: {total} ta kino* | Sahifa: *{page}/{pages}*\n\n"
         
         c = 1
         for m in page_movies:
             code = m['code']
-            text += f"**{c}.  {m['name']}**\n"
+            text += f"*•{c}.  {m['name']}*\n"
             text += f"🆔 Kod: `{code}`\n"
-            text += f"[▶️ Kinoni yuklash](https://t.me/DubKinoBot?start={code})\n"
+            text += f"*[▶️ Kinoni yuklash]*(https://t.me/DubKinoBot?start={code})\n"
             text += f"*{'─' * 35}*\n"
             c += 1
         
