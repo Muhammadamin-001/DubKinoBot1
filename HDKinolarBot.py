@@ -367,8 +367,6 @@ def page_switch(call):
     all_movies = list(movies.find({}, {"_id": 0}))
     total = len(all_movies)
     text, pages = get_movie_page(page)
-    text = "*🎬 Kinolar ro'yxati*\n\n"
-    text += f"📊 Topildi: {total} ta kino | {page}/{pages}\n\n"
     
     
     markup = types.InlineKeyboardMarkup()
@@ -392,6 +390,7 @@ def page_switch(call):
 
     try:
         bot.edit_message_text(
+            f"*🎬 Kinolar ro'yxati*\n\n📊 Topildi: {total} ta kino | {page}/{pages}\n\n",
             text,
             chat_id=call.message.chat.id,
             message_id=call.message.message_id,
