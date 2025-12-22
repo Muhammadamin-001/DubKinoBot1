@@ -64,7 +64,7 @@ def get_movie_page(page=1, per_page=5):
     for m in page_movies:
         # m['code'] va m['name'] MongoDB document ichida bo'lishi kerak
         code = m['code']
-        text += f"*{c}.  {m['name']}*\n"
+        text += f"{c}.  {m['name']}\n"
         text += f"🆔 Kod: `{code}`\n"
         text += f"[▶️ Kinoni yuklash](https://t.me/DubKinoBot?start={code})\n"
         text += f"*{'─' * 10}*\n"
@@ -219,7 +219,7 @@ def send_movie_info(chat_id, kino_kodi):
         # Kino haqida ma'lumot yuboriladi
         caption_text = (
                 f"🎬 {movie['name']} \n"
-                f"*{'─' * 15}*\n"
+                f"{'─' * 15}\n"
                 f"💽 Formati: {movie['formati']}\n"
                 f"🎞 Janri: {movie['genre']}\n"
                 f"🆔 Kod: {code}\n\n"
@@ -435,9 +435,9 @@ def search_page_switch(call):
         c = boshlash + 1
         for m in page_movies:
             code = m['code']
-            text += f"*•{c}. {m['name']}*\n"
+            text += f"{c}. {m['name']}\n"
             text += f"🆔 Kod: `{code}`\n"
-            text += f"*[▶️ Kinoni yuklash]*(https://t.me/DubKinoBot?start={code})\n"
+            text += f"[▶️ Kinoni yuklash](https://t.me/DubKinoBot?start={code})\n"
             text += f"*{'─' * 35}*\n"
             c += 1
         
@@ -1077,9 +1077,9 @@ def movie_list(msg):
     texts=""
     for m in all_movies:
         code = m['code']
-        text += f"*•{c}.  {m['name']}*\n"
+        text += f"{c}.  {m['name']}\n"
         text += f"🆔 Kod: `{code}`\n"
-        text += f"*[▶️ Kinoni yuklash]*(https://t.me/DubKinoBot?start={code})\n"
+        text += f"[▶️ Kinoni yuklash](https://t.me/DubKinoBot?start={code})\n"
         text += f"*{'─' * 10}*\n"
         if c == 5:
             texts=text[:]
@@ -1212,14 +1212,14 @@ def universal_handler(msg):
         page_movies = filtered_movies[boshlash:end]
         
         text = f"🎬 **Qidirish natijalari: '{query}'**\n\n"
-        text += f"*📊 Topildi: {total} ta kino* | Sahifa: *{page}/{pages}*\n\n"
+        text += f"📊 Topildi: {total} ta kino | Sahifa: {page}/{pages}\n\n"
         
         c = 1
         for m in page_movies:
             code = m['code']
-            text += f"*•{c}.  {m['name']}*\n"
+            text += f"{c}.  {m['name']}\n"
             text += f"🆔 Kod: `{code}`\n"
-            text += f"*[▶️ Kinoni yuklash]*(https://t.me/DubKinoBot?start={code})\n"
+            text += f"[▶️ Kinoni yuklash](https://t.me/DubKinoBot?start={code})\n"
             text += f"*{'─' * 35}*\n"
             c += 1
         
