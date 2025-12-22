@@ -67,7 +67,7 @@ def get_movie_page(page=1, per_page=5):
         text += f"**{c}.  {m['name']}**\n"
         text += f"🆔 Kod: `{code}`\n"
         text += f"[▶️ Kinoni yuklash](https://t.me/DubKinoBot?start={code})\n"
-        text += f"*{'─' * 35}*\n"
+        text += f"*{'─' * 10}*\n"
         c += 1
 
     return text, pages
@@ -557,7 +557,7 @@ def start(msg):
 
     # Oddiy boshlash
     
-    bot.send_message(msg. chat.id, "🎬 Kino kodini kiriting:\n\t(Yoki nomini)")
+    bot.send_message(msg. chat.id, "🆔 Kino kodini kiriting:\n\t(🔍 Yoki kino nomini:)")
     
 
 
@@ -805,7 +805,7 @@ def back_panel(msg):
         return
     
     state.pop(str(msg.from_user.id), None)
-    bot.send_message(msg.chat.id, "🎬 Kino kodini kiriting:", reply_markup=types.ReplyKeyboardRemove())
+    bot.send_message(msg.chat.id, "🆔 Kino kodini kiriting:\n\t(🔍 Yoki kino nomini:)", reply_markup=types.ReplyKeyboardRemove())
     
 # --- USER uchun ORTGA tugmasi (ADMIN bo'lmaganlar uchun) ---
 @bot.message_handler(func=lambda m: m.text == "🔙")
@@ -816,7 +816,7 @@ def back_user(msg):
     state.pop(str(msg.from_user.id), None)
     bot.send_message(
         msg.chat.id,
-        "🎬 Kino kodini kiriting:",
+        "🆔 Kino kodini kiriting:\n\t(🔍 Yoki kino nomini:)",
         reply_markup=types.ReplyKeyboardRemove()
     )
 
@@ -1072,8 +1072,9 @@ def movie_list(msg):
         text += f"**{c}.  {m['name']}**\n"
         text += f"🆔 Kod: `{code}`\n"
         text += f"[▶️ Kinoni yuklash](https://t.me/DubKinoBot?start={code})\n"
-        text += f"*{'─' * 35}*\n"
-        
+        text += f"*{'─' * 10}*\n"
+        if c == 5:
+            texts=text[:]
         c += 1
     text=texts
     bot.send_message(msg.chat.id, text, parse_mode="Markdown", reply_markup=markup)
