@@ -469,7 +469,7 @@ def panel(msg):
     if (str(msg.from_user.id) == ADMIN_ID or is_admin(msg.from_user.id)):
         admin_panel(msg.chat.id)
     else:
-        bot.send_message(msg.chat.id, "❌ Diqqat! Bu admin uchun.\n# /kodlar komandasi orqali kinolar ro'yxatini ko'ra olasiz !")
+        bot.send_message(msg.chat.id, "❌ Diqqat! Bu faqat admin uchun.\n#Siz /kodlar komandasi orqali, Botdan to'liq foydalaning !")
         
 @bot.message_handler(commands=['kodlar'])
 def kodlar(msg):
@@ -732,7 +732,7 @@ def catch_video(msg):
     user = str(msg.from_user.id)
     file_id = msg.video.file_id
     state[user] = ["waiting_for_code", file_id]
-    bot.send_message(msg.chat.id, "📌 Kino uchun kod kiriting:")
+    bot.send_message(msg.chat.id, "🆔 Kino uchun kod kiriting:")
     
 # ======== KINO NOMI ========
 @bot.message_handler(func=lambda msg: str(msg.from_user.id) in state and state[str(msg.from_user.id)][0] == "waiting_for_code")
@@ -953,7 +953,7 @@ def movie_list(msg):
         markup.add(types.InlineKeyboardButton("➡️ Next", callback_data="page_2"))
         #markup.add(types.InlineKeyboardButton("📌 Last", callback_data=f"page_{pages}"))
     # O'chirish tugmasi
-    markup.add(types.InlineKeyboardButton("❌", callback_data="delete_movies_list")) 
+    markup.add(types.InlineKeyboardButton("❌", callback_data="delete_msg_list")) 
     
     # Kino ro‘yxatini chiqarish
     text = "🎬 *Kino ro‘yxati:*\n\n"
