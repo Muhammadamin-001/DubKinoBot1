@@ -1063,8 +1063,11 @@ def movie_list(msg):
     markup.add(types.InlineKeyboardButton("❌", callback_data="delete_msg_list")) 
     
     # Kino ro‘yxatini chiqarish
-    text = "🎬 *Kino ro‘yxati:*\n\n"
+    text = "🎬 *Kinolar ro‘yxati:*\n\n"
+    
     all_movies = list(movies.find({}, {"_id": 0}))
+    total = len(all_movies)
+    text += f"📊 Topildi: {total} ta kino\n\n"
     c = 1
     texts=""
     for m in all_movies:
