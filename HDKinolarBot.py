@@ -256,7 +256,7 @@ def check(call):
         
         bot.send_message(
             chat_id, 
-            "✔ Obuna tasdiqlandi! ✅\n\n🎬 Kino kodini yuboring:"
+            "✔ Obuna tasdiqlandi! ✅\n\n🎬 Kino kodini yuboring:\n\t(🔍 Yoki kino nomini:)"
         )
         bot.answer_callback_query(call.id, "✅ Tasdiqlandi!")
     
