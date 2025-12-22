@@ -40,7 +40,7 @@ album_buffer = {}
 album_sending = {}
 
 movie_pages = {}
-
+user_pages = {}  # ← QO'SHILDI:  Qidirish ma'lumotlarini saqlash uchun
 
 # === is_admin funksiyasi ===
 def is_admin(user_id):
@@ -161,7 +161,7 @@ def admin_panel(chat_id):
 
 def user_panel(chat_id):
     btn = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    btn.add("📂 Film kodlari", "📥 Serillar")
+    btn.add("📂 Film kodlari", "📥 Seriallar")
     btn.add("🎁 Donat", "📊 Top 10")
     btn.add("🔙")
     bot.send_message(chat_id, "🔐 Kino kodlarini olish", reply_markup=btn)
@@ -171,6 +171,33 @@ def save_user(user_id):
     # Agar user bazada mavjud bo'lmasa qo'shadi
     if not users_collection.find_one({"user_id": user_id}):
         users_collection.insert_one({"user_id": user_id})
+
+
+
+def search_movie_by_code_or_name(query):
+    """Kino kodi yoki nomiga asosan qidirish"""
+    # Birinchi:  Exact kod bo'yicha qidirish
+    movie_by_code = movies. find_one({"code": query})
+    
+    if movie_by_code: 
+        # Kod topildi → to'g'ridan-to'g'ri shu kinoni qaytarish
+        return "code_found", [movie_by_code], 1
+    
+    # Ikkinchi: Nom bo'yicha qidirish (partial match)
+    search_name = query.lower()
+    all_movies = list(movies.find({}, {"_id": 0}))
+    filtered_movies = [m for m in all_movies if search_name in m['name'].lower()]
+    
+    if filtered_movies:
+        # Nomga mos kinolar topildi
+        total = len(filtered_movies)
+        pages = (total - 1) // 5 + 1
+        return "name_found", filtered_movies, pages, total
+    
+    # Hech narsa topilmadi
+    return "not_found", None, 0
+
+
 
 def send_movie_info(chat_id, kino_kodi):
     movie = movies.find_one({"code": kino_kodi})  # Kino kodi bo'yicha ma'lumot
@@ -198,7 +225,7 @@ def send_movie_info(chat_id, kino_kodi):
     else:
         bot.send_message(chat_id, "❌ Bunday kod bo‘yicha kino topilmadi.")
         
- 
+
 
 
 
@@ -359,6 +386,78 @@ def page_switch(call):
         )
     except:
         pass
+
+
+
+@bot.callback_query_handler(func=lambda c: c.data.startswith("search_"))
+def search_page_switch(call):
+    """Qidirish natijalari sahifalarini chiqarish"""
+    try:
+        # "search_nomiovolov_page_2" → ['search', 'nomiovolov', 'page_2']
+        parts = call.data.split("_", 1)  # ["search", "nomiovolov_page_2"]
+        remaining = parts[1]. rsplit("_", 1)  # ["nomiovolov", "page_2"]
+        search_query = remaining[0]
+        page = int(remaining[1])
+        
+        # Qidirish natijalarini qayta hisoblash
+        result = search_movie_by_code_or_name(search_query)
+        
+        if result[0] != "name_found":
+            bot.answer_callback_query(call.id, "❌ Kino topilmadi.")
+            return
+        
+        filtered_movies = result[1]
+        pages = result[2]
+        total = result[3]
+        
+        # Sahifa ma'lumotlarini hisoblash
+        boshlash = (page - 1) * 5
+        end = boshlash + 5
+        page_movies = filtered_movies[boshlash:end]
+        
+        # Tekst yaratish
+        text = f"🎬 **Qidirish natijalari: '{search_query}'**\n\n"
+        text += f"📊 Topildi: {total} ta kino | Sahifa: {page}/{pages}\n\n"
+        
+        c = boshlash + 1
+        for m in page_movies:
+            code = m['code']
+            text += f"**{c}. {m['name']}**\n"
+            text += f"🆔 Kod:  `{code}`\n"
+            text += f"[▶️ Kinoni yuklash](https://t.me/DubKinoBot?start={code})\n"
+            text += f"*{'─' * 35}*\n"
+            c += 1
+        
+        # Tugmalar
+        markup = types.InlineKeyboardMarkup()
+        btns = []
+        
+        if page > 1:
+            btns.append(types.InlineKeyboardButton("⬅️ Orqaga", callback_data=f"search_{search_query}_page_{page-1}"))
+        
+        if page < pages:
+            btns.append(types.InlineKeyboardButton("➡️ Keyingi", callback_data=f"search_{search_query}_page_{page+1}"))
+        
+        btns.append(types.InlineKeyboardButton("❌", callback_data="delete_msg_list"))
+        
+        if btns:
+            markup.row(*btns)
+        
+        bot.edit_message_text(
+            text,
+            chat_id=call.message.chat.id,
+            message_id=call.message.message_id,
+            parse_mode="Markdown",
+            reply_markup=markup
+        )
+        
+    except Exception as e:
+        print(f"Xatolik:  {e}")
+        bot.answer_callback_query(call.id, "❌ Xatolik yuz berdi.")
+
+
+
+
 
 # O'chirish tugmasi uchun callback handler
 @bot.callback_query_handler(func=lambda call: call.data == "delete_msg_list")
@@ -1048,18 +1147,77 @@ def universal_handler(msg):
         return
 
 
-    # --- 3) Oddiy foydalanuvchi kino kodi so‘rayapti ---
+
+    # --- 3) Oddiy foydalanuvchi kino kodi yoki nomi so'rayapti ---
     if not check_sub(user):
         # Obunani tekshirish
         upload_mdb(msg)
-            
-        #bot.send_message(msg.chat.id, "❗ Avval kanalga obuna bo‘ling.")
         return
     
-    movie_code = msg.text.strip()
-    send_movie_info(msg.chat.id, movie_code)
+    query = msg.text.strip()
+    
+    if not query:
+        bot.send_message(msg.chat.id, "❌ Kino kodi yoki nomini kiriting!")
+        return
+    
+    # ===== QIDIRISH =====
+    result = search_movie_by_code_or_name(query)
+    
+    if result[0] == "code_found":
+        # ✅ KOD TOPILDI - To'g'ridan-to'g'ri kinoni yuborish
+        movie = result[1][0]
+        send_movie_info(msg.chat.id, movie['code'])
+        
+    elif result[0] == "name_found":
+        # ✅ NOMGA MOS KINOLAR TOPILDI - RO'YXAT CHIQARISH
+        filtered_movies = result[1]
+        pages = result[2]
+        total = result[3]
+        
+        # Birinchi sahifani chiqarish
+        #page = 1
+        boshlash = 0
+        end = 5
+        page_movies = filtered_movies[boshlash:end]
+        
+        text = f"🎬 **Qidirish natijalari:  '{query}'**\n\n"
+        text += f"📊 Topildi: {total} ta kino\n\n"
+        
+        c = 1
+        for m in page_movies:
+            code = m['code']
+            text += f"**{c}. {m['name']}**\n"
+            text += f"🆔 Kod: `{code}`\n"
+            text += f"[▶️ Kinoni yuklash](https://t.me/DubKinoBot?start={code})\n"
+            text += f"*{'─' * 35}*\n"
+            c += 1
+        
+        # Tugmalar
+        markup = types.InlineKeyboardMarkup()
+        btns = []
+        
+        if pages > 1:
+            btns.append(types.InlineKeyboardButton("➡️ Keyingi", callback_data=f"search_{query}_page_2"))
+        
+        btns.append(types.InlineKeyboardButton("❌", callback_data="delete_msg_list"))
+        
+        if btns:
+            markup.row(*btns)
+        
+        bot.send_message(msg.chat.id, text, parse_mode="Markdown", reply_markup=markup)
+        user_pages[user] = (query, pages)  # Qidirish ma'lumotini saqlash
+    
+    else:
+        # ❌ TOPILMADI
+        bot.send_message(
+            msg.chat.id, 
+            f"❌ '{query}' bo'yicha kino topilmadi.\n\n"
+            f"💡 Maslahat: To'liq nomi yoki kodni kiriting."
+        )
+        
     
     
+
 
 @app.route('/' + TOKEN, methods=['POST'])
 def webhook():
