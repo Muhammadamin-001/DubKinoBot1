@@ -177,7 +177,7 @@ def save_user(user_id):
 def search_movie_by_code_or_name(query):
     """Kino kodi yoki nomiga asosan qidirish"""
     # Birinchi:  Exact kod bo'yicha qidirish
-    movie_by_code = movies. find_one({"code": query})
+    movie_by_code = movies.find_one({"code": query})
     
     if movie_by_code: 
         # Kod topildi → to'g'ridan-to'g'ri shu kinoni qaytarish
@@ -549,7 +549,7 @@ def start(msg):
 
     # Oddiy boshlash
     
-    bot.send_message(msg. chat.id, "🎬 Kino kodini kiriting:")
+    bot.send_message(msg. chat.id, "🎬 Kino kodini kiriting:\n\t(Yoki nomini)")
     
 
 
