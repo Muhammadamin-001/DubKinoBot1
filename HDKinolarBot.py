@@ -63,7 +63,11 @@ def get_movie_page(page=1, per_page=10):
     c = boshlash + 1
     for m in page_movies:
         # m['code'] va m['name'] MongoDB document ichida bo'lishi kerak
-        text += f"• {c}) {m['name']} \n*-----------------------------*\n #🆔-Kodi: {m['code']}\n\n"
+        code = m['code']
+        text += f"**{c}.  {m['name']}**\n"
+        text += f"🆔 Kod: `{code}`\n"
+        text += f"[▶️ Kinoni yuklash](https://t.me/DubKinoBot?start={code})\n"
+        text += f"*{'─' * 35}*\n"
         c += 1
 
     return text, pages
@@ -1064,10 +1068,12 @@ def movie_list(msg):
     c = 1
     texts=""
     for m in all_movies:
-        text += f"• {c}) {m['name']} \n*-----------------------------*\n #🆔-Kodi: {m['code']}\n\n"
+        code = m['code']
+        text += f"**{c}.  {m['name']}**\n"
+        text += f"🆔 Kod: `{code}`\n"
+        text += f"[▶️ Kinoni yuklash](https://t.me/DubKinoBot?start={code})\n"
+        text += f"*{'─' * 35}*\n"
         
-        if c == 10:
-            texts=text[:]
         c += 1
     text=texts
     bot.send_message(msg.chat.id, text, parse_mode="Markdown", reply_markup=markup)
