@@ -390,13 +390,12 @@ def page_switch(call):
 
     try:
         bot.edit_message_text(
-            "*🎬 Kinolar ro'yxati*\n\n",
-            text,
+            "🎬 *Kino ro‘yxati:*\n\n" + text,
             chat_id=call.message.chat.id,
             message_id=call.message.message_id,
             parse_mode="Markdown",
             reply_markup=markup
-        )
+            )
     except:
         pass
 
