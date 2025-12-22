@@ -368,7 +368,7 @@ def page_switch(call):
     total = len(all_movies)
     text, pages = get_movie_page(page)
     text = "*🎬 Kinolar ro'yxati*\n\n"
-    text += f"📊 Topildi: {total} ta kino | Sahifa: {page}/{pages}\n\n"
+    text += f"📊 Topildi: {total} ta kino | {page}/{pages}\n\n"
     
     
     markup = types.InlineKeyboardMarkup()
