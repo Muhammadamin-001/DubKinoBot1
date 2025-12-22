@@ -1175,18 +1175,19 @@ def universal_handler(msg):
     elif result[0] == "too_short":
         bot.send_message(msg.chat.id, "❌ Kamida 3 ta belgi kiriting!")
     
-    elif result[0] == "name_found":
+    elif result[0] == "name_found": 
     # ✅ NOMGA MOS KINOLAR TOPILDI - RO'YXAT CHIQARISH
         filtered_movies = result[1]
         pages = result[2]
         total = result[3]
         
-        # ⭐ CACHE'GA SAQLANG
-        search_cache[user] = {
+        # ⭐ CACHE'GA SAQLANG - INT SIFATIDA
+        user_int = int(user)  # ← QO'SHILDI
+        search_cache[user_int] = {
             "query": query,
-            "movies": filtered_movies,
+            "movies":  filtered_movies,
             "total": total,
-            "pages":  pages
+            "pages":   pages
         }
         
         # Birinchi sahifani chiqarish
@@ -1194,7 +1195,7 @@ def universal_handler(msg):
         end = 5
         page_movies = filtered_movies[boshlash:end]
         
-        text = f"🎬 **Qidirish natijalari:  '{query}'**\n\n"
+        text = f"🎬 **Qidirish natijalari: '{query}'**\n\n"
         text += f"📊 Topildi: {total} ta kino\n\n"
         
         c = 1
@@ -1202,7 +1203,7 @@ def universal_handler(msg):
             code = m['code']
             text += f"**{c}.  {m['name']}**\n"
             text += f"🆔 Kod: `{code}`\n"
-            text += f"[▶️ Kinoni yuklash](https://t.me/DubKinoBot? start={code})\n"
+            text += f"[▶️ Kinoni yuklash](https://t.me/DubKinoBot?start={code})\n"
             text += f"*{'─' * 35}*\n"
             c += 1
         
@@ -1211,7 +1212,8 @@ def universal_handler(msg):
         btns = []
         
         if pages > 1:
-            btns.append(types.InlineKeyboardButton("➡️ Keyingi", callback_data=f"search_{user}_page_2"))
+            btns.append(types.InlineKeyboardButton("➡️ Keyingi", callback_data=f"search_{user_int}_page_2"))  # ← INT ISHLATISH
+        
         btns.append(types.InlineKeyboardButton("❌", callback_data="delete_msg_list"))
         
         if btns:
