@@ -11,7 +11,6 @@ ADMIN_ID = os.getenv("ADMIN_ID")
 WEBHOOK_URL = os.getenv("WEBHOOK_URL")
 MONGO_URI =os.getenv("MONGO_URI")
 
-#CHANNEL_ID = [-1003359940811]
 bot = telebot.TeleBot(TOKEN)
 
 kanal_link="https://t.me/DubHDkinolar"
@@ -63,7 +62,7 @@ def get_movie_page(page=1, per_page=10):
     c = boshlash + 1
     for m in page_movies:
         # m['code'] va m['name'] MongoDB document ichida bo'lishi kerak
-        text += f"• {c}) {m['name']} ----------------------------- #--Kodi: {m['code']}\n\n"
+        text += f"• {c}) {m['name']} \n*-----------------------------*\n #🆔-Kodi: {m['code']}\n\n"
         c += 1
 
     return text, pages
@@ -156,13 +155,15 @@ def admin_panel(chat_id):
     btn = types.ReplyKeyboardMarkup(resize_keyboard=True)
     btn.add("🎬 Kino yuklash", "📂 Film kodlari")
     btn.add("❌ Film o'chirish", "♻️ Statistika")
-    btn.add("🏷 Super Admin", "⏻ Exit")
+    btn.add("💼 Super Admin", "⏻ Exit")
     bot.send_message(chat_id, "🔐 Admin Paneli", reply_markup=btn)
 
 
 def user_panel(chat_id):
     btn = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    btn.add("📂 Film kodlari", "🔙")
+    btn.add("📂 Film kodlari", "📥 Serillar")
+    btn.add("🎁 Donat", "📊 Top 10")
+    btn.add("🔙")
     bot.send_message(chat_id, "🔐 Kino kodlarini olish", reply_markup=btn)
     
 # ====================== SAVE USER ================================
@@ -181,7 +182,7 @@ def send_movie_info(chat_id, kino_kodi):
         markup.add(types.InlineKeyboardButton("❌", callback_data="delete_movie"))
         # Kino haqida ma'lumot yuboriladi
         caption_text = (
-                f"🎬 {movie['name']} \n-----------------------\n"
+                f"🎬 {movie['name']} \n*-----------------------*\n"
                 f"💽 Formati: {movie['formati']}\n"
                 f"🎞 Janri: {movie['genre']}\n"
                 f"🆔 Kod: {code}\n\n"
@@ -343,7 +344,7 @@ def page_switch(call):
         btns.append(types.InlineKeyboardButton("➡️ Next", callback_data=f"page_{page+1}"))
         
     # O'chirish tugmasi qo'shish
-    btns.append(types.InlineKeyboardButton("❌", callback_data="delete_movies_list"))
+    btns.append(types.InlineKeyboardButton("❌", callback_data="delete_msg_list"))
        
     if btns:
         markup.row(*btns)
@@ -360,7 +361,7 @@ def page_switch(call):
         pass
 
 # O'chirish tugmasi uchun callback handler
-@bot.callback_query_handler(func=lambda call: call.data == "delete_movies_list")
+@bot.callback_query_handler(func=lambda call: call.data == "delete_msg_list")
 def delete_movies_list(call):
     try:
         bot.delete_message(call.message.chat.id, call.message.message_id)
@@ -412,27 +413,7 @@ def delete_stats_message(call):
     except Exception as e:
         print(f"Xatolik:  {e}")
         bot.answer_callback_query(call.id, "❌ Xabar o'chirilmadi.")
-        
-        
-@bot.callback_query_handler(func=lambda call: call.data == "delete_channels_back")
-def delete_channels_back(call):
-    try:
-        bot.delete_message(call.message.chat.id, call.message.message_id)
-        bot.answer_callback_query(call.id, "✅ Xabar o'chirildi!")
-    except Exception as e:
-        print(f"Xatolik:  {e}")
-        bot.answer_callback_query(call.id, "❌ Xabar o'chirilmadi.")
-        
 
-
-@bot.callback_query_handler(func=lambda call: call.data == "delete_channels_list")
-def delete_channels_list(call):
-    try:
-        bot.delete_message(call.message.chat.id, call.message.message_id)
-        bot.answer_callback_query(call.id, "✅ Ro'yxat o'chirildi!")
-    except Exception as e:
-        print(f"Xatolik:  {e}")
-        bot.answer_callback_query(call.id, "❌ Ro'yxat o'chirilmadi.")
 
 
 
@@ -517,7 +498,7 @@ def back(msg):
     # Super Admin panelidan kelgan bo'lsa → Admin panelga qaytarish
     admin_panel(msg.chat.id)
 
-@bot.message_handler(func=lambda msg: msg.text == "🏷 Super Admin")
+@bot.message_handler(func=lambda msg: msg.text == "💼 Super Admin")
 def open_super_admin_panel(msg):
     # Faqat Super Admin uchun
     if str(msg.from_user.id) != ADMIN_ID:
@@ -534,7 +515,7 @@ def add_channel(msg):
         bot.send_message(msg.chat.id, "❌ Bu buyruq siz uchun emas.")
         return
     
-    bot.send_message(msg.chat.id, "📺 Kanal linkini kiriting (masalan: https://t.me/channel_name yoki @channel_name):\n⚠️ Bot kanalga admin bo'lishi shart.")
+    bot.send_message(msg.chat.id, "📺 Kanal linkini kiriting (masalan: https://t.me/channel_name yoki @channel_name):\n\n⚠️ Bot kanalga admin bo'lishi shart.")
     state[str(msg.from_user.id)] = ["waiting_for_channel_link"]
 
 @bot.message_handler(func=lambda msg: str(msg.from_user.id) in state 
@@ -604,7 +585,7 @@ def delete_channel_menu(msg):
     for idx, channel in enumerate(channels):
         btn_text = f"❌ {channel['link']}"
         markup.add(types.InlineKeyboardButton(btn_text, callback_data=f"delete_channel_{idx}"))
-    markup.add(types.InlineKeyboardButton("❌", callback_data="delete_channels_back"))
+    markup.add(types.InlineKeyboardButton("❌", callback_data = "delete_stats"))
     bot.send_message(msg.chat.id, "📺 O'chirmoqchi bo'lgan kanalni tanlang:", reply_markup=markup)
 
 
@@ -629,7 +610,7 @@ def show_channels(msg):
         text += f"{idx}. {channel['link']}\n"
     
     
-    markup.add(types.InlineKeyboardButton("❌", callback_data="delete_channels_list"))
+    markup.add(types.InlineKeyboardButton("❌", callback_data="delete_msg_list"))
     bot.send_message(msg.chat.id, text, parse_mode="Markdown", reply_markup=markup)
 
 
@@ -833,9 +814,9 @@ def movie_url(msg):
 @bot.message_handler(func=lambda msg: msg.text == "📢 Xabar yuborish")
 def ask_broadcast(msg):
     if not str(msg.from_user.id) == ADMIN_ID:
-        bot.send_message(msg.chat.id, "📢 Sizga xabar yuborish uchun ruxsat berilmagan!!!")
+        bot.send_message(msg.chat.id, "⚠️ Sizga xabar yuborish uchun ruxsat berilmagan!!!")
         return
-    bot.send_message(msg.chat.id, "📢 Yuboriladigan xabarni kiriting:")
+    bot.send_message(msg.chat.id, "📝 Yuboriladigan xabarni kiriting:")
     state[str(msg.from_user.id)] = ["waiting_for_broadcast"]
 
 #XabarBoshlandi:
@@ -980,7 +961,7 @@ def movie_list(msg):
     c = 1
     texts=""
     for m in all_movies:
-        text += f"• {c}) {m['name']} ----------------------------- #--Kodi: {m['code']}\n\n"
+        text += f"• {c}) {m['name']} \n*-----------------------------*\n #🆔-Kodi: {m['code']}\n\n"
         
         if c == 10:
             texts=text[:]
@@ -1077,6 +1058,7 @@ def universal_handler(msg):
     
     movie_code = msg.text.strip()
     send_movie_info(msg.chat.id, movie_code)
+    
     
 
 @app.route('/' + TOKEN, methods=['POST'])
