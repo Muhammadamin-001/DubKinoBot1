@@ -469,7 +469,7 @@ def panel(msg):
     if (str(msg.from_user.id) == ADMIN_ID or is_admin(msg.from_user.id)):
         admin_panel(msg.chat.id)
     else:
-        bot.send_message(msg.chat.id, "❌ Diqqat! Bu faqat admin uchun.\n#Siz /kodlar komandasi orqali, Botdan to'liq foydalaning !")
+        bot.send_message(msg.chat.id, "❌ Diqqat! Bu faqat admin uchun.\n# /kodlar komandasi orqali #bot dan to'liq foydalaning !")
         
 @bot.message_handler(commands=['kodlar'])
 def kodlar(msg):
