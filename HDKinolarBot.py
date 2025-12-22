@@ -1186,7 +1186,7 @@ def universal_handler(msg):
         send_movie_info(msg.chat.id, movie['code'])
         
     elif result[0] == "too_short":
-        bot.send_message(msg.chat.id, "❌ Kamida 3 ta belgi kiriting!")
+        bot.send_message(msg.chat.id, "❌ Kamida 3 ta belgi kiriting!\n\t(🔍 Kino nomini bot topishi kerak.)")
     
     elif result[0] == "name_found": 
     # ✅ NOMGA MOS KINOLAR TOPILDI - RO'YXAT CHIQARISH
