@@ -25,7 +25,7 @@ import time
 
 # =================== SERIAL YUKLASH MENYU ===================
 
-@bot.message_handler(func=lambda msg: msg.text == "🎞 Serial yuklash")
+@bot.message_handler(func=lambda msg: msg.text == "upload_type_serial")
 def upload_serial_menu(msg):
     """Serial yuklash asosiy menyu"""
     user_id = msg.from_user.id
@@ -423,7 +423,7 @@ def save_episode_video(msg):
 
 # =================== SERIAL O'CHIRISH MENYU ===================
 
-@bot.message_handler(func=lambda msg:  msg.text == "🎞 Serial o'chirish")
+@bot.message_handler(func=lambda msg:  msg.text == "delete_type_serial")
 def delete_serial_menu(msg):
     """Serial o'chirish menyusi"""
     user_id = msg.from_user.id
