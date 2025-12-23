@@ -2,16 +2,31 @@ import telebot
 from telebot import types
 import time
 from flask import Flask, request
-from pymongo import MongoClient
+#from pymongo import MongoClient
 import os
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
+# HDKinolarBot.py - Bosh fayl
 
-TOKEN = os.getenv("TOKEN")
-ADMIN_ID = os.getenv("ADMIN_ID")
-WEBHOOK_URL = os.getenv("WEBHOOK_URL")
-MONGO_URI =os.getenv("MONGO_URI")
+# 🔧 Konfiguratsiya va Utils
+from config.settings import TOKEN, ADMIN_ID, WEBHOOK_URL, MONGO_URI
+from utils.db_config import bot, db, state, users_collection, movies, serials
+from utils.admin_utils import admin_panel, super_admin_panel, user_panel
+from utils.menu_builder import create_inline_buttons
 
-bot = telebot.TeleBot(TOKEN)
+#🎬 Serial va Kino modullar
+from serial import serial_handler
+from serial import serial_user
+from serial import serial_db
+from movies import movie_handler
+from movies import movie_db
+
+# ...  qolgan asosiy bot kodi ...
+# TOKEN = os.getenv("TOKEN")
+# ADMIN_ID = os.getenv("ADMIN_ID")
+# WEBHOOK_URL = os.getenv("WEBHOOK_URL")
+# MONGO_URI =os.getenv("MONGO_URI")
+
+# bot = telebot.TeleBot(TOKEN)
 
 kanal_link="https://t.me/DubHDkinolar"
 
@@ -23,16 +38,16 @@ for varname in ["TOKEN", "ADMIN_ID", "WEBHOOK_URL", "MONGO_URI"]:
         print(f"ERROR: {varname} is not set!")
 
 
-client = MongoClient(MONGO_URI)
-db = client["TelegramBot"]   # baza nomi
-users_collection = db["users"]       # userlar collection
-movies = db["movies"]     # kinolar collection
+# client = MongoClient(MONGO_URI)
+# db = client["TelegramBot"]   # baza nomi
+# users_collection = db["users"]       # userlar collection
+# movies = db["movies"]     # kinolar collection
 admins_collection = db["admins"]  # Adminlarni saqlash kolleksiyasi
 channels_collection = db["channels"]  # Kanallar kolleksiyasi
 
 
 # =================== STATE (HOLAT) ============================
-state = {}  
+#state = {}  
 
 user_clicks = {}  # {user_id: bosish_soni}
 
@@ -146,30 +161,30 @@ def upload_mdb(msg):
 # =================== ADMIN PANEL =============================
 
 
-def super_admin_panel(chat_id):
-    """Super Admin uchun maxsus panel"""
-    btn = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    btn.add("📢 Xabar yuborish", "🏷 Admin tayinlash")
-    btn.add("🚫 Adminni olish", "📺 Kanal qo'shish")
-    btn.add("❌ Kanal o'chirish", "📋 Kanallar ro'yxati")  # Ixtiyoriy
-    btn. add("🔙 Ortga")
-    bot.send_message(chat_id, "👑 Super Admin Paneli", reply_markup=btn)
+# def super_admin_panel(chat_id):
+#     """Super Admin uchun maxsus panel"""
+#     btn = types.ReplyKeyboardMarkup(resize_keyboard=True)
+#     btn.add("📢 Xabar yuborish", "🏷 Admin tayinlash")
+#     btn.add("🚫 Adminni olish", "📺 Kanal qo'shish")
+#     btn.add("❌ Kanal o'chirish", "📋 Kanallar ro'yxati")  # Ixtiyoriy
+#     btn. add("🔙 Ortga")
+#     bot.send_message(chat_id, "👑 Super Admin Paneli", reply_markup=btn)
 
-def admin_panel(chat_id):
-    """Admin Panel (Oddiy Admin va Super Admin uchun)"""
-    btn = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    btn.add("🎬 Kino yuklash", "📂 Film kodlari")
-    btn.add("❌ Film o'chirish", "♻️ Statistika")
-    btn.add("💼 Super Admin", "⏻ Exit")
-    bot.send_message(chat_id, "🔐 Admin Paneli", reply_markup=btn)
+# def admin_panel(chat_id):
+#     """Admin Panel (Oddiy Admin va Super Admin uchun)"""
+#     btn = types.ReplyKeyboardMarkup(resize_keyboard=True)
+#     btn.add("🎬 Kino yuklash", "📂 Film kodlari")
+#     btn.add("❌ Film o'chirish", "♻️ Statistika")
+#     btn.add("💼 Super Admin", "⏻ Exit")
+#     bot.send_message(chat_id, "🔐 Admin Paneli", reply_markup=btn)
 
 
-def user_panel(chat_id):
-    btn = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    btn.add("📂 Film kodlari", "📥 Seriallar")
-    btn.add("🎁 Donat", "📊 Top 10")
-    btn.add("🔙")
-    bot.send_message(chat_id, "🔐 Kino kodlarini olish", reply_markup=btn)
+# def user_panel(chat_id):
+#     btn = types.ReplyKeyboardMarkup(resize_keyboard=True)
+#     btn.add("📂 Film kodlari", "📥 Seriallar")
+#     btn.add("🎁 Donat", "📊 Top 10")
+#     btn.add("🔙")
+#     bot.send_message(chat_id, "🔐 Kino kodlarini olish", reply_markup=btn)
     
 # ====================== SAVE USER ================================
 def save_user(user_id):
