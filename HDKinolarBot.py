@@ -25,33 +25,31 @@ from utils.admin_utils import (
 from utils.menu_builder import create_inline_buttons
 
 # 🎞️ Serial va Kino modullar
-from serial. serial_handler import (
+from serial.serial_handler import (
     upload_serial_menu, delete_serial_menu
 )
 from serial.serial_user import show_serial_for_user
-from movies.movie_handler import *
-from movies.movie_db import *
+from movies.movie_handler import send_movie_info, upload_movie, catch_video, movie_code, movie_name, movie_genre, movie_url
+from movies.movie_db import get_movie, get_all_movies
 
 # Flask setup
 app = Flask(__name__)
 
 kanal_link = "https://t.me/DubHDkinolar"
 
+# =================== STATE (HOLAT) - ✅ TUZATILGAN ===================
 
+state = {}  # ✅ UNCOMMENTED
 
-# =================== STATE (HOLAT) ============================
-#state = {}  
-
-user_clicks = {}  # {user_id: bosish_soni}
-
-# album_buffer = {}
-# album_sending = {}
+user_clicks = {}
+album_buffer = {}  # ✅ UNCOMMENTED
+album_sending = {}  # ✅ UNCOMMENTED
 
 movie_pages = {}
-user_pages = {}  # ← QO'SHILDI:  Qidirish ma'lumotlarini saqlash uchun
-# search_cache = {} # Qidiruv natijalarini
+user_pages = {}
+search_cache = {}  # ✅ UNCOMMENTED
 
-
+# ...  QOLGAN KOD ... 
 
 
 
@@ -312,7 +310,7 @@ def page_switch(call):
         end = boshlash + per_page
         page_movies = all_movies[boshlash:end]
         
-        text = f"*🎬 Kinolar ro'yxati*\n\n"
+        text = "*🎬 Kinolar ro'yxati*\n\n"
         text += f"📊 Topildi: {total} ta kino | Sahifa: {page}/{pages}\n\n"
         
         c = boshlash + 1
@@ -482,18 +480,7 @@ def delete_stats_message(call):
 
 
 
-# @bot.callback_query_handler(func=lambda call: call. data == "upload_type_kino")
-# def upload_type_kino(call):
-#     """Kino yuklash bosilsa - eski logika"""
-#     bot.delete_message(call.message.chat.id, call.message.message_id)
-#     bot.send_message(call.message.chat.id, "🎬 Video yuboring (video fayl ko'rinishida).")
-#     state[str(call.from_user.id)] = ["waiting_for_video"]
 
-# @bot.callback_query_handler(func=lambda call: call. data == "upload_type_serial")
-# def upload_type_serial(call):
-#     """Serial yuklash bosilsa"""
-#     bot.delete_message(call.message.chat.id, call.message.message_id)
-#     upload_serial_menu(call.message)
 
 @bot.callback_query_handler(func=lambda call: call.data == "upload_back")
 def upload_back(call):
@@ -605,18 +592,20 @@ def upload_content_menu(msg):
         parse_mode="Markdown"
     )
 
-@bot.callback_query_handler(func=lambda call: call.data == "upload_type_kino")
+
+@bot.callback_query_handler(func=lambda call: call. data == "upload_type_kino")
 def upload_type_kino(call):
     """Kino yuklash bosilsa - eski logika"""
     bot.delete_message(call.message.chat.id, call.message.message_id)
     bot.send_message(call.message.chat.id, "🎬 Video yuboring (video fayl ko'rinishida).")
     state[str(call.from_user.id)] = ["waiting_for_video"]
 
-@bot.callback_query_handler(func=lambda call: call.data == "upload_type_serial")
+@bot.callback_query_handler(func=lambda call: call. data == "upload_type_serial")
 def upload_type_serial(call):
-    """Serial yuklash bosilsa - ✅ YANGI"""
-    bot.delete_message(call. message.chat.id, call. message.message_id)
+    """Serial yuklash bosilsa"""
+    bot.delete_message(call.message.chat.id, call.message.message_id)
     upload_serial_menu(call.message)
+    
 
 @bot.callback_query_handler(func=lambda call: call.data == "upload_back_to_admin")
 def upload_back_to_admin(call):
@@ -626,12 +615,6 @@ def upload_back_to_admin(call):
 
     
     
-    
-
-
-
-
-
 
     
 @bot.message_handler(func=lambda msg: msg.text == "🔙 Ortga")
