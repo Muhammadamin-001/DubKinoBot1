@@ -407,43 +407,43 @@ def delete_movie_confirm(call):
     
         
 
-# @bot.callback_query_handler(func=lambda c: c.data.startswith("page_"))
-# def page_switch(call):
-#     page = int(call.data.split("_")[1])
-#     all_movies = list(movies.find({}, {"_id": 0}))
-#     total = len(all_movies)
-#     text, pages = get_movie_page(page)
+@bot.callback_query_handler(func=lambda c: c.data.startswith("page_"))
+def page_switch(call):
+    page = int(call.data.split("_")[1])
+    all_movies = list(movies.find({}, {"_id": 0}))
+    total = len(all_movies)
+    text, pages = get_movie_page(page)
     
-#     text += f" \t📚| Sahifa: {page}/{pages}\n\n"
-#     markup = types.InlineKeyboardMarkup()
-#     btns = []
+    text += f" \t📚| Sahifa: {page}/{pages}\n\n"
+    markup = types.InlineKeyboardMarkup()
+    btns = []
 
-#     if page > 1:
-#         btns.append(types.InlineKeyboardButton("⬅️ Back", callback_data=f"page_{page-1}"))
+    if page > 1:
+        btns.append(types.InlineKeyboardButton("⬅️ Back", callback_data=f"page_{page-1}"))
         
         
-#     if page > 1 and page < pages:
-#         btns.append(types.InlineKeyboardButton("📌 Last", callback_data=f"page_{pages}"))
+    if page > 1 and page < pages:
+        btns.append(types.InlineKeyboardButton("📌 Last", callback_data=f"page_{pages}"))
         
-#     if page < pages:
-#         btns.append(types.InlineKeyboardButton("➡️ Next", callback_data=f"page_{page+1}"))
+    if page < pages:
+        btns.append(types.InlineKeyboardButton("➡️ Next", callback_data=f"page_{page+1}"))
         
-#     # O'chirish tugmasi qo'shish
-#     btns.append(types.InlineKeyboardButton("❌", callback_data="delete_msg_list"))
+    # O'chirish tugmasi qo'shish
+    btns.append(types.InlineKeyboardButton("❌", callback_data="delete_msg_list"))
        
-#     if btns:
-#         markup.row(*btns)
+    if btns:
+        markup.row(*btns)
 
-#     try:
-#         bot.edit_message_text(
-#             f"🎬 *Kino ro‘yxati:*\n\n📊 Topildi: {total} ta kino |\n\n" + text,
-#             chat_id=call.message.chat.id,
-#             message_id=call.message.message_id,
-#             parse_mode="Markdown",
-#             reply_markup=markup
-#             )
-#     except:
-#         pass
+    try:
+        bot.edit_message_text(
+            f"🎬 *Kino ro‘yxati:*\n\n📊 Topildi: {total} ta kino |\n\n" + text,
+            chat_id=call.message.chat.id,
+            message_id=call.message.message_id,
+            parse_mode="Markdown",
+            reply_markup=markup
+            )
+    except:
+        pass
 
 
 
