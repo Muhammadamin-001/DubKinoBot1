@@ -1,24 +1,55 @@
+# ============================================
+# HDKinolarBot. py - ASOSIY BOT FAYLI
+# ============================================
+
+# 📦 STANDART KUTUBXONALAR
 import telebot
 from telebot import types
+from telebot. types import InlineKeyboardMarkup, InlineKeyboardButton
 import time
-from flask import Flask, request
-#from pymongo import MongoClient
 import os
-from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
-# HDKinolarBot.py - Bosh fayl
+from flask import Flask, request
 
-# 🔧 Konfiguratsiya va Utils
+# ⚙️ KONFIGURATSIYA
 from config.settings import TOKEN, ADMIN_ID, WEBHOOK_URL, MONGO_URI
-from utils.db_config import bot, db, state, users_collection, movies, serials
-from utils.admin_utils import admin_panel, super_admin_panel, user_panel
+
+# 🛠️ DATABASE VA GLOBAL
+from utils.db_config import (
+    bot, 
+    db, 
+    state, 
+    users_collection, 
+    movies, 
+    serials,
+    admins_collection,
+    channels_collection,
+    album_buffer,
+    album_sending,
+    search_cache
+)
+
+# 👥 ADMIN VA MENU UTILITYLARI
+from utils.admin_utils import (
+    admin_panel, 
+    super_admin_panel, 
+    user_panel,
+    check_sub,
+    upload_mdb,
+    is_admin,
+    save_user
+)
+
 from utils.menu_builder import create_inline_buttons
 
-#🎬 Serial va Kino modullar
-from serial import serial_handler
-from serial import serial_user
-from serial import serial_db
-from movies import movie_handler
-from movies import movie_db
+# 🎬 SERIAL MODULI
+from serial.serial_handler import *
+from serial.serial_user import *
+from serial.serial_db import *
+from serial.serial_states import *
+
+# 🎥 KINO MODULI
+from movies. movie_handler import *
+from movies.movie_db import *
 
 # ...  qolgan asosiy bot kodi ...
 # TOKEN = os.getenv("TOKEN")
@@ -28,10 +59,10 @@ from movies import movie_db
 
 # bot = telebot.TeleBot(TOKEN)
 
-kanal_link="https://t.me/DubHDkinolar"
+
 
 app = Flask(__name__)
-
+kanal_link="https://t.me/DubHDkinolar"
 
 for varname in ["TOKEN", "ADMIN_ID", "WEBHOOK_URL", "MONGO_URI"]:
     if globals()[varname] is None:
@@ -42,8 +73,8 @@ for varname in ["TOKEN", "ADMIN_ID", "WEBHOOK_URL", "MONGO_URI"]:
 # db = client["TelegramBot"]   # baza nomi
 # users_collection = db["users"]       # userlar collection
 # movies = db["movies"]     # kinolar collection
-admins_collection = db["admins"]  # Adminlarni saqlash kolleksiyasi
-channels_collection = db["channels"]  # Kanallar kolleksiyasi
+# admins_collection = db["admins"]  # Adminlarni saqlash kolleksiyasi
+# channels_collection = db["channels"]  # Kanallar kolleksiyasi
 
 
 # =================== STATE (HOLAT) ============================
@@ -51,112 +82,112 @@ channels_collection = db["channels"]  # Kanallar kolleksiyasi
 
 user_clicks = {}  # {user_id: bosish_soni}
 
-album_buffer = {}
-album_sending = {}
+# album_buffer = {}
+# album_sending = {}
 
 movie_pages = {}
 user_pages = {}  # ← QO'SHILDI:  Qidirish ma'lumotlarini saqlash uchun
-search_cache = {} # Qidiruv natijalarini
+# search_cache = {} # Qidiruv natijalarini
 
 # === is_admin funksiyasi ===
-def is_admin(user_id):
-    # Foydalanuvchi admin bo'lsa, True qaytaradi
-    return admins_collection.find_one({"user_id": int(user_id)}) is not None
+# def is_admin(user_id):
+#     # Foydalanuvchi admin bo'lsa, True qaytaradi
+#     return admins_collection.find_one({"user_id": int(user_id)}) is not None
 
-def get_movie_page(page=1, per_page=5):
-    # Barcha kinolarni bazadan o'qish
-    all_movies = list(movies.find({}, {"_id": 0}))  # movies = db["movies"]
+# def get_movie_page(page=1, per_page=5):
+#     # Barcha kinolarni bazadan o'qish
+#     all_movies = list(movies.find({}, {"_id": 0}))  # movies = db["movies"]
     
-    total = len(all_movies)
-    pages = (total - 1) // per_page + 1
+#     total = len(all_movies)
+#     pages = (total - 1) // per_page + 1
 
-    boshlash = (page - 1) * per_page
-    end = boshlash + per_page
-    page_movies = all_movies[boshlash:end]
+#     boshlash = (page - 1) * per_page
+#     end = boshlash + per_page
+#     page_movies = all_movies[boshlash:end]
 
-    text = ""
-    c = boshlash + 1
-    for m in page_movies:
-        # m['code'] va m['name'] MongoDB document ichida bo'lishi kerak
-        code = m['code']
-        text += f"{c}.  {m['name']}\n"
-        text += f"🆔 Kod: `{code}`\n"
-        text += f"[▶️ Kinoni yuklash](https://t.me/DubKinoBot?start={code})\n"
-        text += f"*{'─' * 10}*\n"
-        c += 1
+#     text = ""
+#     c = boshlash + 1
+#     for m in page_movies:
+#         # m['code'] va m['name'] MongoDB document ichida bo'lishi kerak
+#         code = m['code']
+#         text += f"{c}.  {m['name']}\n"
+#         text += f"🆔 Kod: `{code}`\n"
+#         text += f"[▶️ Kinoni yuklash](https://t.me/DubKinoBot?start={code})\n"
+#         text += f"*{'─' * 10}*\n"
+#         c += 1
 
-    return text, pages
+#     return text, pages
 
 
 
 # =================== OBUNA TEKSHIRISH =========================
-def check_sub(user_id):
-    """Faqat MongoDB'dagi kanallarga obunani tekshirish"""
-    try:
-        # MongoDB'dan kanallarni olish
-        channels = list(channels_collection.find({}, {"_id": 0, "id": 1, "link": 1}))
+# def check_sub(user_id):
+#     """Faqat MongoDB'dagi kanallarga obunani tekshirish"""
+#     try:
+#         # MongoDB'dan kanallarni olish
+#         channels = list(channels_collection.find({}, {"_id": 0, "id": 1, "link": 1}))
         
-        # Agar MongoDB'da kanal bo'lmasa, True qaytarish (hamma ruxsatli)
-        if not channels: 
-            print(f"⚠️ MongoDB'da kanal yo'q, foydalanuvchi {user_id} kirishi ruxsat")  # Debug
-            return True
+#         # Agar MongoDB'da kanal bo'lmasa, True qaytarish (hamma ruxsatli)
+#         if not channels: 
+#             print(f"⚠️ MongoDB'da kanal yo'q, foydalanuvchi {user_id} kirishi ruxsat")  # Debug
+#             return True
         
-        # Tekshirilayotgan kanal ID'lari ro'yxati
-        channels_to_check = []
+#         # Tekshirilayotgan kanal ID'lari ro'yxati
+#         channels_to_check = []
         
-        # MongoDB'dan kanal ID'larini olish
-        for ch in channels:
-            if "id" in ch and ch["id"] is not None:
-                channels_to_check.append(ch["id"])
+#         # MongoDB'dan kanal ID'larini olish
+#         for ch in channels:
+#             if "id" in ch and ch["id"] is not None:
+#                 channels_to_check.append(ch["id"])
             
         
-        # Agar kanal ID'lari bo'lmasa
-        # if not channels_to_check:
-        #     channels_to_check = CHANNEL_ID
+#         # Agar kanal ID'lari bo'lmasa
+#         # if not channels_to_check:
+#         #     channels_to_check = CHANNEL_ID
         
-        print(f"🔍 Tekshirilayotgan kanallar: {channels_to_check}")  # Debug
+#         print(f"🔍 Tekshirilayotgan kanallar: {channels_to_check}")  # Debug
         
-        # Barcha kanallarni tekshirish
-        for channel in channels_to_check:
-            try:
-                member = bot.get_chat_member(channel, user_id)
-                if member.status not in ["member", "administrator", "creator"]:
-                    print(f"❌ Foydalanuvchi {user_id} kanalni {channel} obuna emas")  # Debug
-                    return False
-            except Exception as e:
-                print(f"❌ Kanal tekshirish xatosi ({channel}): {e}")
-                return False
+#         # Barcha kanallarni tekshirish
+#         for channel in channels_to_check:
+#             try:
+#                 member = bot.get_chat_member(channel, user_id)
+#                 if member.status not in ["member", "administrator", "creator"]:
+#                     print(f"❌ Foydalanuvchi {user_id} kanalni {channel} obuna emas")  # Debug
+#                     return False
+#             except Exception as e:
+#                 print(f"❌ Kanal tekshirish xatosi ({channel}): {e}")
+#                 return False
         
-        print(f"✅ Foydalanuvchi {user_id} barcha kanallarga obuna")  # Debug
-        return True
+#         print(f"✅ Foydalanuvchi {user_id} barcha kanallarga obuna")  # Debug
+#         return True
     
-    except Exception as e: 
-        print(f"❌ check_sub xatosi: {e}")
-        return False
+#     except Exception as e: 
+#         print(f"❌ check_sub xatosi: {e}")
+#         return False
 
-def upload_mdb(msg):
-    # MongoDB'dan barcha kanallarni olish
-    channels = list(channels_collection.find({}, {"_id": 0, "link": 1}))
+# def upload_mdb(msg):
+#     # MongoDB'dan barcha kanallarni olish
+#     channels = list(channels_collection.find({}, {"_id": 0, "link": 1}))
     
-    btn = types.InlineKeyboardMarkup()
+#     btn = types.InlineKeyboardMarkup()
     
-    # Agar kanallar qo'shilgan bo'lsa, ularni tugma sifatida qo'shish
-    if not channels:
-        return  # ✅ barchaga ruxsat
+#     # Agar kanallar qo'shilgan bo'lsa, ularni tugma sifatida qo'shish
+#     if not channels:
+#         return  # ✅ barchaga ruxsat
     
-    else:
-        print(f"📺 {len(channels)} ta kanal ko'rinadi")  # Debug
-        for channel in channels:  
-            btn.add(types.InlineKeyboardButton("📌 Kanalga obuna bo'lish", url=channel["link"]))
+#     else:
+#         print(f"📺 {len(channels)} ta kanal ko'rinadi")  # Debug
+#         for channel in channels:  
+#             btn.add(types.InlineKeyboardButton("📌 Kanalga obuna bo'lish", url=channel["link"]))
             
-    # Tekshirish tugmasi
-    btn.add(types.InlineKeyboardButton("♻️ Tekshirish", callback_data="check"))
+#     # Tekshirish tugmasi
+#     btn.add(types.InlineKeyboardButton("♻️ Tekshirish", callback_data="check"))
     
-    bot.send_message(
-        msg.chat.id,
-        "❗ Botdan foydalanish uchun kanalga obuna bo'ling!",
-        reply_markup=btn
-    )
+#     bot.send_message(
+#         msg.chat.id,
+#         "❗ Botdan foydalanish uchun kanalga obuna bo'ling!",
+#         reply_markup=btn
+#     )
 
 # =================== ADMIN PANEL =============================
 
@@ -187,10 +218,10 @@ def upload_mdb(msg):
 #     bot.send_message(chat_id, "🔐 Kino kodlarini olish", reply_markup=btn)
     
 # ====================== SAVE USER ================================
-def save_user(user_id):
-    # Agar user bazada mavjud bo'lmasa qo'shadi
-    if not users_collection.find_one({"user_id": user_id}):
-        users_collection.insert_one({"user_id": user_id})
+# def save_user(user_id):
+#     # Agar user bazada mavjud bo'lmasa qo'shadi
+#     if not users_collection.find_one({"user_id": user_id}):
+#         users_collection.insert_one({"user_id": user_id})
 
 
 def search_movie_by_code_or_name(query):
@@ -376,43 +407,43 @@ def delete_movie_confirm(call):
     
         
 
-@bot.callback_query_handler(func=lambda c: c.data.startswith("page_"))
-def page_switch(call):
-    page = int(call.data.split("_")[1])
-    all_movies = list(movies.find({}, {"_id": 0}))
-    total = len(all_movies)
-    text, pages = get_movie_page(page)
+# @bot.callback_query_handler(func=lambda c: c.data.startswith("page_"))
+# def page_switch(call):
+#     page = int(call.data.split("_")[1])
+#     all_movies = list(movies.find({}, {"_id": 0}))
+#     total = len(all_movies)
+#     text, pages = get_movie_page(page)
     
-    text += f" \t📚| Sahifa: {page}/{pages}\n\n"
-    markup = types.InlineKeyboardMarkup()
-    btns = []
+#     text += f" \t📚| Sahifa: {page}/{pages}\n\n"
+#     markup = types.InlineKeyboardMarkup()
+#     btns = []
 
-    if page > 1:
-        btns.append(types.InlineKeyboardButton("⬅️ Back", callback_data=f"page_{page-1}"))
+#     if page > 1:
+#         btns.append(types.InlineKeyboardButton("⬅️ Back", callback_data=f"page_{page-1}"))
         
         
-    if page > 1 and page < pages:
-        btns.append(types.InlineKeyboardButton("📌 Last", callback_data=f"page_{pages}"))
+#     if page > 1 and page < pages:
+#         btns.append(types.InlineKeyboardButton("📌 Last", callback_data=f"page_{pages}"))
         
-    if page < pages:
-        btns.append(types.InlineKeyboardButton("➡️ Next", callback_data=f"page_{page+1}"))
+#     if page < pages:
+#         btns.append(types.InlineKeyboardButton("➡️ Next", callback_data=f"page_{page+1}"))
         
-    # O'chirish tugmasi qo'shish
-    btns.append(types.InlineKeyboardButton("❌", callback_data="delete_msg_list"))
+#     # O'chirish tugmasi qo'shish
+#     btns.append(types.InlineKeyboardButton("❌", callback_data="delete_msg_list"))
        
-    if btns:
-        markup.row(*btns)
+#     if btns:
+#         markup.row(*btns)
 
-    try:
-        bot.edit_message_text(
-            f"🎬 *Kino ro‘yxati:*\n\n📊 Topildi: {total} ta kino |\n\n" + text,
-            chat_id=call.message.chat.id,
-            message_id=call.message.message_id,
-            parse_mode="Markdown",
-            reply_markup=markup
-            )
-    except:
-        pass
+#     try:
+#         bot.edit_message_text(
+#             f"🎬 *Kino ro‘yxati:*\n\n📊 Topildi: {total} ta kino |\n\n" + text,
+#             chat_id=call.message.chat.id,
+#             message_id=call.message.message_id,
+#             parse_mode="Markdown",
+#             reply_markup=markup
+#             )
+#     except:
+#         pass
 
 
 
@@ -1056,49 +1087,49 @@ def delete_movie(msg):
     bot.send_message(msg.chat.id, "❌ O‘chirmoqchi bo‘lgan kino kodini yuboring.")
 
 # ====================== FILM RO‘YXATI =========================
-@bot.message_handler(func=lambda msg: msg.text == "📂 Film kodlari")
-def movie_list(msg):
-    # if (str(msg.from_user.id) != ADMIN_ID or is_admin(msg.from_user.id)):   #Buni ochsak, ro'yxat faqat adminlarga ko'rinadi
-    #     text = "🎬 *Kino topish uchun mos #Kodlarni shu kanaldan topasiz:*\n\n"
-    #     text+="https://t.me/DubHDkinolar"
-    #     bot.send_message(msg.chat.id, text, parse_mode="Markdown")
-    #     return
+# @bot.message_handler(func=lambda msg: msg.text == "📂 Film kodlari")
+# def movie_list(msg):
+#     # if (str(msg.from_user.id) != ADMIN_ID or is_admin(msg.from_user.id)):   #Buni ochsak, ro'yxat faqat adminlarga ko'rinadi
+#     #     text = "🎬 *Kino topish uchun mos #Kodlarni shu kanaldan topasiz:*\n\n"
+#     #     text+="https://t.me/DubHDkinolar"
+#     #     bot.send_message(msg.chat.id, text, parse_mode="Markdown")
+#     #     return
     
-    # Baza bo‘shligini tekshirish
-    if movies.count_documents({}) == 0:
-        bot.send_message(msg.chat.id, "📂 Bazada kino yo'q.")
-        return
+#     # Baza bo‘shligini tekshirish
+#     if movies.count_documents({}) == 0:
+#         bot.send_message(msg.chat.id, "📂 Bazada kino yo'q.")
+#         return
     
-    # Kino ro‘yxati uchun sahifa
+#     # Kino ro‘yxati uchun sahifa
     
-    text, pages = get_movie_page(page=1)
-    markup = types.InlineKeyboardMarkup()
-    if pages > 1:
-        markup.add(types.InlineKeyboardButton("➡️ Next", callback_data="page_2"))
-        #markup.add(types.InlineKeyboardButton("📌 Last", callback_data=f"page_{pages}"))
-    # O'chirish tugmasi
-    markup.add(types.InlineKeyboardButton("❌", callback_data="delete_msg_list")) 
-    page = 1
-    # Kino ro‘yxatini chiqarish
-    text = "🎬 *Kinolar ro‘yxati:*\n\n"
-    all_movies = list(movies.find({}, {"_id": 0}))
-    total = len(all_movies)
-    text, pages = get_movie_page(page)
-    text = "*🎬 Kinolar ro'yxati*\n\n"
-    text += f"📊 Topildi: {total} ta kino | Sahifa: {page}/{pages}\n\n"
-    c = 1
-    texts=""
-    for m in all_movies:
-        code = m['code']
-        text += f"{c}.  {m['name']}\n"
-        text += f"🆔 Kod: `{code}`\n"
-        text += f"[▶️ Kinoni yuklash](https://t.me/DubKinoBot?start={code})\n"
-        text += f"*{'─' * 10}*\n"
-        if c == 5:
-            texts=text[:]
-        c += 1
-    text=texts
-    bot.send_message(msg.chat.id, text, parse_mode="Markdown", reply_markup=markup)
+#     text, pages = get_movie_page(page=1)
+#     markup = types.InlineKeyboardMarkup()
+#     if pages > 1:
+#         markup.add(types.InlineKeyboardButton("➡️ Next", callback_data="page_2"))
+#         #markup.add(types.InlineKeyboardButton("📌 Last", callback_data=f"page_{pages}"))
+#     # O'chirish tugmasi
+#     markup.add(types.InlineKeyboardButton("❌", callback_data="delete_msg_list")) 
+#     page = 1
+#     # Kino ro‘yxatini chiqarish
+#     text = "🎬 *Kinolar ro‘yxati:*\n\n"
+#     all_movies = list(movies.find({}, {"_id": 0}))
+#     total = len(all_movies)
+#     text, pages = get_movie_page(page)
+#     text = "*🎬 Kinolar ro'yxati*\n\n"
+#     text += f"📊 Topildi: {total} ta kino | Sahifa: {page}/{pages}\n\n"
+#     c = 1
+#     texts=""
+#     for m in all_movies:
+#         code = m['code']
+#         text += f"{c}.  {m['name']}\n"
+#         text += f"🆔 Kod: `{code}`\n"
+#         text += f"[▶️ Kinoni yuklash](https://t.me/DubKinoBot?start={code})\n"
+#         text += f"*{'─' * 10}*\n"
+#         if c == 5:
+#             texts=text[:]
+#         c += 1
+#     text=texts
+#     bot.send_message(msg.chat.id, text, parse_mode="Markdown", reply_markup=markup)
 
 
 # Statistika ko'rsatuvchi tugma ("♻️ Statistika")
