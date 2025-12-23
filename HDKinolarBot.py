@@ -1,68 +1,41 @@
 # ============================================
-# HDKinolarBot. py - ASOSIY BOT FAYLI
+# HDKinolarBot.py - ASOSIY BOT FAYLI
 # ============================================
 
-# 📦 STANDART KUTUBXONALAR
+# 📦 Standart kutubxonalar
+import os
+import time
+from flask import Flask, request
 import telebot
 from telebot import types
-from telebot. types import InlineKeyboardMarkup, InlineKeyboardButton
-import time
-import os
-from flask import Flask, request
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-# ⚙️ KONFIGURATSIYA
-from config.settings import TOKEN, ADMIN_ID, WEBHOOK_URL, MONGO_URI
+# ⚙️ Konfiguratsiya
+from config. settings import TOKEN, ADMIN_ID, WEBHOOK_URL, MONGO_URI
 
-# 🛠️ DATABASE VA GLOBAL
+# 🛠️ Utilities
 from utils.db_config import (
-    bot, 
-    db, 
-    state, 
-    users_collection, 
-    movies, 
-    serials,
-    admins_collection,
-    channels_collection,
-    album_buffer,
-    album_sending,
-    search_cache
+    bot, db, state, users_collection, movies, serials, 
+    admins_collection, channels_collection
 )
-
-# 👥 ADMIN VA MENU UTILITYLARI
 from utils.admin_utils import (
-    admin_panel, 
-    super_admin_panel, 
-    user_panel,
-    check_sub,
-    upload_mdb,
-    is_admin,
-    save_user
+    admin_panel, super_admin_panel, user_panel, 
+    check_sub, upload_mdb, is_admin, save_user
 )
-
 from utils.menu_builder import create_inline_buttons
 
-# 🎬 SERIAL MODULI
-from serial.serial_handler import *
-from serial.serial_user import *
-from serial.serial_db import *
-from serial.serial_states import *
+# 🎞️ Serial va Kino modullar
+from serial. serial_handler import (
+    upload_serial_menu, show_serials_or_add, delete_serial_menu,
+    delete_serial_menu_callback
+)
+from serial.serial_user import show_serial_for_user, search_serial_results
+from movies.movie_handler import *
 
-# 🎥 KINO MODULI
-from movies. movie_handler import *
-from movies.movie_db import *
-
-# ...  qolgan asosiy bot kodi ...
-# TOKEN = os.getenv("TOKEN")
-# ADMIN_ID = os.getenv("ADMIN_ID")
-# WEBHOOK_URL = os.getenv("WEBHOOK_URL")
-# MONGO_URI =os.getenv("MONGO_URI")
-
-# bot = telebot.TeleBot(TOKEN)
-
-
-
+# Flask setup
 app = Flask(__name__)
-kanal_link="https://t.me/DubHDkinolar"
+
+kanal_link = "https://t.me/DubHDkinolar"
 
 # for varname in ["TOKEN", "ADMIN_ID", "WEBHOOK_URL", "MONGO_URI"]:
 #     if globals()[varname] is None:
@@ -572,6 +545,27 @@ def delete_stats_message(call):
 
 
 
+@bot.callback_query_handler(func=lambda call: call. data == "upload_type_kino")
+def upload_type_kino(call):
+    """Kino yuklash bosilsa - eski logika"""
+    bot.delete_message(call.message.chat.id, call.message.message_id)
+    bot.send_message(call.message.chat.id, "🎬 Video yuboring (video fayl ko'rinishida).")
+    state[str(call.from_user.id)] = ["waiting_for_video"]
+
+@bot.callback_query_handler(func=lambda call: call. data == "upload_type_serial")
+def upload_type_serial(call):
+    """Serial yuklash bosilsa"""
+    bot.delete_message(call.message.chat.id, call.message.message_id)
+    upload_serial_menu(call.message)
+
+@bot.callback_query_handler(func=lambda call: call.data == "upload_back")
+def upload_back(call):
+    """Ortga tugmasi"""
+    bot.delete_message(call.message.chat.id, call.message.message_id)
+    admin_panel(call.message.chat.id)
+
+
+
 # ====================== START ================================
 @bot.message_handler(commands=['start'])
 def start(msg):
@@ -638,6 +632,37 @@ def kodlar(msg):
     
     user_panel(msg.chat.id)
  
+
+
+
+# HDKinolarBot.py da qo'shish:
+
+@bot.message_handler(func=lambda msg: msg.text == "🎬 Film yuklash")
+def upload_content_menu(msg):
+    """Film yuklash menyu (kino/serial tanlash)"""
+    user_id = msg.from_user. id
+    
+    if not (str(user_id) == ADMIN_ID or is_admin(user_id)):
+        return
+    
+    buttons = [
+        {"text": "🎥 Kino", "callback":  "upload_type_kino"},
+        {"text": "🎞 Serial", "callback": "upload_type_serial"},
+        {"text": "🔙 Ortga", "callback": "upload_back"}
+    ]
+    markup = create_inline_buttons(buttons)
+    
+    bot.send_message(
+        msg.chat.id,
+        "📺 *Film Yuklash - Turini Tanlang*\n\nKino yoki serial? ",
+        reply_markup=markup,
+        parse_mode="Markdown"
+    )
+    
+    
+    
+
+
 
 
 
@@ -1079,57 +1104,119 @@ def do_broadcast(msg):
 
 
 # ====================== FILM O‘CHIRISH ========================
-@bot.message_handler(func=lambda msg: msg.text == "❌ Film o'chirish")
-def delete_movie(msg):
-    if not (str(msg.from_user.id) == ADMIN_ID or is_admin(msg.from_user.id)):
+# HDKinolarBot.py da o'ngartirish:
+
+@bot.message_handler(func=lambda msg:  msg.text == "❌ Film o'chirish")
+def delete_content_menu(msg):
+    """Film o'chirish menyu (kino/serial tanlash)"""
+    user_id = msg.from_user. id
+    
+    if not (str(user_id) == ADMIN_ID or is_admin(user_id)):
         return
-    state[str(msg.from_user.id)] = ["waiting_for_delete"]
-    bot.send_message(msg.chat.id, "❌ O‘chirmoqchi bo‘lgan kino kodini yuboring.")
+    
+    buttons = [
+        {"text": "🎥 Kino", "callback": "delete_type_kino"},
+        {"text": "🎞 Serial", "callback": "delete_type_serial"},
+        {"text": "🔙 Ortga", "callback": "delete_back"}
+    ]
+    markup = create_inline_buttons(buttons)
+    
+    bot.send_message(
+        msg. chat.id,
+        "🗑️ *Film O'chirish - Turini Tanlang*\n\nKino yoki serial?",
+        reply_markup=markup,
+        parse_mode="Markdown"
+    )
+
+@bot.callback_query_handler(func=lambda call:  call.data == "delete_type_kino")
+def delete_type_kino(call):
+    """Kino o'chirish - eski logika"""
+    bot.delete_message(call.message.chat.id, call.message.message_id)
+    bot.send_message(call.message.chat.id, "❌ O'chirilgan kinoning kodini kiriting.")
+    state[str(call.from_user.id)] = ["waiting_for_delete"]
+
+@bot.callback_query_handler(func=lambda call:  call.data == "delete_type_serial")
+def delete_type_serial(call):
+    """Serial o'chirish menyu"""
+    bot.delete_message(call.message.chat. id, call.message.message_id)
+    delete_serial_menu(call.message)
+
+@bot.callback_query_handler(func=lambda call:  call.data == "delete_back")
+def delete_back(call):
+    """Ortga tugmasi"""
+    bot.delete_message(call.message.chat.id, call.message.message_id)
+    admin_panel(call.message.chat.id)
+    
+    
 
 # ====================== FILM RO‘YXATI =========================
-# @bot.message_handler(func=lambda msg: msg.text == "📂 Film kodlari")
-# def movie_list(msg):
+@bot.message_handler(func=lambda msg: msg.text == "📂 Film kodlari")
+def movie_list(msg):
+    
+    
 #     # if (str(msg.from_user.id) != ADMIN_ID or is_admin(msg.from_user.id)):   #Buni ochsak, ro'yxat faqat adminlarga ko'rinadi
 #     #     text = "🎬 *Kino topish uchun mos #Kodlarni shu kanaldan topasiz:*\n\n"
 #     #     text+="https://t.me/DubHDkinolar"
 #     #     bot.send_message(msg.chat.id, text, parse_mode="Markdown")
 #     #     return
     
-#     # Baza bo‘shligini tekshirish
-#     if movies.count_documents({}) == 0:
-#         bot.send_message(msg.chat.id, "📂 Bazada kino yo'q.")
-#         return
+    # Baza bo‘shligini tekshirish
+    if movies.count_documents({}) == 0:
+        bot.send_message(msg.chat.id, "📂 Bazada kino yo'q.")
+        return
     
-#     # Kino ro‘yxati uchun sahifa
+    # Kino ro‘yxati uchun sahifa
     
-#     text, pages = get_movie_page(page=1)
-#     markup = types.InlineKeyboardMarkup()
-#     if pages > 1:
-#         markup.add(types.InlineKeyboardButton("➡️ Next", callback_data="page_2"))
-#         #markup.add(types.InlineKeyboardButton("📌 Last", callback_data=f"page_{pages}"))
-#     # O'chirish tugmasi
-#     markup.add(types.InlineKeyboardButton("❌", callback_data="delete_msg_list")) 
-#     page = 1
-#     # Kino ro‘yxatini chiqarish
-#     text = "🎬 *Kinolar ro‘yxati:*\n\n"
-#     all_movies = list(movies.find({}, {"_id": 0}))
-#     total = len(all_movies)
-#     text, pages = get_movie_page(page)
-#     text = "*🎬 Kinolar ro'yxati*\n\n"
-#     text += f"📊 Topildi: {total} ta kino | Sahifa: {page}/{pages}\n\n"
-#     c = 1
-#     texts=""
-#     for m in all_movies:
-#         code = m['code']
-#         text += f"{c}.  {m['name']}\n"
-#         text += f"🆔 Kod: `{code}`\n"
-#         text += f"[▶️ Kinoni yuklash](https://t.me/DubKinoBot?start={code})\n"
-#         text += f"*{'─' * 10}*\n"
-#         if c == 5:
-#             texts=text[:]
-#         c += 1
-#     text=texts
-#     bot.send_message(msg.chat.id, text, parse_mode="Markdown", reply_markup=markup)
+    text, pages = get_movie_page(page=1)
+    markup = types.InlineKeyboardMarkup()
+    if pages > 1:
+        markup.add(types.InlineKeyboardButton("➡️ Next", callback_data="page_2"))
+        #markup.add(types.InlineKeyboardButton("📌 Last", callback_data=f"page_{pages}"))
+    # O'chirish tugmasi
+    markup.add(types.InlineKeyboardButton("❌", callback_data="delete_msg_list")) 
+    page = 1
+    # Kino ro‘yxatini chiqarish
+    text = "🎬 *Kinolar ro‘yxati:*\n\n"
+    all_movies = list(movies.find({}, {"_id": 0}))
+    total = len(all_movies)
+    text, pages = get_movie_page(page)
+    text = "*🎬 Kinolar ro'yxati*\n\n"
+    text += f"📊 Topildi: {total} ta kino | Sahifa: {page}/{pages}\n\n"
+    c = 1
+    texts=""
+    for m in all_movies:
+        code = m['code']
+        text += f"{c}.  {m['name']}\n"
+        text += f"🆔 Kod: `{code}`\n"
+        text += f"[▶️ Kinoni yuklash](https://t.me/DubKinoBot?start={code})\n"
+        text += f"*{'─' * 10}*\n"
+        if c == 5:
+            texts=text[:]
+        c += 1
+    text=texts
+    bot.send_message(msg.chat.id, text, parse_mode="Markdown", reply_markup=markup)
+
+
+
+
+# HDKinolarBot.py da qo'shish: 
+
+@bot.message_handler(func=lambda msg: msg.text == "📥 Seriallar")
+def show_user_serials(msg):
+    """Foydalanuvchi uchun seriallar ro'yxati"""
+    user = msg.from_user. id
+    
+    if not check_sub(user):
+        upload_mdb(msg)
+        return
+    
+    serials_list = list(serials. find({}, {"_id": 0, "code": 1, "name": 1, "image": 1}))
+    
+    if not serials_list: 
+        bot.send_message(msg.chat.id, "📺 Hech qanday serial qo'shilmagan.")
+
+
+
 
 
 # Statistika ko'rsatuvchi tugma ("♻️ Statistika")

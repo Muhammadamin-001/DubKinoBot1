@@ -8,14 +8,15 @@ from telebot import types
 from . db_config import bot, admins_collection, channels_collection, users_collection, state
 from config.settings import ADMIN_ID
 
-# === Admin Panel ===
+# ✏️ admin_panel funksiyasini utils/admin_utils.py da yangilang: 
+
 def admin_panel(chat_id):
     """Admin Panel"""
     btn = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    btn.add("🎬 Kino yuklash", "🎞 Serial yuklash")
-    btn.add("📂 Film kodlari", "📥 Seriallar")
-    btn.add("❌ Film o'chirish", "♻️ Statistika")
-    btn.add("💼 Super Admin", "⏻ Exit")
+    btn.add("🎬 Film yuklash", "📂 Film kodlari")  # 🎬 Film yuklash (o'zgartirilingan)
+    btn.add("📥 Seriallar", "❌ Film o'chirish")  # 📥 Seriallar (YANGI)
+    btn.add("♻️ Statistika", "💼 Super Admin")
+    btn.add("⏻ Exit")
     bot.send_message(chat_id, "🔐 Admin Paneli", reply_markup=btn)
 
 def super_admin_panel(chat_id):
