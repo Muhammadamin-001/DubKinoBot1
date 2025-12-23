@@ -1,4 +1,4 @@
-# utils/admin_utils. py
+# utils/admin_utils.py
 """
 👥 ADMIN UTILITIES
 Admin panellar, obuna tekshiruvi, user saqlash
@@ -6,15 +6,14 @@ Admin panellar, obuna tekshiruvi, user saqlash
 
 from telebot import types
 from . db_config import bot, admins_collection, channels_collection, users_collection, state
-from config.settings import ADMIN_ID
+from config. settings import ADMIN_ID
 
-# ✏️ admin_panel funksiyasini utils/admin_utils.py da yangilang: 
-
+# === Admin Panel - ✅ YANGILANGAN ===
 def admin_panel(chat_id):
     """Admin Panel"""
     btn = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    btn.add("🎬 Film yuklash", "📂 Film kodlari")  # 🎬 Film yuklash (o'zgartirilingan)
-    btn.add("📥 Seriallar", "❌ Film o'chirish")  # 📥 Seriallar (YANGI)
+    btn.add("🎬 Film yuklash", "📂 Film kodlari")
+    btn.add("📥 Seriallar", "❌ Film o'chirish")
     btn.add("♻️ Statistika", "💼 Super Admin")
     btn.add("⏻ Exit")
     bot.send_message(chat_id, "🔐 Admin Paneli", reply_markup=btn)
@@ -29,12 +28,12 @@ def super_admin_panel(chat_id):
     bot.send_message(chat_id, "👑 Super Admin Paneli", reply_markup=btn)
 
 def user_panel(chat_id):
-    """User Panel"""
+    """User Panel - ✅ YANGILANGAN"""
     btn = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    btn.add("📂 Film kodlari", "🎞 Seriallar")
+    btn.add("📂 Film kodlari", "📥 Seriallar")
     btn.add("🎁 Donat", "📊 Top 10")
     btn.add("🔙")
-    bot.send_message(chat_id, "🔐 Kino kodlarini olish", reply_markup=btn)
+    bot.send_message(chat_id, "🔐 Kino va Seriallar", reply_markup=btn)
 
 # === Obuna Tekshirish ===
 def check_sub(user_id):
@@ -61,7 +60,7 @@ def check_sub(user_id):
         
         return True
     
-    except Exception as e:
+    except Exception as e: 
         print(f"❌ check_sub xatosi: {e}")
         return False
 

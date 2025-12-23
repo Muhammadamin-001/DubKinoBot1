@@ -26,11 +26,11 @@ from utils.menu_builder import create_inline_buttons
 
 # 🎞️ Serial va Kino modullar
 from serial. serial_handler import (
-    upload_serial_menu, show_serials_or_add, delete_serial_menu,
-    delete_serial_menu_callback
+    upload_serial_menu, delete_serial_menu
 )
-from serial.serial_user import show_serial_for_user, search_serial_results
+from serial.serial_user import show_serial_for_user
 from movies.movie_handler import *
+from movies.movie_db import *
 
 # Flask setup
 app = Flask(__name__)
@@ -53,40 +53,51 @@ user_pages = {}  # ← QO'SHILDI:  Qidirish ma'lumotlarini saqlash uchun
 
 
 
-# =================== ADMIN PANEL =============================
-
 
 
     
 
 
 
-def search_movie_by_code_or_name(query):
-    """Kino kodi yoki nomiga asosan qidirish (minimal 3 belgi)"""
+# =================== QIDIRISH (Kino va Serial) - ✅ YANGILANGAN ===================
+
+def search_content_by_code_or_name(query):
+    """Kino yoki serialni qidirish"""
     query = query.strip()
-    # Birinchi: Exact kod bo'yicha qidirish
+    
+    # 1️⃣ Kinoni kod bilan qidirish
     movie_by_code = movies.find_one({"code":  query})
+    if movie_by_code:
+        return "movie_code_found", [movie_by_code], 1
     
-    if movie_by_code: 
-        # Kod topildi → to'g'ridan-to'g'ri shu kinoni qaytarish
-        return "code_found", [movie_by_code], 1
+    # 2️⃣ Serialni kod bilan qidirish - ✅ YANGI
+    serial_by_code = serials.find_one({"code": query})
+    if serial_by_code:
+        return "serial_code_found", [serial_by_code], 1
     
-    # Agar 3 harfdan kam bo'lsa
+    # 3️⃣ Kam belgi bo'lsa
     if len(query) < 3:
         return "too_short", None, 0
     
-    # Ikkinchi: Nom bo'yicha qidirish (partial match)
+    # 4️⃣ Nomi bilan qidirish
     search_name = query.lower()
+    
+    # Kinolarda
     all_movies = list(movies.find({}, {"_id": 0}))
     filtered_movies = [m for m in all_movies if search_name in m['name'].lower()]
     
-    if filtered_movies:
-        # Nomga mos kinolar topildi
-        total = len(filtered_movies)
-        pages = (total - 1) // 5 + 1
-        return "name_found", filtered_movies, pages, total
+    # Seriallarda - ✅ YANGI
+    all_serials = list(serials.find({}, {"_id": 0}))
+    filtered_serials = [s for s in all_serials if search_name in s['name'].lower()]
     
-    # Hech narsa topilmadi
+    # Barcha natijalar
+    combined = filtered_movies + filtered_serials
+    
+    if combined:
+        total = len(combined)
+        pages = (total - 1) // 5 + 1
+        return "found", combined, pages, total
+    
     return "not_found", None, 0
 
 
@@ -284,42 +295,47 @@ def page_switch(call):
 
 
 
-@bot.callback_query_handler(func=lambda c: c.data. startswith("search_"))
+# =================== CALLBACK HANDLERS - QIDIRUSH SAHIFALAR ===================
+
+@bot.callback_query_handler(func=lambda c: c.data.  startswith("search_"))
 def search_page_switch(call):
-    """Qidirish natijalari sahifalarini chiqarish"""
+    """Qidirush natijalari sahifalarini chiqarish - ✅ YANGILANGAN"""
     try:
-        # "search_123456789_page_2" → user_id va page
         parts = call.data.split("_page_")
         user_id = int(parts[0]. replace("search_", ""))
         page = int(parts[1])
         
-        # Cache'dan ma'lumotlarni olish
-        if user_id not in search_cache:
-            bot.answer_callback_query(call.id, "❌ Qidirish natijalari o'chirib yuborildi.")
+        if user_id not in search_cache: 
+            bot.answer_callback_query(call.id, "❌ Qidirush natijalari o'chirib yuborildi.")
             return
         
         cached = search_cache[user_id]
-        filtered_movies = cached["movies"]
+        filtered_items = cached["items"]
         pages = cached["pages"]
         total = cached["total"]
         search_query = cached["query"]
         
-        # Sahifa ma'lumotlarini hisoblash
+        # Sahifa ma'lumotlari
         boshlash = (page - 1) * 5
         end = boshlash + 5
-        page_movies = filtered_movies[boshlash:end]
+        page_items = filtered_items[boshlash:end]
         
-        # Tekst yaratish
-        text = f"🎬 **Qidirish natijalari: '{search_query}'**\n\n"
-        text += f"📊 Topildi: {total} ta kino | Sahifa: {page}/{pages}\n\n"
+        # Matn
+        text = f"🎬 **Qidirush natijalari:  '{search_query}'**\n\n"
+        text += f"📊 Topildi: {total} ta | Sahifa: {page}/{pages}\n\n"
         
         c = boshlash + 1
-        for m in page_movies:
-            code = m['code']
-            text += f"{c}. {m['name']}\n"
-            text += f"🆔 Kod: `{code}`\n"
-            text += f"[▶️ Kinoni yuklash](https://t.me/DubKinoBot?start={code})\n"
-            text += f"*{'─' * 35}*\n"
+        for item in page_items:
+            if "seasons" in item:  # Serial
+                text += f"{c}.  🎞 {item['name']}\n"
+                text += f"🆔 Kod: `{item['code']}`\n"
+                text += f"[▶️ Serial](https://t.me/DubKinoBot?start={item['code']})\n"
+            else:  # Kino
+                text += f"{c}. 🎬 {item['name']}\n"
+                text += f"🆔 Kod: `{item['code']}`\n"
+                text += f"[▶️ Kino](https://t.me/DubKinoBot?start={item['code']})\n"
+            
+            text += f"*{'─' * 30}*\n"
             c += 1
         
         # Tugmalar
@@ -330,7 +346,7 @@ def search_page_switch(call):
             btns.append(types.InlineKeyboardButton("⬅️ Orqaga", callback_data=f"search_{user_id}_page_{page-1}"))
         
         if page < pages:
-            btns.append(types.InlineKeyboardButton("➡️ Keyingi", callback_data=f"search_{user_id}_page_{page+1}"))
+            btns. append(types.InlineKeyboardButton("➡️ Keyingi", callback_data=f"search_{user_id}_page_{page+1}"))
         
         btns.append(types.InlineKeyboardButton("❌", callback_data="delete_msg_list"))
         
@@ -345,9 +361,9 @@ def search_page_switch(call):
             reply_markup=markup
         )
         
-    except Exception as e: 
-        print(f"Xatolik:  {e}")
-        bot.answer_callback_query(call.id, "❌ Xatolik yuz berdi.")
+    except Exception as e:
+        print(f"Xatolik: {e}")
+        bot.answer_callback_query(call. id, "❌ Xatolik yuz berdi.")
 
 
 
@@ -409,18 +425,18 @@ def delete_stats_message(call):
 
 
 
-@bot.callback_query_handler(func=lambda call: call. data == "upload_type_kino")
-def upload_type_kino(call):
-    """Kino yuklash bosilsa - eski logika"""
-    bot.delete_message(call.message.chat.id, call.message.message_id)
-    bot.send_message(call.message.chat.id, "🎬 Video yuboring (video fayl ko'rinishida).")
-    state[str(call.from_user.id)] = ["waiting_for_video"]
+# @bot.callback_query_handler(func=lambda call: call. data == "upload_type_kino")
+# def upload_type_kino(call):
+#     """Kino yuklash bosilsa - eski logika"""
+#     bot.delete_message(call.message.chat.id, call.message.message_id)
+#     bot.send_message(call.message.chat.id, "🎬 Video yuboring (video fayl ko'rinishida).")
+#     state[str(call.from_user.id)] = ["waiting_for_video"]
 
-@bot.callback_query_handler(func=lambda call: call. data == "upload_type_serial")
-def upload_type_serial(call):
-    """Serial yuklash bosilsa"""
-    bot.delete_message(call.message.chat.id, call.message.message_id)
-    upload_serial_menu(call.message)
+# @bot.callback_query_handler(func=lambda call: call. data == "upload_type_serial")
+# def upload_type_serial(call):
+#     """Serial yuklash bosilsa"""
+#     bot.delete_message(call.message.chat.id, call.message.message_id)
+#     upload_serial_menu(call.message)
 
 @bot.callback_query_handler(func=lambda call: call.data == "upload_back")
 def upload_back(call):
@@ -433,9 +449,9 @@ def upload_back(call):
 # ====================== START ================================
 @bot.message_handler(commands=['start'])
 def start(msg):
-    user = msg.from_user.id
+    """Start komandasi"""
+    user = msg. from_user.id
     
-    # "start=kino_kodi" formatida yuborilgan parametrni olish
     kino_kodi = None
     if ' ' in msg.text:
         start_parts = msg.text.split(' ', 1)
@@ -443,28 +459,34 @@ def start(msg):
     
     save_user(user)
     
-    print(f"🔍 /start tekshirilmoqda:  user_id={user}, kino_kodi={kino_kodi}")  # Debug
+    print(f"🔍 /start tekshirilmoqda: user_id={user}, kino_kodi={kino_kodi}")
 
-    # Obunani tekshirish
     if not check_sub(user):
-        print(f"❌ Foydalanuvchi {user} obuna emas")  # Debug
+        print(f"❌ Foydalanuvchi {user} obuna emas")
         upload_mdb(msg)
-        
         return
     
-    # ✅ Foydalanuvchi obuna bo'lsa
-    print(f"✅ Foydalanuvchi {user} obuna")  # Debug
+    print(f"✅ Foydalanuvchi {user} obuna")
     
-    # Agar kino kodi yuborilgan bo'lsa
-    if kino_kodi:  
-        print(f"🎬 Kino yuborilmoqda: {kino_kodi}")  # Debug
-        send_movie_info(msg.chat.id, kino_kodi)
+    if kino_kodi:
+        print(f"🎬 Kino yuborilmoqda: {kino_kodi}")
+        
+        # Kino bormi?
+        movie = movies.find_one({"code": kino_kodi})
+        if movie:
+            send_movie_info(msg. chat.id, kino_kodi)
+            return
+        
+        # Serial bormi?
+        serial = serials.find_one({"code": kino_kodi})
+        if serial:
+            show_serial_for_user(msg.chat.id, kino_kodi)
+            return
+        
+        bot.send_message(msg.chat.id, "❌ Bunday kod topilmadi!")
         return
 
-    # Oddiy boshlash
-    
-    bot.send_message(msg. chat.id, "🆔 Kino kodini kiriting:\n\t(🔍 Yoki kino nomini:)")
-    
+    bot.send_message(msg.chat.id, "🆔 Kino kodini kiriting:\n\t(🔍 Yoki kino nomini: )")
 
 
 
@@ -482,7 +504,7 @@ def panel(msg):
     if (str(msg.from_user.id) == ADMIN_ID or is_admin(msg.from_user.id)):
         admin_panel(msg.chat.id)
     else:
-        bot.send_message(msg.chat.id, "❌ Diqqat! Bu faqat admin uchun.\n# /kodlar komandasi orqali #bot dan to'liq foydalaning !")
+        bot.send_message(msg.chat.id, "❌ Diqqat! Bu faqat admin uchun.")
         
 @bot.message_handler(commands=['kodlar'])
 def kodlar(msg):
@@ -501,27 +523,50 @@ def kodlar(msg):
 
 # HDKinolarBot.py da qo'shish:
 
+# =================== FILM YUKLASH MENYU ===================
+
 @bot.message_handler(func=lambda msg: msg.text == "🎬 Film yuklash")
 def upload_content_menu(msg):
-    """Film yuklash menyu (kino/serial tanlash)"""
+    """Film yuklash menyu (kino/serial tanlash) - ✅ YANGI"""
     user_id = msg.from_user. id
     
     if not (str(user_id) == ADMIN_ID or is_admin(user_id)):
+        bot.send_message(msg.chat.id, "❌ Siz admin emassiz!")
         return
     
     buttons = [
         {"text": "🎥 Kino", "callback":  "upload_type_kino"},
         {"text": "🎞 Serial", "callback": "upload_type_serial"},
-        {"text": "🔙 Ortga", "callback": "upload_back"}
+        {"text": "🔙 Ortga", "callback": "upload_back_to_admin"}
     ]
     markup = create_inline_buttons(buttons)
     
     bot.send_message(
         msg.chat.id,
-        "📺 *Film Yuklash - Turini Tanlang*\n\nKino yoki serial? ",
+        "📺 *Film Yuklash - Turini Tanlang*\n\n🎥 Kino yoki 🎞 Serial?  ",
         reply_markup=markup,
         parse_mode="Markdown"
     )
+
+@bot.callback_query_handler(func=lambda call: call.data == "upload_type_kino")
+def upload_type_kino(call):
+    """Kino yuklash bosilsa - eski logika"""
+    bot.delete_message(call.message.chat.id, call.message.message_id)
+    bot.send_message(call.message.chat.id, "🎬 Video yuboring (video fayl ko'rinishida).")
+    state[str(call.from_user.id)] = ["waiting_for_video"]
+
+@bot.callback_query_handler(func=lambda call: call.data == "upload_type_serial")
+def upload_type_serial(call):
+    """Serial yuklash bosilsa - ✅ YANGI"""
+    bot.delete_message(call. message.chat.id, call. message.message_id)
+    upload_serial_menu(call.message)
+
+@bot.callback_query_handler(func=lambda call: call.data == "upload_back_to_admin")
+def upload_back_to_admin(call):
+    """Ortga tugmasi"""
+    bot.delete_message(call.message.chat. id, call.message.message_id)
+    admin_panel(call.message. chat.id)
+
     
     
     
@@ -967,117 +1012,140 @@ def do_broadcast(msg):
 
 
 
-# ====================== FILM O‘CHIRISH ========================
-# HDKinolarBot.py da o'ngartirish:
+# =================== FILM O'CHIRISH MENYU ===================
 
-@bot.message_handler(func=lambda msg:  msg.text == "❌ Film o'chirish")
+@bot.message_handler(func=lambda msg: msg. text == "❌ Film o'chirish")
 def delete_content_menu(msg):
-    """Film o'chirish menyu (kino/serial tanlash)"""
-    user_id = msg.from_user. id
+    """Film o'chirish menyu (kino/serial tanlash) - ✅ YANGI"""
+    user_id = msg.from_user.id
     
     if not (str(user_id) == ADMIN_ID or is_admin(user_id)):
+        bot.send_message(msg.chat.id, "❌ Siz admin emassiz!")
         return
     
     buttons = [
-        {"text": "🎥 Kino", "callback": "delete_type_kino"},
+        {"text": "🎥 Kino", "callback":  "delete_type_kino"},
         {"text": "🎞 Serial", "callback": "delete_type_serial"},
-        {"text": "🔙 Ortga", "callback": "delete_back"}
+        {"text": "🔙 Ortga", "callback": "delete_back_to_admin"}
     ]
     markup = create_inline_buttons(buttons)
     
     bot.send_message(
-        msg. chat.id,
-        "🗑️ *Film O'chirish - Turini Tanlang*\n\nKino yoki serial?",
+        msg.chat.id,
+        "🗑️ *Film O'chirish - Turini Tanlang*\n\n🎥 Kino yoki 🎞 Serial? ",
         reply_markup=markup,
         parse_mode="Markdown"
     )
 
-@bot.callback_query_handler(func=lambda call:  call.data == "delete_type_kino")
+@bot.callback_query_handler(func=lambda call: call.data == "delete_type_kino")
 def delete_type_kino(call):
     """Kino o'chirish - eski logika"""
     bot.delete_message(call.message.chat.id, call.message.message_id)
     bot.send_message(call.message.chat.id, "❌ O'chirilgan kinoning kodini kiriting.")
-    state[str(call.from_user.id)] = ["waiting_for_delete"]
+    state[str(call.from_user. id)] = ["waiting_for_delete_kino"]
 
-@bot.callback_query_handler(func=lambda call:  call.data == "delete_type_serial")
+@bot.callback_query_handler(func=lambda call: call.data == "delete_type_serial")
 def delete_type_serial(call):
-    """Serial o'chirish menyu"""
-    bot.delete_message(call.message.chat. id, call.message.message_id)
+    """Serial o'chirish menyu - ✅ YANGI"""
+    bot.delete_message(call.message.chat.id, call.message.message_id)
     delete_serial_menu(call.message)
 
-@bot.callback_query_handler(func=lambda call:  call.data == "delete_back")
-def delete_back(call):
+@bot.callback_query_handler(func=lambda call: call.data == "delete_back_to_admin")
+def delete_back_to_admin(call):
     """Ortga tugmasi"""
-    bot.delete_message(call.message.chat.id, call.message.message_id)
-    admin_panel(call.message.chat.id)
+    bot.delete_message(call. message.chat.id, call. message.message_id)
+    admin_panel(call.message. chat.id)
     
     
 
-# ====================== FILM RO‘YXATI =========================
+# =================== FILM KODLARI (Admin uchun) ===================
+
 @bot.message_handler(func=lambda msg: msg.text == "📂 Film kodlari")
 def movie_list(msg):
-    
-    
-#     # if (str(msg.from_user.id) != ADMIN_ID or is_admin(msg.from_user.id)):   #Buni ochsak, ro'yxat faqat adminlarga ko'rinadi
-#     #     text = "🎬 *Kino topish uchun mos #Kodlarni shu kanaldan topasiz:*\n\n"
-#     #     text+="https://t.me/DubHDkinolar"
-#     #     bot.send_message(msg.chat.id, text, parse_mode="Markdown")
-#     #     return
-    
-    # Baza bo‘shligini tekshirish
-    if movies.count_documents({}) == 0:
-        bot.send_message(msg.chat.id, "📂 Bazada kino yo'q.")
-        return
-    
-    # Kino ro‘yxati uchun sahifa
-    
-    text, pages = get_movie_page(page=1)
-    markup = types.InlineKeyboardMarkup()
-    if pages > 1:
-        markup.add(types.InlineKeyboardButton("➡️ Next", callback_data="page_2"))
-        #markup.add(types.InlineKeyboardButton("📌 Last", callback_data=f"page_{pages}"))
-    # O'chirish tugmasi
-    markup.add(types.InlineKeyboardButton("❌", callback_data="delete_msg_list")) 
-    page = 1
-    # Kino ro‘yxatini chiqarish
-    text = "🎬 *Kinolar ro‘yxati:*\n\n"
-    all_movies = list(movies.find({}, {"_id": 0}))
-    total = len(all_movies)
-    text, pages = get_movie_page(page)
-    text = "*🎬 Kinolar ro'yxati*\n\n"
-    text += f"📊 Topildi: {total} ta kino | Sahifa: {page}/{pages}\n\n"
-    c = 1
-    texts=""
-    for m in all_movies:
-        code = m['code']
-        text += f"{c}.  {m['name']}\n"
-        text += f"🆔 Kod: `{code}`\n"
-        text += f"[▶️ Kinoni yuklash](https://t.me/DubKinoBot?start={code})\n"
-        text += f"*{'─' * 10}*\n"
-        if c == 5:
-            texts=text[:]
-        c += 1
-    text=texts
-    bot.send_message(msg.chat.id, text, parse_mode="Markdown", reply_markup=markup)
-
-
-
-
-# HDKinolarBot.py da qo'shish: 
-
-@bot.message_handler(func=lambda msg: msg.text == "📥 Seriallar")
-def show_user_serials(msg):
-    """Foydalanuvchi uchun seriallar ro'yxati"""
+    """Film kodlari ro'yxati (Admin uchun)"""
     user = msg.from_user. id
     
     if not check_sub(user):
         upload_mdb(msg)
         return
     
-    serials_list = list(serials. find({}, {"_id": 0, "code": 1, "name": 1, "image": 1}))
+    if movies.count_documents({}) == 0:
+        bot.send_message(msg.chat.id, "📂 Bazada kino yo'q.")
+        return
+    
+    all_movies = list(movies.find({}, {"_id": 0}))
+    total = len(all_movies)
+    
+    markup = types.InlineKeyboardMarkup()
+    if total > 5:
+        markup.add(types.InlineKeyboardButton("➡️ Next", callback_data="page_2"))
+    markup.add(types.InlineKeyboardButton("❌", callback_data="delete_msg_list"))
+    
+    text = "*🎬 Kinolar ro'yxati*\n\n"
+    text += f"📊 Topildi: {total} ta kino | Sahifa: 1/{(total-1)//5+1}\n\n"
+    
+    c = 1
+    for m in all_movies[: 5]:
+        code = m['code']
+        text += f"{c}.   {m['name']}\n"
+        text += f"🆔 Kod: `{code}`\n"
+        text += f"[▶️ Kinoni yuklash](https://t.me/DubKinoBot?start={code})\n"
+        text += f"*{'─' * 10}*\n"
+        c += 1
+    
+    bot.send_message(msg.chat.id, text, parse_mode="Markdown", reply_markup=markup)
+
+
+
+# HDKinolarBot.py da qo'shish: 
+
+# =================== SERIALLAR (User uchun) - ✅ YANGI ===================
+
+@bot.message_handler(func=lambda msg: msg.text == "📥 Seriallar")
+def show_user_serials(msg):
+    """Foydalanuvchi uchun seriallar ro'yxati"""
+    user = msg. from_user.id
+    
+    if not check_sub(user):
+        upload_mdb(msg)
+        return
+    
+    serials_list = list(serials.find({}, {"_id": 0, "code": 1, "name": 1, "image": 1}))
     
     if not serials_list: 
         bot.send_message(msg.chat.id, "📺 Hech qanday serial qo'shilmagan.")
+        return
+    
+    markup = types.InlineKeyboardMarkup()
+    
+    for serial in serials_list:
+        markup.add(types.InlineKeyboardButton(
+            f"🎞 {serial['name']}",
+            callback_data=f"user_view_serial_{serial['code']}"
+        ))
+    
+    markup.add(types.InlineKeyboardButton("🔙", callback_data="user_back_from_serials"))
+    
+    bot.send_message(
+        msg.chat.id,
+        "📺 *Barcha Seriallar*\n\nSerialni tanlang:",
+        reply_markup=markup,
+        parse_mode="Markdown"
+    )
+
+@bot.callback_query_handler(func=lambda call: call.data. startswith("user_view_serial_"))
+def user_view_serial(call):
+    """Foydalanuvchi serialni tanlaganda"""
+    serial_code = call.data.replace("user_view_serial_", "")
+    bot.delete_message(call.message.chat.id, call.message.message_id)
+    show_serial_for_user(call.message.chat.id, serial_code)
+
+@bot.callback_query_handler(func=lambda call: call.data == "user_back_from_serials")
+def user_back_from_serials(call):
+    """Seriallardan ortga"""
+    bot.delete_message(call.message.chat. id, call.message.message_id)
+    user_panel(call.message.chat.id)
+
 
 
 
@@ -1126,96 +1194,88 @@ def show_statistics(msg):
                 
 
 # ====================== UMUMIY HANDLER ========================
-@bot.message_handler(func=lambda msg: True)
+@bot.message_handler(func=lambda msg:  True)
 def universal_handler(msg):
+    """Umumiy handler - kino/serial qidirish"""
     user = str(msg.from_user.id)
-    text = msg.text.strip()
-
-    # --- 1) Admin kino kodi kiritayapti ---
-    if user in state and state[user][0] == "waiting_for_code":
-        file_id = state[user][1]
-        
-        movies.update_one(
-            {"code": text},      # filter: qaysi document-ni yangilash
-            {"$set": {"file_id": file_id}},
-            upsert=True           # agar document yo‘q bo‘lsa, yangi yaratadi
-        )
-
-
-        bot.send_message(msg.chat.id, f"✔ Kino saqlandi!\nKino kodi: {text}")
-        del state[user]
-        return
-
-
-    # --- 2) Admin kino o‘chirayapti ---
-    if user in state and state[user][0] == "waiting_for_delete":
-
+    text = msg.text. strip()
+    
+    # 1️⃣ Admin kino o'chirayapti
+    if user in state and state[user][0] == "waiting_for_delete_kino":
         result = movies.delete_one({"code": text})
         
         if result.deleted_count > 0:
-            bot.send_message(msg.chat.id, f"✔ Kino o‘chirildi. Kod: {text}")
+            bot.send_message(msg.chat.id, f"✔ Kino o'chirildi!\nKino kodi: {text}")
         else:
             bot.send_message(msg.chat.id, "❌ Bunday kod mavjud emas.")
-    
+        
         del state[user]
         return
-
-
-
-    # --- 3) Oddiy foydalanuvchi kino kodi yoki nomi so'rayapti ---
+    
+    # 2️⃣ Obunani tekshirish
     if not check_sub(user):
-        # Obunani tekshirish
         upload_mdb(msg)
         return
     
-    query = msg.text.strip()
-    
-    if not query:
+    # 3️⃣ Qidirish
+    if not text:
         bot.send_message(msg.chat.id, "❌ Kino kodi yoki nomini kiriting!")
         return
     
-    # ===== QIDIRISH =====
-    result = search_movie_by_code_or_name(query)
+    result = search_content_by_code_or_name(text)
     
-    if result[0] == "code_found":
-        # ✅ KOD TOPILDI - To'g'ridan-to'g'ri kinoni yuborish
+    # KINO - KOD TOPILDI
+    if result[0] == "movie_code_found": 
         movie = result[1][0]
-        send_movie_info(msg.chat.id, movie['code'])
-        
-    elif result[0] == "too_short":
-        bot.send_message(msg.chat.id, "❌ Kamida 3 ta belgi kiriting!\n\t(🔍 Kino nomini bot topishi kerak.)")
+        send_movie_info(msg. chat.id, movie['code'])
+        return
     
-    elif result[0] == "name_found": 
-    # ✅ NOMGA MOS KINOLAR TOPILDI - RO'YXAT CHIQARISH
-        filtered_movies = result[1]
+    # SERIAL - KOD TOPILDI - ✅ YANGI
+    if result[0] == "serial_code_found":
+        serial = result[1][0]
+        show_serial_for_user(msg.chat.id, serial['code'])
+        return
+    
+    # NOTASI - JUDA QO'LIK
+    if result[0] == "too_short":
+        bot.send_message(msg.chat.id, "❌ Kamina 3 ta belgi kiriting!\n\t(🔍 Kino nomini bot topishi kerak. )")
+        return
+    
+    # TOPILDI - KINO VA SERIALLAR - ✅ YANGILANGAN
+    if result[0] == "found":
+        filtered_items = result[1]
         pages = result[2]
         total = result[3]
         
-        # ⭐ CACHE'GA SAQLANG - INT SIFATIDA
-        user_int = int(user)  # ← QO'SHILDI
+        user_int = int(user)
         search_cache[user_int] = {
-            "query": query,
-            "movies":  filtered_movies,
+            "query": text,
+            "items":   filtered_items,
             "total": total,
-            "pages":   pages
+            "pages":  pages
         }
         
-        # Birinchi sahifani chiqarish
+        # Birinchi sahifa
         page = 1
         boshlash = 0
         end = 5
-        page_movies = filtered_movies[boshlash:end]
+        page_items = filtered_items[boshlash:end]
         
-        text = f"🎬 **Qidirish natijalari: '{query}'**\n\n"
-        text += f"📊 Topildi: {total} ta kino | Sahifa: {page}/{pages}\n\n"
+        text_result = f"🎬 **Qidirush natijalari:  '{text}'**\n\n"
+        text_result += f"📊 Topildi: {total} ta | Sahifa: {page}/{pages}\n\n"
         
         c = 1
-        for m in page_movies:
-            code = m['code']
-            text += f"{c}.  {m['name']}\n"
-            text += f"🆔 Kod: `{code}`\n"
-            text += f"[▶️ Kinoni yuklash](https://t.me/DubKinoBot?start={code})\n"
-            text += f"*{'─' * 35}*\n"
+        for item in page_items:
+            if "seasons" in item:  # Serial
+                text_result += f"{c}. 🎞 {item['name']}\n"
+                text_result += f"🆔 Kod: `{item['code']}`\n"
+                text_result += f"[▶️ Serial](https://t.me/DubKinoBot?start={item['code']})\n"
+            else:  # Kino
+                text_result += f"{c}. 🎬 {item['name']}\n"
+                text_result += f"🆔 Kod: `{item['code']}`\n"
+                text_result += f"[▶️ Kino](https://t.me/DubKinoBot?start={item['code']})\n"
+            
+            text_result += f"*{'─' * 30}*\n"
             c += 1
         
         # Tugmalar
@@ -1223,23 +1283,22 @@ def universal_handler(msg):
         btns = []
         
         if pages > 1:
-            btns.append(types.InlineKeyboardButton("➡️ Keyingi", callback_data=f"search_{user_int}_page_2"))  # ← INT ISHLATISH
+            btns.append(types.InlineKeyboardButton("➡️ Keyingi", callback_data=f"search_{user_int}_page_2"))
         
         btns.append(types.InlineKeyboardButton("❌", callback_data="delete_msg_list"))
         
         if btns:
             markup.row(*btns)
         
-        bot.send_message(msg.chat.id, text, parse_mode="Markdown", reply_markup=markup)
-        user_pages[user] = (query, pages)  # Qidirish ma'lumotini saqlash
+        bot.send_message(msg.chat.id, text_result, parse_mode="Markdown", reply_markup=markup)
+        return
     
-    else:
-        # ❌ TOPILMADI
-        bot.send_message(
-            msg.chat.id, 
-            f"❌ '{query}' bo'yicha kino topilmadi.\n\n"
-            f"💡 Maslahat: To'liq nomi yoki kodni kiriting."
-        )
+    # TOPILMADI
+    bot.send_message(
+        msg.chat.id,
+        f"❌ '{text}' bo'yicha hech qanday kino yoki serial topilmadi.\n\n"
+        f"💡 Maslahat: To'liq nomi yoki kodni kiriting."
+    )
         
     
     
