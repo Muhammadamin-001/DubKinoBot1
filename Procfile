@@ -1,1 +1,1 @@
-#web: gunicorn HDKinolarBot:app
+web: gunicorn HDKinolarBot:app

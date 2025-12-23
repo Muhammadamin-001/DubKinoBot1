@@ -1,3 +1,4 @@
+# utils/__init__.py
 """
 🛠️ UMUMIY YORDAMCHI MODULLAR
 Admin panellar, menu tayyorlash, database konfiguratsiya va misc funksiyalar
@@ -17,8 +18,6 @@ from . db_config import (
     album_buffer,
     album_sending,
     search_cache,
-    user_pages,
-    movie_pages
 )
 
 from .admin_utils import (
@@ -33,21 +32,11 @@ from .admin_utils import (
 
 from .menu_builder import (
     create_inline_buttons,
-    create_reply_buttons,
-    create_back_button,
-    create_pagination_buttons
-)
-
-from .misc import (
-    get_movie_page,
-    format_movie_info,
-    format_serial_info,
-    time_now,
-    safe_int
+    create_back_button
 )
 
 __all__ = [
-    # Database Config
+    # Database
     'bot',
     'db',
     'client',
@@ -61,8 +50,6 @@ __all__ = [
     'album_buffer',
     'album_sending',
     'search_cache',
-    'user_pages',
-    'movie_pages',
     
     # Admin Utils
     'admin_panel',
@@ -73,16 +60,7 @@ __all__ = [
     'is_admin',
     'save_user',
     
-    # Menu Builder
+    # Menu
     'create_inline_buttons',
-    'create_reply_buttons',
     'create_back_button',
-    'create_pagination_buttons',
-    
-    # Misc
-    'get_movie_page',
-    'format_movie_info',
-    'format_serial_info',
-    'time_now',
-    'safe_int',
 ]

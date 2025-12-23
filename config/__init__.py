@@ -1,6 +1,7 @@
+# config/__init__.py
 """
-⚙️ KONFIGURATSIYA
-Environment variables, tokenlar, va global sozlamalar
+⚙️ KONFIGURATSIYA PACKAGE
+Environment variables va global sozlamalar
 """
 
 from .settings import (

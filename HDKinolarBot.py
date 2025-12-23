@@ -64,9 +64,9 @@ from movies.movie_db import *
 app = Flask(__name__)
 kanal_link="https://t.me/DubHDkinolar"
 
-for varname in ["TOKEN", "ADMIN_ID", "WEBHOOK_URL", "MONGO_URI"]:
-    if globals()[varname] is None:
-        print(f"ERROR: {varname} is not set!")
+# for varname in ["TOKEN", "ADMIN_ID", "WEBHOOK_URL", "MONGO_URI"]:
+#     if globals()[varname] is None:
+#         print(f"ERROR: {varname} is not set!")
 
 
 # client = MongoClient(MONGO_URI)

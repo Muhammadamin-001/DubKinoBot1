@@ -1,25 +1,32 @@
 # utils/db_config.py
+"""
+🛢️ DATABASE CONFIGURATION
+MongoDB, Bot instance va global o'zgaruvchilar
+"""
+
 import telebot
 from pymongo import MongoClient
 from config.settings import TOKEN, MONGO_URI
 
-# Bot instance (global)
+# ⭐ BOT INSTANCE (GLOBAL)
 bot = telebot.TeleBot(TOKEN)
 
-# MongoDB connection
+# 🔌 MONGODB CONNECTION
 client = MongoClient(MONGO_URI)
 db = client["TelegramBot"]
 
-# Kolleksiyalar
+# 📚 COLLECTIONS
 users_collection = db["users"]
 movies = db["movies"]
-serials = db["serials"]  # 🆕 SERIAL KOLEKSIYASI
+serials = db["serials"]
 admins_collection = db["admins"]
 channels_collection = db["channels"]
 
-# Global state
+# 🌍 GLOBAL STATE
 state = {}
 user_clicks = {}
 album_buffer = {}
 album_sending = {}
 search_cache = {}
+user_pages = {}
+movie_pages = {}
