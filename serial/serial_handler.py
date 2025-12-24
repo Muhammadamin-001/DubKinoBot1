@@ -79,6 +79,23 @@ def show_serial_menu_after_upload(chat_id, serial):
 
 # =================== SERIAL YUKLASH MENYU ===================
 
+@bot.message_handler(func=lambda msg: msg.text == "🎞 Serial yuklash")
+def upload_serial_menu(msg):
+    """Serial yuklash asosiy menyu - AUTO HANDLER"""
+    buttons = [
+        {"text": "➕ Yangi Serial", "callback":  "serial_add_new"},
+        {"text": "📺 Mavjud Seriallar", "callback": "serial_show_existing"},
+        {"text": "🔙 Ortga", "callback": "serial_back_to_admin"}
+    ]
+    markup = create_inline_buttons(buttons)
+    
+    bot.send_message(
+        msg.chat.id,
+        "🎞️ *Serial Yuklash Menyu*\n\nNima qilish? ",
+        reply_markup=markup,
+        parse_mode="Markdown"
+    )
+
 # =================== YANGI:  CALLBACK dan keladigan SERIAL MENYU ===================
 
 @bot.callback_query_handler(func=lambda call: call.data == "upload_type_serial")
@@ -93,7 +110,7 @@ def show_serial_menu_from_callback(call):
     markup = create_inline_buttons(buttons)
     
     bot.send_message(
-        call.message.chat. id,
+        call.message.chat.id,
         "🎞️ *Serial Yuklash Menyu*\n\nNima qilish? ",
         reply_markup=markup,
         parse_mode="Markdown"
@@ -579,6 +596,32 @@ def save_episode_video(msg):
 
 
 # =================== SERIAL O'CHIRISH MENYU ===================
+
+@bot.message_handler(func=lambda msg: msg.text == "❌ Serial o'chirish")
+def delete_serial_menu(msg):
+    """Serial o'chirish menyusi - AUTO HANDLER"""
+    serials_list = get_all_serials()
+    
+    if not serials_list:
+        bot.send_message(msg.chat.id, "📺 Hech qanday serial qo'shilmagan.")
+        return
+    
+    markup = types.InlineKeyboardMarkup()
+    
+    for serial in serials_list:
+        markup.add(types.InlineKeyboardButton(
+            f"🎞 {serial['name']}",
+            callback_data=f"delete_serial_{serial['code']}"
+        ))
+    
+    markup.add(types.InlineKeyboardButton("🔙 Ortga", callback_data="delete_back_to_admin"))
+    
+    bot.send_message(
+        msg.chat.id,
+        "🗑️ *Qaysi serialni o'chirish? *",
+        reply_markup=markup,
+        parse_mode="Markdown"
+    )
 
 @bot.callback_query_handler(func=lambda call: call. data == "delete_type_serial")
 def show_delete_serial_menu_from_callback(call):
