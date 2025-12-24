@@ -105,23 +105,23 @@ def upload_serial_menu(msg):
 
 #=================== YANGI:  CALLBACK dan keladigan SERIAL MENYU ===================
 
-@bot.callback_query_handler(func=lambda call: call.data == "upload_type_serial")
-def show_serial_menu_from_callback(call):
-    """Callback dan keladigan serial menyu - ✅ YANGI"""
+# @bot.callback_query_handler(func=lambda call: call.data == "upload_type_serial")
+# def show_serial_menu_from_callback(call):
+#     """Callback dan keladigan serial menyu - ✅ YANGI"""
     
-    buttons = [
-        {"text": "➕ Yangi Serial", "callback": "serial_add_new"},
-        {"text": "📺 Mavjud Seriallar", "callback": "serial_show_existing"},
-        {"text": "🔙 Ortga", "callback": "upload_back_to_admin"}
-    ]
-    markup = create_inline_buttons(buttons)
+#     buttons = [
+#         {"text": "➕ Yangi Serial", "callback": "serial_add_new"},
+#         {"text": "📺 Mavjud Seriallar", "callback": "serial_show_existing"},
+#         {"text": "🔙 Ortga", "callback": "upload_back_to_admin"}
+#     ]
+#     markup = create_inline_buttons(buttons)
     
-    bot.send_message(
-        call.message.chat.id,
-        "🎞️ *Serial Yuklash Menyu*\n\nNima qilish? ",
-        reply_markup=markup,
-        parse_mode="Markdown"
-    )
+#     bot.send_message(
+#         call.message.chat.id,
+#         "🎞️ *Serial Yuklash Menyu*\n\nNima qilish? ",
+#         reply_markup=markup,
+#         parse_mode="Markdown"
+#     )
 
 #========== Mavjud seriallar =============
 @bot.callback_query_handler(func=lambda call: call. data == "serial_show_existing")
