@@ -139,7 +139,7 @@ def add_new_serial_start(call):
     # 🔍 DEBUG: State chiqarish
     print(f"[CALLBACK] serial_add_new - user_id: {user_id}, state: {state}")
     
-    bot.delete_message(call.message.chat.id, call.message.message_id)
+    #bot.delete_message(call.message.chat.id, call.message.message_id)
     bot.send_message(
         call.message.chat.id,
         "🆔 *Serial kodini kiriting*\n\n(Masalan: serial_001 yoki mirzabek)",
