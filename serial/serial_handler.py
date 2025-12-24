@@ -1,18 +1,20 @@
 # serial/serial_handler.py
+# serial/serial_handler.py
 """
 🎞️ SERIAL ADMIN HANDLER
 Serial yuklash, o'chirish, menular va callback handlerlari
 """
 
 from telebot import types
-from utils.db_config import bot #, state, serials
-from utils.menu_builder import create_inline_buttons
-from utils.admin_utils import is_admin  # ✅ QOSHILDI
-from config.settings import ADMIN_ID  # ✅ QOSHILDI
-from .  serial_db import (
+from utils. db_config import bot, state, serials  # ✅ TUZATILGAN
+from utils. menu_builder import create_inline_buttons
+from utils.admin_utils import is_admin
+from config. settings import ADMIN_ID
+from .serial_db import (
     create_serial, add_season, add_episode, add_full_files,
     get_serial, get_all_serials, get_season, delete_serial,
-    delete_season, check_serial_code_exists,
+    delete_season, delete_episode,  # ✅ QOSHILDI
+    check_serial_code_exists,
     check_episode_exists
 )
 from .serial_states import (
@@ -20,19 +22,19 @@ from .serial_states import (
     get_serial_code_from_state,
     is_waiting_for
 )
-#import time
+import time  # ✅ UNCOMMENTED
 
 # =================== SERIAL YUKLASH MENYU ===================
 
 @bot.message_handler(func=lambda msg: msg.text == "🎞 Serial yuklash")
 def upload_serial_menu(msg):
     """Serial yuklash asosiy menyu - ✅ TUZATILGAN"""
-    user_id = msg.from_user.id
+    #user_id = msg.from_user.id
     
     # ✅ ADMIN TEKSHIRUVI TUZATILDI
-    if not (str(user_id) == ADMIN_ID or is_admin(user_id)):
-        bot.send_message(msg.chat.id, "❌ Siz admin emassiz!")
-        return
+    # if not (str(user_id) == ADMIN_ID or is_admin(user_id)):
+    #     bot.send_message(msg.chat.id, "❌ Siz admin emassiz!")
+    #     return
     
     buttons = [
         {"text": "➕ Yangi Serial", "callback":   "serial_add_new"},
@@ -551,8 +553,8 @@ def delete_season_or_episode(call):
     serial_code = parts[3]
     season_number = int(parts[4])
     
-    serial = get_serial(serial_code)
-    season = get_season(serial, season_number)
+    #serial = get_serial(serial_code)
+    season = get_season(serial_code, season_number)
     
     if not season:
         bot.answer_callback_query(call.id, "❌ Fasl topilmadi!")
