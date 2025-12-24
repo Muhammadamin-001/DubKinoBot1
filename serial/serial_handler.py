@@ -79,18 +79,21 @@ def show_serial_menu_after_upload(chat_id, serial):
 
 # =================== SERIAL YUKLASH MENYU ===================
 
-@bot.message_handler(func=lambda msg: msg.text == "🎞 Serial yuklash")
-def upload_serial_menu(msg):
-    """Serial yuklash asosiy menyu"""
+# =================== YANGI:  CALLBACK dan keladigan SERIAL MENYU ===================
+
+@bot.callback_query_handler(func=lambda call: call.data == "upload_type_serial")
+def show_serial_menu_from_callback(call):
+    """Callback dan keladigan serial menyu - ✅ YANGI"""
+    
     buttons = [
         {"text": "➕ Yangi Serial", "callback": "serial_add_new"},
         {"text": "📺 Mavjud Seriallar", "callback": "serial_show_existing"},
-        {"text":  "🔙 Ortga", "callback": "serial_back_to_admin"}
+        {"text": "🔙 Ortga", "callback": "upload_back_to_admin"}
     ]
     markup = create_inline_buttons(buttons)
     
     bot.send_message(
-        msg.chat.id,
+        call.message.chat. id,
         "🎞️ *Serial Yuklash Menyu*\n\nNima qilish? ",
         reply_markup=markup,
         parse_mode="Markdown"
@@ -571,25 +574,27 @@ def save_episode_video(msg):
     
     set_serial_state(user_id, ["episode_waiting_number", serial_code, season_number])
     print(f"[RESET TO EPISODE] state: {state.get(user_id)}")
+    
+    
+
 
 # =================== SERIAL O'CHIRISH MENYU ===================
 
-@bot.message_handler(func=lambda msg:  msg.text == "🎞 Serial o'chirish")
-def delete_serial_menu(msg):
-    """Serial o'chirish menyusi"""
+@bot.callback_query_handler(func=lambda call: call. data == "delete_type_serial")
+def show_delete_serial_menu_from_callback(call):
+    """Callback dan keladigan serial o'chirish menyu"""
+    from serial.serial_db import get_all_serials
+    
     serials_list = get_all_serials()
     
     if not serials_list:
-        bot.send_message(
-            msg.chat.id,
-            "📺 Hech qanday serial qo'shilmagan."
-        )
+        bot.answer_callback_query(call.id, "📺 Hech qanday serial qo'shilmagan.")
         return
     
     markup = types.InlineKeyboardMarkup()
     
-    for serial in serials_list:  
-        markup.add(types.InlineKeyboardButton(
+    for serial in serials_list:
+        markup. add(types.InlineKeyboardButton(
             f"🎞 {serial['name']}",
             callback_data=f"delete_serial_{serial['code']}"
         ))
@@ -597,8 +602,8 @@ def delete_serial_menu(msg):
     markup.add(types.InlineKeyboardButton("🔙 Ortga", callback_data="delete_back_to_admin"))
     
     bot.send_message(
-        msg.chat.id,
-        "🗑️ *Qaysi serialni o'chirish? *",
+        call.message.chat.id,
+        "🗑️ *Qaysi serialni o'chirish?*",
         reply_markup=markup,
         parse_mode="Markdown"
     )
@@ -756,7 +761,7 @@ def delete_season_all(call):
 def serial_back_menu(call):
     """Asosiy serial menuyga qaytish"""
     bot.delete_message(call.message.chat.id, call.message.message_id)
-    upload_serial_menu(call. message)
+    show_serial_menu_after_upload(call. message)
 
 @bot.callback_query_handler(func=lambda call: call.data == "delete_back_to_admin")
 def delete_back_menu(call):
