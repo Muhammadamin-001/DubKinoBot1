@@ -16,7 +16,7 @@ import time
 from flask import Flask, request
 import telebot
 from telebot import types
-
+#from serial.serial_db import get_all_serials
 # ⚙️ Konfiguratsiya
 from config. settings import TOKEN, ADMIN_ID
 
@@ -40,9 +40,9 @@ from serial.serial_db import (
     # check_episode_exists
 )
 
-from serial.serial_states import (
-    set_serial_state
-    )
+# from serial.serial_states import (
+#     set_serial_state
+#     )
 # Flask setup
 app = Flask(__name__)
 
@@ -681,10 +681,8 @@ def delete_type_kino(call):
 @bot.callback_query_handler(func=lambda call: call.data == "delete_type_serial")
 def delete_type_serial(call):
     """Serial o'chirish menyu"""
-    bot.delete_message(call.message.chat. id, call.message.message_id)
+    bot.delete_message(call.message.chat.id, call.message.message_id)
     
-    from serial.serial_db import get_all_serials
-    from telebot import types
     
     serials_list = get_all_serials()
     
