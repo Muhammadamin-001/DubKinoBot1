@@ -7,8 +7,8 @@ Serial yuklash, o'chirish, menular va callback handlerlari
 from telebot import types
 from utils.db_config import bot, state#, serials
 from utils.menu_builder import create_inline_buttons
-#from utils.admin_utils import is_admin
-#from config.settings import ADMIN_ID
+from utils.admin_utils import is_admin
+from config.settings import ADMIN_ID
 from . serial_db import (
     create_serial, add_season, add_episode, add_full_files,
     get_serial, get_all_serials, get_season, delete_serial,
@@ -79,42 +79,49 @@ def show_serial_menu_after_upload(chat_id, serial):
 
 # =================== SERIAL YUKLASH MENYU ===================
 
+# ✅ BUNI QO'SHISH KERAK ENDI! 
 @bot.message_handler(func=lambda msg: msg.text == "🎞 Serial yuklash")
 def upload_serial_menu(msg):
     """Serial yuklash asosiy menyu - AUTO HANDLER"""
+    user_id = msg.from_user.id
+    
+    if not (str(user_id) == ADMIN_ID or is_admin(user_id)):
+        bot.send_message(msg.chat.id, "❌ Siz admin emassiz!")
+        return
+    
     buttons = [
         {"text": "➕ Yangi Serial", "callback":  "serial_add_new"},
-        {"text": "📺 Mavjud Seriallar", "callback": "serial_show_existing"},
+        {"text":  "📺 Mavjud Seriallar", "callback": "serial_show_existing"},
         {"text": "🔙 Ortga", "callback": "serial_back_to_admin"}
     ]
     markup = create_inline_buttons(buttons)
     
     bot.send_message(
         msg.chat.id,
-        "🎞️ *Serial Yuklash Menyu*\n\nNima qilish? ",
+        "🎞️ *Serial Yuklash Menyu*\n\nNima qilish?  ",
         reply_markup=markup,
         parse_mode="Markdown"
     )
 
 # =================== YANGI:  CALLBACK dan keladigan SERIAL MENYU ===================
 
-@bot.callback_query_handler(func=lambda call: call.data == "upload_type_serial")
-def show_serial_menu_from_callback(call):
-    """Callback dan keladigan serial menyu - ✅ YANGI"""
+# @bot.callback_query_handler(func=lambda call: call.data == "upload_type_serial")
+# def show_serial_menu_from_callback(call):
+#     """Callback dan keladigan serial menyu - ✅ YANGI"""
     
-    buttons = [
-        {"text": "➕ Yangi Serial", "callback": "serial_add_new"},
-        {"text": "📺 Mavjud Seriallar", "callback": "serial_show_existing"},
-        {"text": "🔙 Ortga", "callback": "upload_back_to_admin"}
-    ]
-    markup = create_inline_buttons(buttons)
+#     buttons = [
+#         {"text": "➕ Yangi Serial", "callback": "serial_add_new"},
+#         {"text": "📺 Mavjud Seriallar", "callback": "serial_show_existing"},
+#         {"text": "🔙 Ortga", "callback": "upload_back_to_admin"}
+#     ]
+#     markup = create_inline_buttons(buttons)
     
-    bot.send_message(
-        call.message.chat.id,
-        "🎞️ *Serial Yuklash Menyu*\n\nNima qilish? ",
-        reply_markup=markup,
-        parse_mode="Markdown"
-    )
+#     bot.send_message(
+#         call.message.chat.id,
+#         "🎞️ *Serial Yuklash Menyu*\n\nNima qilish? ",
+#         reply_markup=markup,
+#         parse_mode="Markdown"
+#     )
 
 @bot.callback_query_handler(func=lambda call: call.data == "serial_show_existing")
 def show_serials_or_add(call):
@@ -597,24 +604,31 @@ def save_episode_video(msg):
 
 # =================== SERIAL O'CHIRISH MENYU ===================
 
+# ✅ BUNI QO'SHISH KERAK ENDI!
 @bot.message_handler(func=lambda msg: msg.text == "❌ Serial o'chirish")
 def delete_serial_menu(msg):
     """Serial o'chirish menyusi - AUTO HANDLER"""
+    user_id = msg.from_user.id
+    
+    if not (str(user_id) == ADMIN_ID or is_admin(user_id)):
+        bot.send_message(msg.chat.id, "❌ Siz admin emassiz!")
+        return
+    
     serials_list = get_all_serials()
     
     if not serials_list:
-        bot.send_message(msg.chat.id, "📺 Hech qanday serial qo'shilmagan.")
+        bot.send_message(msg. chat.id, "📺 Hech qanday serial qo'shilmagan.")
         return
     
     markup = types.InlineKeyboardMarkup()
     
-    for serial in serials_list:
+    for serial in serials_list: 
         markup.add(types.InlineKeyboardButton(
             f"🎞 {serial['name']}",
             callback_data=f"delete_serial_{serial['code']}"
         ))
     
-    markup.add(types.InlineKeyboardButton("🔙 Ortga", callback_data="delete_back_to_admin"))
+    markup.add(types.InlineKeyboardButton("🔙 Ortga", callback_data="serial_back_to_admin"))
     
     bot.send_message(
         msg.chat.id,
