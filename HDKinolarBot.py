@@ -25,8 +25,11 @@ from utils.admin_utils import (
 from utils.menu_builder import create_inline_buttons
 
 # 🎞️ Serial va Kino modullar
+# ✅ TUZATILDI:  FAQAT MAVJUD FUNKSIYALARNI IMPORT QIL
 from serial.serial_handler import (
-    show_serial_menu_after_upload, delete_serial_menu
+    upload_serial_menu,
+    delete_serial_menu,
+    show_serial_menu_after_upload  # ✅ QOSHILDI
 )
 from serial.serial_user import show_serial_for_user
 from movies.movie_handler import send_movie_info#, upload_movie #, catch_video, movie_code, movie_name, movie_genre, movie_url
@@ -570,7 +573,7 @@ def kodlar(msg):
 
 # =================== FILM YUKLASH MENYU ===================
 
-@bot.message_handler(func=lambda msg: msg.text == "🎬 Film yuklash")
+@bot. message_handler(func=lambda msg: msg.text == "🎬 Film yuklash")
 def upload_content_menu(msg):
     """Film yuklash menyu (kino/serial tanlash) - ✅ YANGI"""
     user_id = msg.from_user.id
@@ -580,9 +583,9 @@ def upload_content_menu(msg):
         return
     
     buttons = [
-        {"text": "🎥 Kino", "callback":  "upload_type_kino"},
+        {"text": "🎥 Kino", "callback": "upload_type_kino"},
         {"text": "🎞 Serial", "callback": "upload_type_serial"},
-        {"text": "🔙 Ortga", "callback": "upload_back_to_admin"}
+        {"text": "🔙 Ortga", "callback":  "upload_back_to_admin"}
     ]
     markup = create_inline_buttons(buttons)
     
@@ -594,7 +597,6 @@ def upload_content_menu(msg):
     )
 
 
-# ✅ TUZATILDI:  Eski "waiting_for_video" o'rniga qoldirildi
 @bot.callback_query_handler(func=lambda call: call.data == "upload_type_kino")
 def upload_type_kino(call):
     """Kino yuklash bosilsa"""
@@ -603,54 +605,35 @@ def upload_type_kino(call):
     state[str(call.from_user.id)] = ["waiting_for_video"]
 
 
-# ✅ TUZATILDI:  CALLBACK dan SERIAL HANDLER CHAQIRISH
-@bot.callback_query_handler(func=lambda call:  call.data == "upload_type_serial")
+# ✅ TUZATILDI:   CALLBACK dan SERIAL MENYU
+@bot.callback_query_handler(func=lambda call: call.data == "upload_type_serial")
 def upload_type_serial(call):
-    """Serial yuklash bosilsa - SERIAL HANDLER CHAQIR"""
-    bot.delete_message(call.message.chat.id, call.message.message_id)
+    """Serial yuklash bosilsa"""
+    bot.delete_message(call.message.chat. id, call.message.message_id)
     
-    # Serial yuklash menyu (serial_handler dan)
-    # Bajariladi: upload_serial_menu() funksiyasi
-    from serial. serial_handler import upload_serial_menu as serial_menu_func
-    
-    # CALLBACK ni MESSAGE ga o'tkaztirish uchun artificial message yaratamiz
-    class FakeMessage:
-        def __init__(self, chat_id, user_id):
-            self.chat = type('obj', (object,), {'id': chat_id})()
-            self.from_user = type('obj', (object,), {'id': user_id})()
-            self.text = "🎞 Serial yuklash"
-    
-    fake_msg = FakeMessage(call.message.chat.id, call.from_user.id)
-    
-    # Endi serial menyu chaqir
+    # Serial menyu chiqarish
     buttons = [
         {"text": "➕ Yangi Serial", "callback": "serial_add_new"},
-        {"text":  "📺 Mavjud Seriallar", "callback": "serial_show_existing"},
-        {"text": "🔙 Ortga", "callback": "serial_back_to_admin"}
+        {"text": "📺 Mavjud Seriallar", "callback": "serial_show_existing"},
+        {"text": "🔙 Ortga", "callback": "upload_back_to_admin"}
     ]
     markup = create_inline_buttons(buttons)
     
     bot.send_message(
-        call. message.chat.id,
+        call.message.chat.id,
         "🎞️ *Serial Yuklash Menyu*\n\nNima qilish? ",
         reply_markup=markup,
         parse_mode="Markdown"
     )
 
 
-# ✅ TUZATILDI: ORTGA TUGMASI
-@bot.callback_query_handler(func=lambda call:  call.data == "upload_back_to_admin")
+@bot.callback_query_handler(func=lambda call: call.data == "upload_back_to_admin")
 def upload_back_to_admin(call):
     """Ortga tugmasi"""
     bot.delete_message(call.message.chat.id, call.message.message_id)
     admin_panel(call.message.chat.id)
-    
-    
-    
-    
-    
-    
-    
+
+
 # =================== FILM O'CHIRISH MENYU ===================
 
 @bot. message_handler(func=lambda msg: msg.text == "❌ Film o'chirish")
@@ -663,7 +646,7 @@ def delete_content_menu(msg):
         return
     
     buttons = [
-        {"text": "🎥 Kino", "callback": "delete_type_kino"},
+        {"text": "🎥 Kino", "callback":  "delete_type_kino"},
         {"text": "🎞 Serial", "callback": "delete_type_serial"},
         {"text": "🔙 Ortga", "callback": "delete_back_to_admin"}
     ]
@@ -677,8 +660,7 @@ def delete_content_menu(msg):
     )
 
 
-# ✅ TUZATILDI: KINO O'CHIRISH
-@bot.callback_query_handler(func=lambda call: call. data == "delete_type_kino")
+@bot.callback_query_handler(func=lambda call: call.data == "delete_type_kino")
 def delete_type_kino(call):
     """Kino o'chirish"""
     bot.delete_message(call.message.chat.id, call.message.message_id)
@@ -686,27 +668,19 @@ def delete_type_kino(call):
     state[str(call.from_user.id)] = ["waiting_for_delete_kino"]
 
 
-# ✅ TUZATILDI:  SERIAL O'CHIRISH MENYU
+# ✅ TUZATILDI:  CALLBACK dan SERIAL O'CHIRISH MENYU
 @bot.callback_query_handler(func=lambda call: call.data == "delete_type_serial")
 def delete_type_serial(call):
     """Serial o'chirish menyu"""
-    bot.delete_message(call.message.chat.id, call.message.message_id)
-    
-    # Serial o'chirish menyu chiqarish
-    
-    # Bajariladi: delete_serial_menu() funksiyasi
-    buttons = [
-        # Seriallar ro'yxatini chiqarish
-    ]
+    bot.delete_message(call.message.chat. id, call.message.message_id)
     
     from serial.serial_db import get_all_serials
+    from telebot import types
+    
     serials_list = get_all_serials()
     
     if not serials_list:
-        bot.send_message(
-            call.message.chat.id,
-            "📺 Hech qanday serial qo'shilmagan."
-        )
+        bot.answer_callback_query(call.id, "📺 Hech qanday serial qo'shilmagan.")
         return
     
     markup = types.InlineKeyboardMarkup()
@@ -721,20 +695,17 @@ def delete_type_serial(call):
     
     bot.send_message(
         call.message.chat.id,
-        "🗑️ *Qaysi serialni o'chirish? *",
+        "🗑️ *Qaysi serialni o'chirish?*",
         reply_markup=markup,
         parse_mode="Markdown"
     )
 
 
-# ✅ TUZATILDI: ORTGA TUGMASI
 @bot.callback_query_handler(func=lambda call: call.data == "delete_back_to_admin")
 def delete_back_to_admin(call):
     """Ortga tugmasi"""
-    bot.delete_message(call.message.chat.id, call.message.message_id)
-    admin_panel(call.message.chat.id)
-        
-
+    bot.delete_message(call. message.chat.id, call. message.message_id)
+    admin_panel(call.message. chat.id)
 
 
 

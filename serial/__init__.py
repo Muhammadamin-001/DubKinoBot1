@@ -4,8 +4,8 @@
 Seriallarni yuklash, o'chirish va boshqarish uchun barcha funksiyalar
 """
 
-# ✅ ANIQ IMPORT (Star o'rniga)
-from .serial_handler import (
+# ✅ SODDA IMPORT - FAQAT ZARUR FUNKSIYALAR
+from . serial_handler import (
     upload_serial_menu,
     show_serials_or_add,
     add_new_serial_start,
@@ -27,6 +27,7 @@ from .serial_handler import (
     delete_season_or_episode,
     delete_season_all,
     serial_back_menu,
+    show_serial_menu_after_upload,  # ✅ QOSHILDI
 )
 
 from .serial_db import (
@@ -61,7 +62,7 @@ from .serial_user import (
 )
 
 __all__ = [
-    # serial_handler.py
+    # serial_handler. py
     'upload_serial_menu',
     'show_serials_or_add',
     'add_new_serial_start',
@@ -83,6 +84,7 @@ __all__ = [
     'delete_season_or_episode',
     'delete_season_all',
     'serial_back_menu',
+    'show_serial_menu_after_upload',  # ✅ QOSHILDI
     
     # serial_db.py
     'create_serial',
