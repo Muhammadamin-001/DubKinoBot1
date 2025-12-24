@@ -703,10 +703,9 @@ def add_new_serial_start(call):
 
 
 
-
 # =================== FILM O'CHIRISH MENYU ===================
 
-@bot. message_handler(func=lambda msg: msg.text == "❌ Film o'chirish")
+@bot.message_handler(func=lambda msg: msg.text == "❌ Film o'chirish")
 def delete_content_menu(msg):
     """Film o'chirish menyu (kino/serial tanlash) - ✅ YANGI"""
     user_id = msg.from_user.id

@@ -5,8 +5,8 @@ Seriallarni yuklash, o'chirish va boshqarish uchun barcha funksiyalar
 """
 
 # ✅ FAQAT MAVJUD FUNKSIYALARNI IMPORT QIL
-from . serial_handler import (
-    upload_serial_menu,
+from serial.serial_handler import (
+   # upload_serial_menu,
     delete_serial_menu,
 )
 
@@ -41,7 +41,7 @@ from .serial_user import (
 
 __all__ = [
     # serial_handler. py - FAQAT MAVJUD
-    'upload_serial_menu',
+    #'upload_serial_menu',
     'delete_serial_menu',
     
     # serial_db.py
