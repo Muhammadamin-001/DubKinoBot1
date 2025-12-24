@@ -2,16 +2,19 @@
 # HDKinolarBot.py - ASOSIY BOT FAYLI
 # ============================================
 
+# ============================================
+# HDKinolarBot.py - ASOSIY BOT FAYLI
+# ============================================
+
 # 📦 Standart kutubxonalar
 import os
 import time
 from flask import Flask, request
 import telebot
 from telebot import types
-#from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 # ⚙️ Konfiguratsiya
-from config. settings import TOKEN, ADMIN_ID #, WEBHOOK_URL, MONGO_URI
+from config. settings import TOKEN, ADMIN_ID
 
 # 🛠️ Utilities
 from utils.db_config import (
@@ -28,12 +31,10 @@ from utils.menu_builder import create_inline_buttons
 # ✅ TUZATILDI:  FAQAT MAVJUD FUNKSIYALARNI IMPORT QIL
 from serial.serial_handler import (
     upload_serial_menu,
-    delete_serial_menu,
-    show_serial_menu_after_upload  # ✅ QOSHILDI
+    delete_serial_menu
 )
 from serial.serial_user import show_serial_for_user
-from movies.movie_handler import send_movie_info#, upload_movie #, catch_video, movie_code, movie_name, movie_genre, movie_url
-#from movies.movie_db import get_movie, get_all_movies
+from movies.movie_handler import send_movie_info
 
 # Flask setup
 app = Flask(__name__)
