@@ -29,7 +29,7 @@ from serial.serial_handler import (
     upload_serial_menu, delete_serial_menu
 )
 from serial.serial_user import show_serial_for_user
-from movies.movie_handler import send_movie_info, upload_movie #, catch_video, movie_code, movie_name, movie_genre, movie_url
+from movies.movie_handler import send_movie_info#, upload_movie #, catch_video, movie_code, movie_name, movie_genre, movie_url
 #from movies.movie_db import get_movie, get_all_movies
 
 # Flask setup
@@ -598,16 +598,14 @@ def upload_content_menu(msg):
 def upload_type_kino(call):
     """Kino yuklash bosilsa - eski logika"""
     bot.delete_message(call.message.chat.id, call.message.message_id)
-    upload_movie(call.message)
-    # bot.send_message(call.message.chat.id, "🎬 Video yuboring (video fayl ko'rinishida).")
-    # state[str(call.from_user.id)] = ["waiting_for_video"]
+    bot.send_message(call.message.chat.id, "🎬 Video yuboring (video fayl ko'rinishida).")
+    state[str(call.from_user.id)] = ["waiting_for_video"]
 
 @bot.callback_query_handler(func=lambda call: call. data == "upload_type_serial")
 def upload_type_serial(call):
     """Serial yuklash bosilsa"""
     bot.delete_message(call.message.chat.id, call.message.message_id)
     upload_serial_menu(call.message)
-    
 
 @bot.callback_query_handler(func=lambda call: call.data == "upload_back_to_admin")
 def upload_back_to_admin(call):
