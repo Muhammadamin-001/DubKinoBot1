@@ -29,7 +29,7 @@ from serial.serial_handler import (
     upload_serial_menu, delete_serial_menu
 )
 from serial.serial_user import show_serial_for_user
-from movies.movie_handler import send_movie_info #, upload_movie, catch_video, movie_code, movie_name, movie_genre, movie_url
+from movies.movie_handler import send_movie_info, upload_movie #, catch_video, movie_code, movie_name, movie_genre, movie_url
 #from movies.movie_db import get_movie, get_all_movies
 
 # Flask setup
@@ -531,7 +531,7 @@ def start(msg):
         bot.send_message(msg.chat.id, "❌ Bunday kod topilmadi!")
         return
 
-    bot.send_message(msg.chat.id, "🆔 Kino kodini kiriting:\n\t(🔍 Yoki kino nomini: )")
+    bot.send_message(msg.chat.id, "🆔 Film kodini kiriting:\n\t(🔍 Yoki film nomini: )")
 
 
 
@@ -598,8 +598,9 @@ def upload_content_menu(msg):
 def upload_type_kino(call):
     """Kino yuklash bosilsa - eski logika"""
     bot.delete_message(call.message.chat.id, call.message.message_id)
-    bot.send_message(call.message.chat.id, "🎬 Video yuboring (video fayl ko'rinishida).")
-    state[str(call.from_user.id)] = ["waiting_for_video"]
+    upload_movie(call.message)
+    # bot.send_message(call.message.chat.id, "🎬 Video yuboring (video fayl ko'rinishida).")
+    # state[str(call.from_user.id)] = ["waiting_for_video"]
 
 @bot.callback_query_handler(func=lambda call: call. data == "upload_type_serial")
 def upload_type_serial(call):
@@ -611,7 +612,7 @@ def upload_type_serial(call):
 @bot.callback_query_handler(func=lambda call: call.data == "upload_back_to_admin")
 def upload_back_to_admin(call):
     """Ortga tugmasi"""
-    bot.delete_message(call.message.chat. id, call.message.message_id)
+    bot.delete_message(call.message.chat.id, call.message.message_id)
     admin_panel(call.message. chat.id)
 
     
@@ -839,7 +840,7 @@ def back_user(msg):
     state.pop(str(msg.from_user.id), None)
     bot.send_message(
         msg.chat.id,
-        "🆔 Kino kodini kiriting:\n\t(🔍 Yoki kino nomini:)",
+        "🆔 Film kodini kiriting:\n\t(🔍 Yoki film nomini:)",
         reply_markup=types.ReplyKeyboardRemove()
     )
 
