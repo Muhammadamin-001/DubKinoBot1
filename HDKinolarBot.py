@@ -6,6 +6,10 @@
 # HDKinolarBot.py - ASOSIY BOT FAYLI
 # ============================================
 
+# ============================================
+# HDKinolarBot.py - ASOSIY BOT FAYLI
+# ============================================
+
 # 📦 Standart kutubxonalar
 import os
 import time
@@ -27,12 +31,6 @@ from utils.admin_utils import (
 )
 from utils.menu_builder import create_inline_buttons
 
-# 🎞️ Serial va Kino modullar
-# ✅ TUZATILDI:  FAQAT MAVJUD FUNKSIYALARNI IMPORT QIL
-from . serial_handler import (
-    show_serial_menu_after_upload,
-    show_delete_serial_menu_from_callback,
-)
 from serial.serial_user import show_serial_for_user
 from movies.movie_handler import send_movie_info
 
@@ -41,19 +39,15 @@ app = Flask(__name__)
 
 #kanal_link = "https://t.me/DubHDkinolar"
 
-# =================== STATE (HOLAT) - ✅ TUZATILGAN ===================
-
-#state = {}  # ✅ UNCOMMENTED
+# =================== STATE (HOLAT) ===================
 
 user_clicks = {}
-album_buffer = {}  # ✅ UNCOMMENTED
-album_sending = {}  # ✅ UNCOMMENTED
+album_buffer = {}
+album_sending = {}
 
 movie_pages = {}
 user_pages = {}
-search_cache = {}  # ✅ UNCOMMENTED
-
-# ...  QOLGAN KOD ... 
+search_cache = {}
 
 
 
