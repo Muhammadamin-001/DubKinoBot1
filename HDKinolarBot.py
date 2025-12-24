@@ -29,9 +29,9 @@ from utils.menu_builder import create_inline_buttons
 
 # 🎞️ Serial va Kino modullar
 # ✅ TUZATILDI:  FAQAT MAVJUD FUNKSIYALARNI IMPORT QIL
-from serial.serial_handler import (
-    upload_serial_menu,
-    delete_serial_menu
+from . serial_handler import (
+    show_serial_menu_after_upload,
+    show_delete_serial_menu_from_callback,
 )
 from serial.serial_user import show_serial_for_user
 from movies.movie_handler import send_movie_info

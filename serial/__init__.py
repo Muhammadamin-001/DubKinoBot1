@@ -6,8 +6,8 @@ Seriallarni yuklash, o'chirish va boshqarish uchun barcha funksiyalar
 
 # ✅ FAQAT MAVJUD FUNKSIYALARNI IMPORT QIL
 from . serial_handler import (
-    upload_serial_menu,
-    delete_serial_menu,
+    show_serial_menu_after_upload,
+    show_delete_serial_menu_from_callback,
 )
 
 from .serial_db import (
