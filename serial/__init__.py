@@ -25,7 +25,6 @@ from .serial_handler import (
     delete_serial_all,
     delete_serial_seasons,
     delete_season_or_episode,
-    # ❌ 'delete_episode' O'CHIRILDI - serial_db.py da bor
     delete_season_all,
     serial_back_menu,
 )
@@ -37,7 +36,7 @@ from .serial_db import (
     add_full_files,
     delete_serial,
     delete_season,
-    delete_episode,  # ✅ SHUDAN IMPORT QILINADI
+    delete_episode,
     get_serial,
     get_all_serials,
     get_season,
@@ -92,7 +91,7 @@ __all__ = [
     'add_full_files',
     'delete_serial',
     'delete_season',
-    'delete_episode',  # ✅ SHUDAN
+    'delete_episode',
     'get_serial',
     'get_all_serials',
     'get_season',
