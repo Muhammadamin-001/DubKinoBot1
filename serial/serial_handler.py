@@ -37,6 +37,7 @@ def upload_serial_menu(msg):
     #     return
     
     buttons = [
+        {"text": "➕ Yangi Serial", "callback": "serial_add_new"},
         {"text": "📺 Mavjud Seriallar", "callback": "serial_show_existing"},
         {"text": "🔙 Ortga", "callback": "serial_back_to_admin"}
     ]
@@ -93,7 +94,7 @@ def show_serials_or_add(call):
 
 # =================== YANGI SERIAL YARATISH ===================
 
-@bot. callback_query_handler(func=lambda call: call.data == "serial_add_new")
+@bot.callback_query_handler(func=lambda call: call.data == "serial_add_new")
 def add_new_serial_start(call):
     """Yangi serial yaratishni boshlash"""
     user_id = call.from_user.id
@@ -180,7 +181,7 @@ def save_serial_image(msg):
 
 # =================== SERIAL TANLASH VA FASLLAR ===================
 
-@bot.  callback_query_handler(func=lambda call: call.data.  startswith("serial_select_"))
+@bot.callback_query_handler(func=lambda call: call.data.  startswith("serial_select_"))
 def select_serial(call):
     """Serial tanlash va fasllarni ko'rsatish"""
     user_id = call.from_user.id
@@ -284,7 +285,7 @@ def save_season_number(msg):
 
 # =================== TO'LIQ FASL YUKLASH ===================
 
-@bot.  callback_query_handler(func=lambda call: call.data. startswith("season_type_full_"))
+@bot.callback_query_handler(func=lambda call: call.data. startswith("season_type_full_"))
 def season_type_full(call):
     """To'liq fasl yuklashni boshlash"""
     user_id = call.from_user.id
@@ -347,7 +348,7 @@ def upload_season_full_video(msg):
 
 # =================== QISM-QISM FASL YUKLASH ===================
 
-@bot.  callback_query_handler(func=lambda call: call.data.startswith("season_type_episodes_"))
+@bot.callback_query_handler(func=lambda call: call.data.startswith("season_type_episodes_"))
 def season_type_episodes(call):
     """Qism-qism fasl yuklashni boshlash"""
     user_id = call.from_user.id
