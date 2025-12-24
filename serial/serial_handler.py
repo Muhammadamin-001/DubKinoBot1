@@ -79,111 +79,111 @@ def show_serial_menu_after_upload(chat_id, serial):
 
 # =================== SERIAL YUKLASH MENYU ===================
 
-# ✅ BUNI QO'SHISH KERAK ENDI! 
-# @bot.message_handler(func=lambda msg: msg.text == "🎞 Serial yuklash")
-# def upload_serial_menu(msg):
-#     """Serial yuklash asosiy menyu - AUTO HANDLER"""
-#     user_id = msg.from_user.id
+#✅ BUNI QO'SHISH KERAK ENDI! 
+@bot.message_handler(func=lambda msg: msg.text == "🎞 Serial yuklash")
+def upload_serial_menu(msg):
+    """Serial yuklash asosiy menyu - AUTO HANDLER"""
+    user_id = msg.from_user.id
     
-#     if not (str(user_id) == ADMIN_ID or is_admin(user_id)):
-#         bot.send_message(msg.chat.id, "❌ Siz admin emassiz!")
-#         return
+    if not (str(user_id) == ADMIN_ID or is_admin(user_id)):
+        bot.send_message(msg.chat.id, "❌ Siz admin emassiz!")
+        return
     
-#     buttons = [
-#         {"text": "➕ Yangi Serial", "callback":  "serial_add_new"},
-#         {"text":  "📺 Mavjud Seriallar", "callback": "serial_show_existing"},
-#         {"text": "🔙 Ortga", "callback": "serial_back_to_admin"}
-#     ]
-#     markup = create_inline_buttons(buttons)
+    buttons = [
+        {"text": "➕ Yangi Serial", "callback":  "serial_add_new"},
+        {"text":  "📺 Mavjud Seriallar", "callback": "serial_show_existing"},
+        {"text": "🔙 Ortga", "callback": "serial_back_to_admin"}
+    ]
+    markup = create_inline_buttons(buttons)
     
-#     bot.send_message(
-#         msg.chat.id,
-#         "🎞️ *Serial Yuklash Menyu*\n\nNima qilish?  ",
-#         reply_markup=markup,
-#         parse_mode="Markdown"
-#     )
+    bot.send_message(
+        msg.chat.id,
+        "🎞️ *Serial Yuklash Menyu*\n\nNima qilish?  ",
+        reply_markup=markup,
+        parse_mode="Markdown"
+    )
 
-# =================== YANGI:  CALLBACK dan keladigan SERIAL MENYU ===================
+#=================== YANGI:  CALLBACK dan keladigan SERIAL MENYU ===================
 
-# @bot.callback_query_handler(func=lambda call: call.data == "upload_type_serial")
-# def show_serial_menu_from_callback(call):
-#     """Callback dan keladigan serial menyu - ✅ YANGI"""
+@bot.callback_query_handler(func=lambda call: call.data == "upload_type_serial")
+def show_serial_menu_from_callback(call):
+    """Callback dan keladigan serial menyu - ✅ YANGI"""
     
-#     buttons = [
-#         {"text": "➕ Yangi Serial", "callback": "serial_add_new"},
-#         {"text": "📺 Mavjud Seriallar", "callback": "serial_show_existing"},
-#         {"text": "🔙 Ortga", "callback": "upload_back_to_admin"}
-#     ]
-#     markup = create_inline_buttons(buttons)
+    buttons = [
+        {"text": "➕ Yangi Serial", "callback": "serial_add_new"},
+        {"text": "📺 Mavjud Seriallar", "callback": "serial_show_existing"},
+        {"text": "🔙 Ortga", "callback": "upload_back_to_admin"}
+    ]
+    markup = create_inline_buttons(buttons)
     
-#     bot.send_message(
-#         call.message.chat.id,
-#         "🎞️ *Serial Yuklash Menyu*\n\nNima qilish? ",
-#         reply_markup=markup,
-#         parse_mode="Markdown"
-#     )
+    bot.send_message(
+        call.message.chat.id,
+        "🎞️ *Serial Yuklash Menyu*\n\nNima qilish? ",
+        reply_markup=markup,
+        parse_mode="Markdown"
+    )
 
 #========== Mavjud seriallar =============
-# @bot.callback_query_handler(func=lambda call: call. data == "serial_show_existing")
-# def show_serials_or_add(call):
-#     """Mavjud seriallarni ko'rsatish"""
-#     serials_list = get_all_serials()
+@bot.callback_query_handler(func=lambda call: call. data == "serial_show_existing")
+def show_serials_or_add(call):
+    """Mavjud seriallarni ko'rsatish"""
+    serials_list = get_all_serials()
     
-#     try:
-#         bot.delete_message(call.message.chat.id, call.message.message_id)
-#     except:
-#         pass
+    try:
+        bot.delete_message(call.message.chat.id, call.message.message_id)
+    except:
+        pass
     
-#     markup = types.InlineKeyboardMarkup()
+    markup = types.InlineKeyboardMarkup()
     
-#     for serial in serials_list:  
-#         markup.add(types.InlineKeyboardButton(
-#             f"📺 {serial['name']}",
-#             callback_data=f"serial_select_{serial['code']}"
-#         ))
+    for serial in serials_list:  
+        markup.add(types.InlineKeyboardButton(
+            f"📺 {serial['name']}",
+            callback_data=f"serial_select_{serial['code']}"
+        ))
     
-#     markup.add(types.InlineKeyboardButton("➕ Yangi Serial", callback_data="serial_add_new"))
-#     markup.add(types.InlineKeyboardButton("🔙 Ortga", callback_data="serial_back_to_admin"))
+    markup.add(types.InlineKeyboardButton("➕ Yangi Serial", callback_data="serial_add_new"))
+    markup.add(types.InlineKeyboardButton("🔙 Ortga", callback_data="serial_back_to_admin"))
     
-#     if serials_list:
-#         bot. send_message(
-#             call. message.chat.id,
-#             "📚 *Mavjud Seriallar*\n\nSerialni tanlang:",
-#             reply_markup=markup,
-#             parse_mode="Markdown"
-#         )
-#     else:
-#         bot.send_message(
-#             call.message.chat.id,
-#             "📺 Hech qanday serial qo'shilmagan.",
-#             reply_markup=markup,
-#             parse_mode="Markdown"
-#         )
+    if serials_list:
+        bot. send_message(
+            call. message.chat.id,
+            "📚 *Mavjud Seriallar*\n\nSerialni tanlang:",
+            reply_markup=markup,
+            parse_mode="Markdown"
+        )
+    else:
+        bot.send_message(
+            call.message.chat.id,
+            "📺 Hech qanday serial qo'shilmagan.",
+            reply_markup=markup,
+            parse_mode="Markdown"
+        )
 
-# # =================== YANGI SERIAL YARATISH ===================
+# =================== YANGI SERIAL YARATISH ===================
 
-# # =================== CALLBACK: YANGI SERIAL QADAMI 1 ===================
+# =================== CALLBACK: YANGI SERIAL QADAMI 1 ===================
 
-# @bot.callback_query_handler(func=lambda call: call.data == "serial_add_new")
-# def add_new_serial_start(call):
-#     """Yangi serial yaratishni boshlash"""
-#     user_id = str(call.from_user.id)
+@bot.callback_query_handler(func=lambda call: call.data == "serial_add_new")
+def add_new_serial_start(call):
+    """Yangi serial yaratishni boshlash"""
+    user_id = str(call.from_user.id)
     
-#     try:
-#         bot.delete_message(call.message.chat.id, call.message.message_id)
-#     except:
-#         pass
+    try:
+        bot.delete_message(call.message.chat.id, call.message.message_id)
+    except:
+        pass
     
-#     print(f"🔵 [CALLBACK] serial_add_new - user_id: {user_id}")
+    print(f"🔵 [CALLBACK] serial_add_new - user_id: {user_id}")
     
-#     bot.send_message(
-#         call.message.chat.id,
-#         "🆔 *Serial kodini kiriting*\n\n(Masalan: serial_001)",
-#         parse_mode="Markdown"
-#     )
+    bot.send_message(
+        call.message.chat.id,
+        "🆔 *Serial kodini kiriting*\n\n(Masalan: serial_001)",
+        parse_mode="Markdown"
+    )
     
-#     set_serial_state(user_id, ["serial_waiting_code"])
-#     print(f"🟢 [STATE SET] {user_id}:  {state. get(user_id)}")
+    set_serial_state(user_id, ["serial_waiting_code"])
+    print(f"🟢 [STATE SET] {user_id}:  {state. get(user_id)}")
 
 
 # =================== MESSAGE:  QADAMI 2 - KOD SAQLASH ===================
