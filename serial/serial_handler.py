@@ -32,9 +32,9 @@ def upload_serial_menu(msg):
     #user_id = msg.from_user.id
     
     # ✅ ADMIN TEKSHIRUVI TUZATILDI
-    if not (str(msg.from_user.id) == ADMIN_ID or is_admin(msg.from_user.id)):
-        bot.send_message(msg.chat.id, "❌ Siz admin emassiz!")
-        return
+    # if not (str(msg.from_user.id) == ADMIN_ID or is_admin(msg.from_user.id)):
+    #     bot.send_message(msg.chat.id, "❌ Siz admin emassiz!")
+    #     return
     
     buttons = [
         {"text": "➕ Yangi Serial", "callback":   "serial_add_new"},
@@ -56,9 +56,9 @@ def show_serials_or_add(call):
     #user_id = call.  from_user.id
     
     # ✅ ADMIN TEKSHIRUVI TUZATILDI
-    if not (str(call.from_user.id) == ADMIN_ID or is_admin(call.from_user.id)):
-        bot.answer_callback_query(call.id, "❌ Ruxsat yo'q!")
-        return
+    # if not (str(call.from_user.id) == ADMIN_ID or is_admin(call.from_user.id)):
+    #     bot.answer_callback_query(call.id, "❌ Ruxsat yo'q!")
+    #     return
     
     serials_list = get_all_serials()
     
