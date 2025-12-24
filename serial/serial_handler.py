@@ -160,6 +160,7 @@ def show_serials_or_add(call):
             parse_mode="Markdown"
         )
 
+# serial/serial_handler.py
 # =================== YANGI SERIAL YARATISH ===================
 
 @bot.callback_query_handler(func=lambda call: call.data == "serial_add_new")
@@ -176,41 +177,49 @@ def add_new_serial_start(call):
     
     set_serial_state(user_id, ["serial_waiting_code"])
 
+# ✅ TUZATILDI:  message_handler ichida to'g'ri tekshirish
 @bot.message_handler(func=lambda msg: is_waiting_for(msg.from_user.id, "serial_waiting_code"))
 def save_serial_code(msg):
     """Serial kodi saqlash"""
     user_id = msg.from_user.id
-    serial_code = msg.text.  strip()
+    serial_code = msg.text. strip()
     
     # Tekshirish
     if check_serial_code_exists(serial_code):
         bot.send_message(
             msg.chat.id,
-            "⚠️ *Bu kod allaqachon mavjud!*\n\nBoshqa kod kiriting:",
+            "⚠️ *Bu kod allaqachon mavjud! *\n\nBoshqa kod kiriting:",
             parse_mode="Markdown"
         )
         return
     
-    if len(serial_code) < 2: 
+    if len(serial_code) < 2:  
         bot.send_message(
             msg.chat.id,
-            "❌ Kod kamina 2 ta belgi bo'lishi kerak!  ",
+            "❌ Kod kamina 2 ta belgi bo'lishi kerak! ",
             parse_mode="Markdown"
         )
         return
     
     set_serial_state(user_id, ["serial_waiting_name", serial_code])
     bot.send_message(
-        msg. chat.id,
-        "📝 *Serial nomini kiriting*\n\n(Masalan: Mirzabek yoki Shahzoda)",
+        msg.chat.id,
+        "📝 *Serial nomini kiriting*\n\n(Masalan:  Mirzabek yoki Shahzoda)",
         parse_mode="Markdown"
     )
 
+# ✅ TUZATILDI: message_handler ichida to'g'ri tekshirish
 @bot.message_handler(func=lambda msg: is_waiting_for(msg.from_user.id, "serial_waiting_name"))
 def save_serial_name(msg):
     """Serial nomi saqlash"""
     user_id = msg.from_user.id
     state_data = get_serial_state(user_id)
+    
+    if not state_data or len(state_data) < 2:
+        bot.send_message(msg.chat.id, "❌ Xatolik yuz berdi.  Qayta urinib ko'ring.")
+        clear_serial_state(user_id)
+        return
+    
     serial_code = state_data[1]
     serial_name = msg.text.strip()
     
@@ -221,101 +230,72 @@ def save_serial_name(msg):
         parse_mode="Markdown"
     )
 
-@bot.message_handler(func=lambda msg: is_waiting_for(msg.from_user.id, "serial_waiting_image"),
+# ✅ TUZATILDI: content_types parametri to'g'ri
+@bot.message_handler(func=lambda msg: is_waiting_for(msg.from_user. id, "serial_waiting_image"),
                      content_types=['photo'])
 def save_serial_image(msg):
     """Serial rasmi saqlash"""
     user_id = msg.from_user.id
     state_data = get_serial_state(user_id)
+    
+    if not state_data or len(state_data) < 3:
+        bot.send_message(msg.chat.id, "❌ Xatolik yuz berdi. Qayta urinib ko'ring.")
+        clear_serial_state(user_id)
+        return
+    
     serial_code = state_data[1]
     serial_name = state_data[2]
     image_file_id = msg.photo[-1].file_id
     
     # Bazaga saqlash
-    create_serial(serial_code, serial_name, image_file_id)
-    
-    bot.send_message(
-        msg.chat.id,
-        f"✅ *Serial '{serial_name}' yaratildi!*\n\n"
-        f"🆔 Kod: `{serial_code}`\n\n"
-        f"📺 Endi fasl qo'shishingiz mumkin.",
-        parse_mode="Markdown"
-    )
+    if create_serial(serial_code, serial_name, image_file_id):
+        bot.send_message(
+            msg.chat.id,
+            f"✅ *Serial '{serial_name}' yaratildi!*\n\n"
+            f"🆔 Kod: `{serial_code}`\n\n"
+            f"📺 Endi fasl qo'shishingiz mumkin.",
+            parse_mode="Markdown"
+        )
+    else:
+        bot.send_message(
+            msg.chat.id,
+            "❌ Serial yaratishda xatolik yuz berdi! ",
+            parse_mode="Markdown"
+        )
     
     clear_serial_state(user_id)
     
     # Qayta menyu ko'rsatish
     show_serials_or_add_temp(msg.chat.id)
 
-# =================== SERIAL TANLASH VA FASLLAR ===================
-
-@bot.callback_query_handler(func=lambda call: call.data.startswith("serial_select_"))
-def select_serial(call):
-    """Serial tanlash va fasllarni ko'rsatish"""
-    user_id = call.from_user.id
-    serial_code = call.data.replace("serial_select_", "")
-    
-    serial = get_serial(serial_code)
-    if not serial:
-        bot.answer_callback_query(call.id, "❌ Serial topilmadi!")
-        return
-    
-    bot.delete_message(call.message.chat.id, call.message.message_id)
-    
-    markup = types.InlineKeyboardMarkup()
-    
-    # Fasllar ro'yxati
-    seasons = serial. get("seasons", [])
-    if seasons:
-        for season in seasons:  
-            season_num = season["season_number"]
-            episodes_count = len(season. get("episodes", []))
-            full_count = len(season.get("full_files", []))
-            count_text = f"{episodes_count} qism" if episodes_count > 0 else f"{full_count} video"
-            
-            markup.add(types.InlineKeyboardButton(
-                f"📺 {season_num}-fasl ({count_text})",
-                callback_data=f"season_select_{serial_code}_{season_num}"
-            ))
-    
-    # Yangi fasl qo'shish
-    markup.add(types.InlineKeyboardButton("➕ Fasl qo'shish", callback_data=f"season_add_{serial_code}"))
-    markup.add(types. InlineKeyboardButton("🔙 Ortga", callback_data="serial_show_existing"))
-    
-    caption = f"📚 *{serial['name']}*\n\nFasllarni boshqarish:"
-    
-    bot.send_photo(
-        call.message.chat.id,
-        serial["image"],
-        caption=caption,
-        parse_mode="Markdown",
-        reply_markup=markup
-    )
-    
-    set_serial_state(user_id, ["viewing_serial", serial_code])
-
 # =================== FASL QO'SHISH ===================
 
-@bot.callback_query_handler(func=lambda call:   call.data.startswith("season_add_"))
+@bot.callback_query_handler(func=lambda call: call.data. startswith("season_add_"))
 def add_season_start(call):
     """Fasl qo'shishni boshlash"""
-    user_id = call.from_user.id
+    user_id = call.from_user. id
     serial_code = call.data.replace("season_add_", "")
     
-    bot.delete_message(call.message.chat.  id, call.message.message_id)
+    bot.delete_message(call.message.chat. id, call.message.message_id)
     bot.send_message(
-        call.message.  chat. id,
-        "🔢 *Fasl raqamini kiriting*\n\n(Masalan: 1, 2, 3...  )",
+        call.message. chat.id,
+        "🔢 *Fasl raqamini kiriting*\n\n(Masalan: 1, 2, 3... )",
         parse_mode="Markdown"
     )
     
     set_serial_state(user_id, ["season_waiting_number", serial_code])
 
-@bot.message_handler(func=lambda msg:   is_waiting_for(msg.  from_user.id, "season_waiting_number"))
+# ✅ TUZATILDI: message_handler ichida to'g'ri tekshirish
+@bot.message_handler(func=lambda msg: is_waiting_for(msg.from_user.id, "season_waiting_number"))
 def save_season_number(msg):
     """Fasl raqami saqlash"""
-    user_id = msg.from_user.  id
+    user_id = msg.from_user.id
     serial_code = get_serial_code_from_state(user_id)
+    
+    if not serial_code: 
+        bot.send_message(msg.chat.id, "❌ Xatolik yuz berdi. Qayta urinib ko'ring.")
+        clear_serial_state(user_id)
+        return
     
     try:
         season_number = int(msg.text. strip())
@@ -330,23 +310,23 @@ def save_season_number(msg):
     # Fasl bormi tekshirish
     serial = get_serial(serial_code)
     if serial:
-        for season in serial.get("seasons", []):
-            if season["season_number"] == season_number: 
+        for season in serial. get("seasons", []):
+            if season["season_number"] == season_number:  
                 bot.send_message(msg.chat.id, f"⚠️ {season_number}-fasl allaqachon mavjud!")
                 return
     
     set_serial_state(user_id, ["season_waiting_type", serial_code, season_number])
     
     buttons = [
-        {"text": "📺 To'liq fasl", "callback":   f"season_type_full_{serial_code}_{season_number}"},
-        {"text":   "🎬 Qism-qism", "callback": f"season_type_episodes_{serial_code}_{season_number}"},
-        {"text":   "🔙 Ortga", "callback": f"serial_select_{serial_code}"}
+        {"text": "📺 To'liq fasl", "callback":  f"season_type_full_{serial_code}_{season_number}"},
+        {"text": "🎬 Qism-qism", "callback": f"season_type_episodes_{serial_code}_{season_number}"},
+        {"text":  "🔙 Ortga", "callback": f"serial_select_{serial_code}"}
     ]
     markup = create_inline_buttons(buttons)
     
     bot.send_message(
         msg.chat.id,
-        f"⏳ *{season_number}-faslni qanday yuklaysiz?*",
+        f"⏳ *{season_number}-faslni qanday yuklaysiz? *",
         reply_markup=markup,
         parse_mode="Markdown"
     )
@@ -371,12 +351,19 @@ def season_type_full(call):
     
     set_serial_state(user_id, ["season_uploading_full", serial_code, season_number, []])
 
-@bot.message_handler(func=lambda msg:  is_waiting_for(msg.from_user.id, "season_uploading_full"),
+# ✅ TUZATILDI: message_handler ichida to'g'ri tekshirish
+@bot.message_handler(func=lambda msg: is_waiting_for(msg.from_user.id, "season_uploading_full"),
                      content_types=['video', 'text'])
 def upload_season_full_video(msg):
     """To'liq fasl videolarini saqlash"""
     user_id = msg.from_user.id
     state_data = get_serial_state(user_id)
+    
+    if not state_data or len(state_data) < 4:
+        bot.send_message(msg.chat.id, "❌ Xatolik yuz berdi. Qayta urinib ko'ring.")
+        clear_serial_state(user_id)
+        return
+    
     serial_code = state_data[1]
     season_number = state_data[2]
     videos = state_data[3]
@@ -403,9 +390,9 @@ def upload_season_full_video(msg):
         serial = get_serial(serial_code)
         show_serial_menu_after_upload(msg.chat.id, serial)
         
-    elif msg.content_type == "video":
+    elif msg.content_type == "video": 
         file_id = msg.video.file_id
-        videos.  append(file_id)
+        videos. append(file_id)
         set_serial_state(user_id, ["season_uploading_full", serial_code, season_number, videos])
         
         bot.send_message(
@@ -416,7 +403,7 @@ def upload_season_full_video(msg):
 
 # =================== QISM-QISM FASL YUKLASH ===================
 
-@bot.callback_query_handler(func=lambda call: call.data.startswith("season_type_episodes_"))
+@bot.callback_query_handler(func=lambda call: call. data.startswith("season_type_episodes_"))
 def season_type_episodes(call):
     """Qism-qism fasl yuklashni boshlash"""
     user_id = call.from_user.id
@@ -424,7 +411,7 @@ def season_type_episodes(call):
     serial_code = parts[3]
     season_number = int(parts[4])
     
-    bot.delete_message(call.message.chat.id, call.message.message_id)
+    bot.delete_message(call.message.chat. id, call.message.message_id)
     
     # Faslni bazaga qo'shish
     add_season(serial_code, season_number)
@@ -432,33 +419,40 @@ def season_type_episodes(call):
     bot.send_message(
         call.message.chat.id,
         f"🎬 *{season_number}-faslga qism qo'shish*\n\n"
-        f"Qaysi qism raqamini kiriting?    (1, 2, 3... )",
+        f"Qaysi qism raqamini kiriting?  (1, 2, 3...)",
         parse_mode="Markdown"
     )
     
     set_serial_state(user_id, ["episode_waiting_number", serial_code, season_number])
 
+# ✅ TUZATILDI: message_handler ichida to'g'ri tekshirish
 @bot.message_handler(func=lambda msg: is_waiting_for(msg.from_user.id, "episode_waiting_number"))
 def save_episode_number(msg):
     """Qism raqami saqlash"""
     user_id = msg.from_user.id
     state_data = get_serial_state(user_id)
+    
+    if not state_data or len(state_data) < 3:
+        bot.send_message(msg.chat.id, "❌ Xatolik yuz berdi. Qayta urinib ko'ring.")
+        clear_serial_state(user_id)
+        return
+    
     serial_code = state_data[1]
     season_number = state_data[2]
     
     try:
         episode_number = int(msg.text.strip())
     except ValueError:
-        bot.  send_message(msg.chat.  id, "❌ Raqam kiriting!")
+        bot.send_message(msg. chat.id, "❌ Raqam kiriting!")
         return
     
     if episode_number < 1:
-        bot.  send_message(msg. chat. id, "❌ Qism raqami 1 dan boshlanadi!")
+        bot.send_message(msg. chat.id, "❌ Qism raqami 1 dan boshlanadi!")
         return
     
     # Qism bormi tekshirish
     if check_episode_exists(serial_code, season_number, episode_number):
-        bot.send_message(msg.chat. id, f"⚠️ {episode_number}-qism allaqachon mavjud!   Boshqa raqam kiriting.")
+        bot.send_message(msg.chat.id, f"⚠️ {episode_number}-qism allaqachon mavjud!  Boshqa raqam kiriting.")
         return
     
     set_serial_state(user_id, ["episode_waiting_video", serial_code, season_number, episode_number])
@@ -468,12 +462,19 @@ def save_episode_number(msg):
         parse_mode="Markdown"
     )
 
-@bot.message_handler(func=lambda msg:   is_waiting_for(msg.from_user.id, "episode_waiting_video"),
+# ✅ TUZATILDI: message_handler ichida to'g'ri tekshirish
+@bot.message_handler(func=lambda msg: is_waiting_for(msg.from_user. id, "episode_waiting_video"),
                      content_types=['video'])
 def save_episode_video(msg):
     """Qism videosini saqlash"""
     user_id = msg.from_user.id
     state_data = get_serial_state(user_id)
+    
+    if not state_data or len(state_data) < 4:
+        bot.send_message(msg. chat.id, "❌ Xatolik yuz berdi. Qayta urinib ko'ring.")
+        clear_serial_state(user_id)
+        return
+    
     serial_code = state_data[1]
     season_number = state_data[2]
     episode_number = state_data[3]
@@ -484,8 +485,8 @@ def save_episode_video(msg):
     
     bot.send_message(
         msg.chat.id,
-        f"✅ *{episode_number}-qism qo'shildi!  *\n\n"
-        f"Yana qism qo'shish?   Qism raqamini kiriting yoki /menu yozing.",
+        f"✅ *{episode_number}-qism qo'shildi!*\n\n"
+        f"Yana qism qo'shish?  Qism raqamini kiriting yoki /menu yozing.",
         parse_mode="Markdown"
     )
     
