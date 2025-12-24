@@ -24,6 +24,72 @@ from .serial_states import (
 )
 import time  # ✅ UNCOMMENTED
 
+
+
+
+# =================== YORDAMCHI FUNKSIYALAR ===================
+
+def show_serial_menu_after_upload(chat_id, serial):
+    """Upload qilingandan keyin serial menyu ko'rsatish"""
+    markup = types.InlineKeyboardMarkup()
+    
+    seasons = serial.get("seasons", [])
+    if seasons:
+        for season in seasons: 
+            season_num = season["season_number"]
+            episodes_count = len(season.get("episodes", []))
+            full_count = len(season.get("full_files", []))
+            count_text = f"{episodes_count} qism" if episodes_count > 0 else f"{full_count} video"
+            
+            markup.add(types.  InlineKeyboardButton(
+                f"📺 {season_num}-fasl ({count_text})",
+                callback_data=f"season_select_{serial['code']}_{season_num}"
+            ))
+    
+    markup.add(types.InlineKeyboardButton("➕ Fasl qo'shish", callback_data=f"season_add_{serial['code']}"))
+    markup.add(types.InlineKeyboardButton("🔙 Ortga", callback_data="serial_show_existing"))
+    
+    caption = f"📚 *{serial['name']}*\n\nFasllarni boshqarish:"
+    
+    bot.send_photo(
+        chat_id,
+        serial["image"],
+        caption=caption,
+        parse_mode="Markdown",
+        reply_markup=markup
+    )
+
+def show_serials_or_add_temp(chat_id):
+    """Menyu ko'rsatish (inline callback o'rniga)"""
+    serials_list = get_all_serials()
+    
+    markup = types.InlineKeyboardMarkup()
+    
+    for serial in serials_list:
+        markup.add(types.InlineKeyboardButton(
+            f"📺 {serial['name']}",
+            callback_data=f"serial_select_{serial['code']}"
+        ))
+    
+    markup.add(types.InlineKeyboardButton("➕ Yangi Serial", callback_data="serial_add_new"))
+    markup.add(types.InlineKeyboardButton("🔙 Ortga", callback_data="serial_back_to_admin"))
+    
+    bot.send_message(
+        chat_id,
+        "📚 *Mavjud Seriallar*\n\nSerialni tanlang:",
+        reply_markup=markup,
+        parse_mode="Markdown"
+    )
+
+def delete_season_or_episode_refresh(call, serial_code, season_number):
+    """O'chirishdan keyin fasl qismlari ko'rsatish"""
+    call.data = f"delete_season_select_{serial_code}_{season_number}"
+    delete_season_or_episode(call)
+
+
+
+
+
 # =================== SERIAL YUKLASH MENYU ===================
 
 @bot.message_handler(func=lambda msg: msg.text == "🎞 Serial yuklash")
@@ -108,7 +174,7 @@ def add_new_serial_start(call):
     
     set_serial_state(user_id, ["serial_waiting_code"])
 
-@bot.message_handler(func=lambda msg:   is_waiting_for(msg.from_user.id, "serial_waiting_code"))
+@bot.message_handler(func=lambda msg: is_waiting_for(msg.from_user.id, "serial_waiting_code"))
 def save_serial_code(msg):
     """Serial kodi saqlash"""
     user_id = msg.from_user.id
@@ -597,7 +663,7 @@ def delete_season_or_episode(call):
 
 
 
-@bot.callback_query_handler(func=lambda call: call.data.  startswith("delete_season_confirm_"))
+@bot.callback_query_handler(func=lambda call: call.data.startswith("delete_season_confirm_"))
 def delete_season_all(call):
     """Butun faslni o'chirish"""
     parts = call.data.split("_")
@@ -613,64 +679,9 @@ def delete_season_all(call):
     else:
         bot.  answer_callback_query(call.  id, "❌ Xatolik yuz berdi!")
 
-# =================== YORDAMCHI FUNKSIYALAR ===================
 
-def show_serial_menu_after_upload(chat_id, serial):
-    """Upload qilingandan keyin serial menyu ko'rsatish"""
-    markup = types.InlineKeyboardMarkup()
-    
-    seasons = serial.get("seasons", [])
-    if seasons:
-        for season in seasons: 
-            season_num = season["season_number"]
-            episodes_count = len(season.get("episodes", []))
-            full_count = len(season.get("full_files", []))
-            count_text = f"{episodes_count} qism" if episodes_count > 0 else f"{full_count} video"
-            
-            markup.add(types.  InlineKeyboardButton(
-                f"📺 {season_num}-fasl ({count_text})",
-                callback_data=f"season_select_{serial['code']}_{season_num}"
-            ))
-    
-    markup.add(types.InlineKeyboardButton("➕ Fasl qo'shish", callback_data=f"season_add_{serial['code']}"))
-    markup.add(types.InlineKeyboardButton("🔙 Ortga", callback_data="serial_show_existing"))
-    
-    caption = f"📚 *{serial['name']}*\n\nFasllarni boshqarish:"
-    
-    bot.send_photo(
-        chat_id,
-        serial["image"],
-        caption=caption,
-        parse_mode="Markdown",
-        reply_markup=markup
-    )
 
-def show_serials_or_add_temp(chat_id):
-    """Menyu ko'rsatish (inline callback o'rniga)"""
-    serials_list = get_all_serials()
-    
-    markup = types.InlineKeyboardMarkup()
-    
-    for serial in serials_list:
-        markup.add(types.InlineKeyboardButton(
-            f"📺 {serial['name']}",
-            callback_data=f"serial_select_{serial['code']}"
-        ))
-    
-    markup.add(types.InlineKeyboardButton("➕ Yangi Serial", callback_data="serial_add_new"))
-    markup.add(types.InlineKeyboardButton("🔙 Ortga", callback_data="serial_back_to_admin"))
-    
-    bot.send_message(
-        chat_id,
-        "📚 *Mavjud Seriallar*\n\nSerialni tanlang:",
-        reply_markup=markup,
-        parse_mode="Markdown"
-    )
 
-def delete_season_or_episode_refresh(call, serial_code, season_number):
-    """O'chirishdan keyin fasl qismlari ko'rsatish"""
-    call.data = f"delete_season_select_{serial_code}_{season_number}"
-    delete_season_or_episode(call)
 
 # =================== BACK BUTTON HANDLERLARI ===================
 
