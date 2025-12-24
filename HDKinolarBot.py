@@ -638,67 +638,7 @@ def upload_back_to_admin(call):
     admin_panel(call.message.chat.id)
 
 
-#========== Mavjud seriallar =============
-@bot.callback_query_handler(func=lambda call: call. data == "serial_show_existing")
-def show_serials_or_add(call):
-    """Mavjud seriallarni ko'rsatish"""
-    serials_list = get_all_serials()
-    
-    try:
-        bot.delete_message(call.message.chat.id, call.message.message_id)
-    except:
-        pass
-    
-    markup = types.InlineKeyboardMarkup()
-    
-    for serial in serials_list:  
-        markup.add(types.InlineKeyboardButton(
-            f"📺 {serial['name']}",
-            callback_data=f"serial_select_{serial['code']}"
-        ))
-    
-    markup.add(types.InlineKeyboardButton("➕ Yangi Serial", callback_data="serial_add_new"))
-    markup.add(types.InlineKeyboardButton("🔙 Ortga", callback_data="serial_back_to_admin"))
-    
-    if serials_list:
-        bot. send_message(
-            call. message.chat.id,
-            "📚 *Mavjud Seriallar*\n\nSerialni tanlang:",
-            reply_markup=markup,
-            parse_mode="Markdown"
-        )
-    else:
-        bot.send_message(
-            call.message.chat.id,
-            "📺 Hech qanday serial qo'shilmagan.",
-            reply_markup=markup,
-            parse_mode="Markdown"
-        )
 
-# =================== YANGI SERIAL YARATISH ===================
-
-# =================== CALLBACK: YANGI SERIAL QADAMI 1 ===================
-
-@bot.callback_query_handler(func=lambda call: call.data == "serial_add_new")
-def add_new_serial_start(call):
-    """Yangi serial yaratishni boshlash"""
-    user_id = str(call.from_user.id)
-    
-    try:
-        bot.delete_message(call.message.chat.id, call.message.message_id)
-    except:
-        pass
-    
-    print(f"🔵 [CALLBACK] serial_add_new - user_id: {user_id}")
-    
-    bot.send_message(
-        call.message.chat.id,
-        "🆔 *Serial kodini kiriting*\n\n(Masalan: serial_001)",
-        parse_mode="Markdown"
-    )
-    
-    set_serial_state(user_id, ["serial_waiting_code"])
-    print(f"🟢 [STATE SET] {user_id}:  {state. get(user_id)}")
 
 
 
