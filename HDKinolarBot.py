@@ -673,8 +673,8 @@ def delete_content_menu(msg):
 def delete_type_kino(call):
     """Kino o'chirish"""
     bot.delete_message(call.message.chat.id, call.message.message_id)
-    bot.send_message(call.message.chat.id, "❌ O'chirilgan kinoning kodini kiriting.")
-    state[str(call.from_user.id)] = ["waiting_for_delete_kino"]
+    bot.send_message(call.message.chat.id, "❌ O'chiriladigan kinoning kodini kiriting.")
+    state[str(call.from_user. id)] = ["waiting_for_delete_kino"]
 
 
 # ✅ TUZATILDI:  CALLBACK dan SERIAL O'CHIRISH MENYU
