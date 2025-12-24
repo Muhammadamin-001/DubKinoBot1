@@ -90,6 +90,8 @@ def delete_season_or_episode_refresh(call, serial_code, season_number):
 
 
 
+
+
 # =================== SERIAL YUKLASH MENYU ===================
 
 @bot.message_handler(func=lambda msg: msg.text == "🎞 Serial yuklash")
@@ -204,7 +206,7 @@ def save_serial_code(msg):
         parse_mode="Markdown"
     )
 
-@bot.message_handler(func=lambda msg:   is_waiting_for(msg.  from_user.id, "serial_waiting_name"))
+@bot.message_handler(func=lambda msg: is_waiting_for(msg.from_user.id, "serial_waiting_name"))
 def save_serial_name(msg):
     """Serial nomi saqlash"""
     user_id = msg.from_user.id
@@ -219,7 +221,7 @@ def save_serial_name(msg):
         parse_mode="Markdown"
     )
 
-@bot.message_handler(func=lambda msg:  is_waiting_for(msg. from_user.id, "serial_waiting_image"),
+@bot.message_handler(func=lambda msg: is_waiting_for(msg.from_user.id, "serial_waiting_image"),
                      content_types=['photo'])
 def save_serial_image(msg):
     """Serial rasmi saqlash"""
@@ -247,7 +249,7 @@ def save_serial_image(msg):
 
 # =================== SERIAL TANLASH VA FASLLAR ===================
 
-@bot.callback_query_handler(func=lambda call: call.data.  startswith("serial_select_"))
+@bot.callback_query_handler(func=lambda call: call.data.startswith("serial_select_"))
 def select_serial(call):
     """Serial tanlash va fasllarni ko'rsatish"""
     user_id = call.from_user.id
@@ -294,7 +296,7 @@ def select_serial(call):
 
 # =================== FASL QO'SHISH ===================
 
-@bot.callback_query_handler(func=lambda call:   call.data. startswith("season_add_"))
+@bot.callback_query_handler(func=lambda call:   call.data.startswith("season_add_"))
 def add_season_start(call):
     """Fasl qo'shishni boshlash"""
     user_id = call.from_user.id
@@ -351,7 +353,7 @@ def save_season_number(msg):
 
 # =================== TO'LIQ FASL YUKLASH ===================
 
-@bot.callback_query_handler(func=lambda call: call.data. startswith("season_type_full_"))
+@bot.callback_query_handler(func=lambda call: call.data.startswith("season_type_full_"))
 def season_type_full(call):
     """To'liq fasl yuklashni boshlash"""
     user_id = call.from_user.id
@@ -369,7 +371,7 @@ def season_type_full(call):
     
     set_serial_state(user_id, ["season_uploading_full", serial_code, season_number, []])
 
-@bot.message_handler(func=lambda msg:  is_waiting_for(msg. from_user.id, "season_uploading_full"),
+@bot.message_handler(func=lambda msg:  is_waiting_for(msg.from_user.id, "season_uploading_full"),
                      content_types=['video', 'text'])
 def upload_season_full_video(msg):
     """To'liq fasl videolarini saqlash"""
@@ -466,7 +468,7 @@ def save_episode_number(msg):
         parse_mode="Markdown"
     )
 
-@bot.message_handler(func=lambda msg:   is_waiting_for(msg.  from_user.id, "episode_waiting_video"),
+@bot.message_handler(func=lambda msg:   is_waiting_for(msg.from_user.id, "episode_waiting_video"),
                      content_types=['video'])
 def save_episode_video(msg):
     """Qism videosini saqlash"""
@@ -612,7 +614,7 @@ def delete_serial_seasons(call):
         parse_mode="Markdown"
     )
 
-@bot.callback_query_handler(func=lambda call: call.  data.startswith("delete_season_select_"))
+@bot.callback_query_handler(func=lambda call: call.data.startswith("delete_season_select_"))
 def delete_season_or_episode(call):
     """Fasl tanlandi - qismlari yoki butun fasl o'chirish"""
     parts = call.data.split("_")
