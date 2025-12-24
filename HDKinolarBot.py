@@ -40,7 +40,7 @@ from serial.serial_db import (
     # check_episode_exists
 )
 
-from .serial_states import (
+from serial.serial_states import (
     set_serial_state
     )
 # Flask setup
