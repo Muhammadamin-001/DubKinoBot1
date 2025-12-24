@@ -6,10 +6,10 @@ Serial yuklash, o'chirish, menular va callback handlerlari
 """
 
 from telebot import types
-from utils. db_config import bot, state, serials  # ✅ TUZATILGAN
-from utils. menu_builder import create_inline_buttons
+from utils.db_config import bot, state, serials  # ✅ TUZATILGAN
+from utils.menu_builder import create_inline_buttons
 from utils.admin_utils import is_admin
-from config. settings import ADMIN_ID
+from config.settings import ADMIN_ID
 from .serial_db import (
     create_serial, add_season, add_episode, add_full_files,
     get_serial, get_all_serials, get_season, delete_serial,
@@ -32,9 +32,9 @@ def upload_serial_menu(msg):
     #user_id = msg.from_user.id
     
     # ✅ ADMIN TEKSHIRUVI TUZATILDI
-    # if not (str(user_id) == ADMIN_ID or is_admin(user_id)):
-    #     bot.send_message(msg.chat.id, "❌ Siz admin emassiz!")
-    #     return
+    if not (str(msg.from_user.id) == ADMIN_ID or is_admin(msg.from_user.id)):
+        bot.send_message(msg.chat.id, "❌ Siz admin emassiz!")
+        return
     
     buttons = [
         {"text": "➕ Yangi Serial", "callback":   "serial_add_new"},
@@ -53,10 +53,10 @@ def upload_serial_menu(msg):
 @bot.callback_query_handler(func=lambda call: call.data == "serial_show_existing")
 def show_serials_or_add(call):
     """Mavjud seriallarni ko'rsatish"""
-    user_id = call.  from_user.id
+    #user_id = call.  from_user.id
     
     # ✅ ADMIN TEKSHIRUVI TUZATILDI
-    if not (str(user_id) == ADMIN_ID or is_admin(user_id)):
+    if not (str(call.from_user.id) == ADMIN_ID or is_admin(call.from_user.id)):
         bot.answer_callback_query(call.id, "❌ Ruxsat yo'q!")
         return
     

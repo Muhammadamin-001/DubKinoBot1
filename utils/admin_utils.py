@@ -5,7 +5,7 @@ Admin panellar, obuna tekshiruvi, user saqlash
 """
 
 from telebot import types
-from . db_config import bot, admins_collection, channels_collection, users_collection #, state
+from .db_config import bot, admins_collection, channels_collection, users_collection #, state
 #from config.settings import ADMIN_ID
 
 # === Admin Panel - ✅ YANGILANGAN ===
