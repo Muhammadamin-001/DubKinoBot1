@@ -37,7 +37,6 @@ def upload_serial_menu(msg):
     #     return
     
     buttons = [
-        {"text": "➕ Yangi Serial", "callback":   "serial_add_new"},
         {"text": "📺 Mavjud Seriallar", "callback": "serial_show_existing"},
         {"text": "🔙 Ortga", "callback": "serial_back_to_admin"}
     ]
@@ -108,10 +107,10 @@ def add_new_serial_start(call):
     
     set_serial_state(user_id, ["serial_waiting_code"])
 
-@bot.message_handler(func=lambda msg:   is_waiting_for(msg. from_user.id, "serial_waiting_code"))
+@bot.message_handler(func=lambda msg:   is_waiting_for(msg.from_user.id, "serial_waiting_code"))
 def save_serial_code(msg):
     """Serial kodi saqlash"""
-    user_id = msg.from_user. id
+    user_id = msg.from_user.id
     serial_code = msg.text.  strip()
     
     # Tekshirish
@@ -429,12 +428,12 @@ def save_episode_video(msg):
 @bot.message_handler(func=lambda msg:   msg.text == "🎞 Serial o'chirish")
 def delete_serial_menu(msg):
     """Serial o'chirish menyusi - ✅ TUZATILGAN"""
-    user_id = msg.from_user.id
+   # user_id = msg.from_user.id
     
     # ✅ ADMIN TEKSHIRUVI TUZATILDI
-    if not (str(user_id) == ADMIN_ID or is_admin(user_id)):
-        bot.send_message(msg.chat.id, "❌ Siz admin emassiz!")
-        return
+    # if not (str(user_id) == ADMIN_ID or is_admin(user_id)):
+    #     bot.send_message(msg.chat.id, "❌ Siz admin emassiz!")
+    #     return
     
     serials_list = get_all_serials()
     
