@@ -331,6 +331,7 @@ def page_switch(call):
         if page > 1 and page < pages:
             btns.append(types.InlineKeyboardButton("📌 oxirgi", callback_data=f"page_{pages}"))
             
+     
         if page < pages:
             btns.append(types.InlineKeyboardButton("➡️ Keyingi", callback_data=f"page_{page+1}"))
         
