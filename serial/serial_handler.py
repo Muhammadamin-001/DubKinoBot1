@@ -189,10 +189,10 @@ def add_new_serial_start(call):
 # =================== MESSAGE:  QADAMI 2 - KOD SAQLASH ===================
 
 @bot.message_handler(func=lambda msg:  (
-    str(msg.from_user.id) in set_serial_state and 
-    set_serial_state[str(msg.from_user.id)] is not None and
+    str(msg.from_user.id) in state and 
+    state[str(msg.from_user.id)] is not None and
     len(state[str(msg.from_user.id)]) > 0 and
-   set_serial_state[str(msg.from_user.id)][0] == "serial_waiting_code"
+    state[str(msg.from_user.id)][0] == "serial_waiting_code"
 ))
 def save_serial_code(msg):
     """Serial kodi saqlash"""
@@ -222,10 +222,10 @@ def save_serial_code(msg):
 # =================== MESSAGE: QADAMI 3 - NOM SAQLASH ===================
 
 @bot.message_handler(func=lambda msg: (
-    str(msg.from_user.id) in set_serial_state and 
-    set_serial_state[str(msg.from_user.id)] is not None and
+    str(msg.from_user.id) in state and 
+    state[str(msg.from_user.id)] is not None and
     len(set_serial_state[str(msg.from_user.id)]) > 0 and
-    set_serial_state[str(msg.from_user.id)][0] == "serial_waiting_name"
+    state[str(msg.from_user.id)][0] == "serial_waiting_name"
 ))
 def save_serial_name(msg):
     """Serial nomi saqlash"""
@@ -257,10 +257,10 @@ def save_serial_name(msg):
 
 @bot.message_handler(func=lambda msg: (
     msg.content_type == 'photo' and
-    str(msg.from_user.id) in set_serial_state and 
-    set_serial_state[str(msg. from_user.id)] is not None and
+    str(msg.from_user.id) in state and 
+    state[str(msg. from_user.id)] is not None and
     len(set_serial_state[str(msg.from_user. id)]) > 0 and
-    set_serial_state[str(msg. from_user.id)][0] == "serial_waiting_image"
+    state[str(msg. from_user.id)][0] == "serial_waiting_image"
 ), content_types=['photo'])
 def save_serial_image(msg):
     """Serial rasmi saqlash"""
@@ -370,9 +370,9 @@ def add_season_start(call):
 
 # ✅ TUZATILDI: TO'G'RI MESSAGE HANDLER
 @bot.message_handler(func=lambda msg: (
-    str(msg.from_user.id) in set_serial_state and 
-    set_serial_state[str(msg.from_user.id)] and 
-    set_serial_state[str(msg.from_user.id)][0] == "season_waiting_number"
+    str(msg.from_user.id) in state and 
+    state[str(msg.from_user.id)] and 
+    state[str(msg.from_user.id)][0] == "season_waiting_number"
 ))
 def save_season_number(msg):
     """Fasl raqami saqlash"""
@@ -446,9 +446,9 @@ def season_type_full(call):
 
 # ✅ TUZATILDI: TO'G'RI MESSAGE HANDLER
 @bot.message_handler(func=lambda msg: (
-    str(msg.from_user.id) in set_serial_state and 
-    set_serial_state[str(msg.from_user.id)] and 
-    set_serial_state[str(msg.from_user.id)][0] == "season_uploading_full"
+    str(msg.from_user.id) in state and 
+    state[str(msg.from_user.id)] and 
+    state[str(msg.from_user.id)][0] == "season_uploading_full"
 ),
 content_types=['video', 'text'])
 def upload_season_full_video(msg):
@@ -525,9 +525,9 @@ def season_type_episodes(call):
 
 # ✅ TUZATILDI: TO'G'RI MESSAGE HANDLER
 @bot.message_handler(func=lambda msg: (
-    str(msg.from_user. id) in set_serial_state and 
-    set_serial_state[str(msg.from_user.id)] and 
-    set_serial_state[str(msg.from_user.id)][0] == "episode_waiting_number"
+    str(msg.from_user. id) in state and 
+    state[str(msg.from_user.id)] and 
+    state[str(msg.from_user.id)][0] == "episode_waiting_number"
 ))
 def save_episode_number(msg):
     """Qism raqami saqlash"""
@@ -569,9 +569,9 @@ def save_episode_number(msg):
 
 # ✅ TUZATILDI: TO'G'RI MESSAGE HANDLER
 @bot.message_handler(func=lambda msg: (
-    str(msg.from_user.id) in set_serial_state and 
-    set_serial_state[str(msg.from_user. id)] and 
-    set_serial_state[str(msg.from_user. id)][0] == "episode_waiting_video"
+    str(msg.from_user.id) in state and 
+    state[str(msg.from_user. id)] and 
+    state[str(msg.from_user. id)][0] == "episode_waiting_video"
 ),
 content_types=['video'])
 def save_episode_video(msg):
