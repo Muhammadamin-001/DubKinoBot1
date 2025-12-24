@@ -123,17 +123,21 @@ def upload_serial_menu(msg):
 #         parse_mode="Markdown"
 #     )
 
-@bot.callback_query_handler(func=lambda call: call.data == "serial_show_existing")
+#========== Mavjud seriallar =============
+@bot.callback_query_handler(func=lambda call: call. data == "serial_show_existing")
 def show_serials_or_add(call):
     """Mavjud seriallarni ko'rsatish"""
     serials_list = get_all_serials()
     
-    bot.delete_message(call.message.chat.id, call.message.message_id)
+    try:
+        bot.delete_message(call.message.chat.id, call.message.message_id)
+    except:
+        pass
     
     markup = types.InlineKeyboardMarkup()
     
     for serial in serials_list:  
-        markup.add(types. InlineKeyboardButton(
+        markup.add(types.InlineKeyboardButton(
             f"📺 {serial['name']}",
             callback_data=f"serial_select_{serial['code']}"
         ))
@@ -151,158 +155,152 @@ def show_serials_or_add(call):
     else:
         bot.send_message(
             call.message.chat.id,
-            "📺 Hech qanday serial qo'shilmagan.\n\n➕ Yangi serial qo'shish uchun tugmani bosing.",
+            "📺 Hech qanday serial qo'shilmagan.",
             reply_markup=markup,
             parse_mode="Markdown"
         )
 
 # =================== YANGI SERIAL YARATISH ===================
 
+# =================== CALLBACK: YANGI SERIAL QADAMI 1 ===================
+
 @bot.callback_query_handler(func=lambda call: call.data == "serial_add_new")
 def add_new_serial_start(call):
     """Yangi serial yaratishni boshlash"""
     user_id = str(call.from_user.id)
     
-    # 🔍 DEBUG: State chiqarish
-    print(f"[CALLBACK] serial_add_new - user_id: {user_id}, state: {state}")
+    try:
+        bot.delete_message(call.message.chat.id, call.message.message_id)
+    except:
+        pass
     
-    #bot.delete_message(call.message.chat.id, call.message.message_id)
+    print(f"🔵 [CALLBACK] serial_add_new - user_id: {user_id}")
+    
     bot.send_message(
         call.message.chat.id,
-        "🆔 *Serial kodini kiriting*\n\n(Masalan: serial_001 yoki mirzabek)",
+        "🆔 *Serial kodini kiriting*\n\n(Masalan: serial_001)",
         parse_mode="Markdown"
     )
     
     set_serial_state(user_id, ["serial_waiting_code"])
-    
-    # 🔍 DEBUG:  Bajarilgandan keyin state chiqarish
-    print(f"[AFTER SET] state: {state}")
+    print(f"🟢 [STATE SET] {user_id}:  {state. get(user_id)}")
 
-# ✅ TUZATILDI:  TO'G'RI MESSAGE HANDLER
-@bot.message_handler(func=lambda msg: (
+
+# =================== MESSAGE:  QADAMI 2 - KOD SAQLASH ===================
+
+@bot.message_handler(func=lambda msg:  (
     str(msg.from_user.id) in state and 
-    state[str(msg.from_user.id)] and 
+    state[str(msg.from_user.id)] is not None and
+    len(state[str(msg.from_user.id)]) > 0 and
     state[str(msg.from_user.id)][0] == "serial_waiting_code"
 ))
 def save_serial_code(msg):
     """Serial kodi saqlash"""
-    user_id = str(msg.from_user. id)
-    
-    # 🔍 DEBUG
-    print(f"[MESSAGE] save_serial_code - user_id: {user_id}, state: {state. get(user_id)}")
-    
-    if user_id not in state or not state[user_id]: 
-        bot.send_message(msg.chat.id, "❌ Xatolik:  State topilmadi")
-        return
-    
+    user_id = str(msg.from_user.id)
     serial_code = msg.text. strip()
     
-    if check_serial_code_exists(serial_code):
-        bot.send_message(
-            msg.chat.id,
-            "⚠️ *Bu kod allaqachon mavjud!*\n\nBoshqa kod kiriting:",
-            parse_mode="Markdown"
-        )
+    print(f"🔵 [MESSAGE] save_serial_code - user_id: {user_id}, code: {serial_code}")
+    
+    if not serial_code:
+        bot.send_message(msg.chat.id, "❌ Kod bo'sh bo'lmasligi kerak!")
         return
     
-    if len(serial_code) < 2:  
-        bot.send_message(
-            msg.chat.id,
-            "❌ Kod kamina 2 ta belgi bo'lishi kerak! ",
-            parse_mode="Markdown"
-        )
+    if check_serial_code_exists(serial_code):
+        bot.send_message(msg.chat.id, "⚠️ *Bu kod allaqachon mavjud!*\n\nBoshqa kod kiriting:", parse_mode="Markdown")
+        return
+    
+    if len(serial_code) < 2:
+        bot.send_message(msg.chat.id, "❌ Kod kamina 2 ta belgi bo'lishi kerak!", parse_mode="Markdown")
         return
     
     set_serial_state(user_id, ["serial_waiting_name", serial_code])
-    print(f"[SAVED CODE] state: {state.get(user_id)}")
+    print(f"🟢 [STATE SET] {user_id}: {state.get(user_id)}")
     
-    bot.send_message(
-        msg.chat.id,
-        "📝 *Serial nomini kiriting*\n\n(Masalan:  Mirzabek yoki Shahzoda)",
-        parse_mode="Markdown"
-    )
+    bot.send_message(msg.chat.id, "📝 *Serial nomini kiriting*\n\n(Masalan:  Mirzabek)", parse_mode="Markdown")
 
-# ✅ TUZATILDI: TO'G'RI MESSAGE HANDLER
+
+# =================== MESSAGE: QADAMI 3 - NOM SAQLASH ===================
+
 @bot.message_handler(func=lambda msg: (
     str(msg.from_user.id) in state and 
-    state[str(msg. from_user.id)] and 
-    state[str(msg. from_user.id)][0] == "serial_waiting_name"
+    state[str(msg.from_user.id)] is not None and
+    len(state[str(msg.from_user.id)]) > 0 and
+    state[str(msg.from_user.id)][0] == "serial_waiting_name"
 ))
 def save_serial_name(msg):
     """Serial nomi saqlash"""
     user_id = str(msg.from_user.id)
-    
-    print(f"[MESSAGE] save_serial_name - user_id:  {user_id}, state: {state.get(user_id)}")
-    
     state_data = get_serial_state(user_id)
     
+    print(f"🔵 [MESSAGE] save_serial_name - user_id: {user_id}, state: {state_data}")
+    
     if not state_data or len(state_data) < 2:
-        bot.send_message(msg.chat.id, "❌ Xatolik yuz berdi.  Qayta urinib ko'ring.")
+        print(f"❌ State xatosi:  {state_data}")
         clear_serial_state(user_id)
+        bot.send_message(msg.chat.id, "❌ Xatolik!  Qayta boshlang.")
         return
     
     serial_code = state_data[1]
     serial_name = msg.text.strip()
     
-    set_serial_state(user_id, ["serial_waiting_image", serial_code, serial_name])
-    print(f"[SAVED NAME] state: {state.get(user_id)}")
+    if not serial_name:
+        bot. send_message(msg.chat. id, "❌ Nom bo'sh bo'lmasligi kerak!")
+        return
     
-    bot.send_message(
-        msg.chat. id,
-        "🖼️ *Serial uchun rasm yuboring*\n\n(Serialning afishasi yoki poster)",
-        parse_mode="Markdown"
-    )
+    set_serial_state(user_id, ["serial_waiting_image", serial_code, serial_name])
+    print(f"🟢 [STATE SET] {user_id}: {state.get(user_id)}")
+    
+    bot.send_message(msg.chat.id, "🖼️ *Serial uchun rasm yuboring*\n\n(Afisha yoki poster)", parse_mode="Markdown")
+    
 
-# ✅ TUZATILDI: TO'G'RI PHOTO HANDLER
+# =================== MESSAGE:  QADAMI 4 - RASM SAQLASH ===================
+
 @bot.message_handler(func=lambda msg: (
     msg.content_type == 'photo' and
     str(msg.from_user.id) in state and 
-    state[str(msg. from_user.id)] and 
+    state[str(msg. from_user.id)] is not None and
+    len(state[str(msg.from_user. id)]) > 0 and
     state[str(msg. from_user.id)][0] == "serial_waiting_image"
-),
-content_types=['photo'])
+), content_types=['photo'])
 def save_serial_image(msg):
     """Serial rasmi saqlash"""
     user_id = str(msg.from_user.id)
-    
-    print(f"[MESSAGE] save_serial_image - user_id:  {user_id}, state: {state.get(user_id)}")
-    
     state_data = get_serial_state(user_id)
     
+    print(f"🔵 [MESSAGE] save_serial_image - user_id: {user_id}, state: {state_data}")
+    
     if not state_data or len(state_data) < 3:
-        bot.send_message(msg.chat.id, "❌ Xatolik yuz berdi. Qayta urinib ko'ring.")
+        print(f"❌ State xatosi: {state_data}")
         clear_serial_state(user_id)
+        bot.send_message(msg.chat.id, "❌ Xatolik!  Qayta boshlang.")
         return
     
     serial_code = state_data[1]
     serial_name = state_data[2]
     image_file_id = msg.photo[-1].file_id
     
+    print(f"🟢 Creating serial:  code={serial_code}, name={serial_name}")
+    
     if create_serial(serial_code, serial_name, image_file_id):
         bot.send_message(
             msg.chat.id,
-            f"✅ *Serial '{serial_name}' yaratildi!*\n\n"
-            f"🆔 Kod: `{serial_code}`\n\n"
-            f"📺 Endi fasl qo'shishingiz mumkin.",
+            f"✅ *Serial '{serial_name}' yaratildi!*\n\n🆔 Kod: `{serial_code}`\n\n📺 Endi fasl qo'shishingiz mumkin.",
             parse_mode="Markdown"
         )
+        print("🟢 Serial created successfully!")
     else:
-        bot.send_message(
-            msg.chat. id,
-            "❌ Serial yaratishda xatolik yuz berdi!",
-            parse_mode="Markdown"
-        )
+        bot.send_message(msg.chat.id, "❌ Serial yaratishda xatolik yuz berdi!", parse_mode="Markdown")
+        print("❌ Failed to create serial")
     
     clear_serial_state(user_id)
-    print(f"[CLEARED STATE] state: {state}")
-    show_serials_or_add(msg.chat.id)
+    print(f"🟢 [STATE CLEARED] {user_id}")
 
 # =================== SERIAL TANLASH VA FASLLAR ===================
 
 @bot.callback_query_handler(func=lambda call: call.data. startswith("serial_select_"))
 def select_serial(call):
     """Serial tanlash va fasllarni ko'rsatish"""
-    user_id = str(call.from_user. id)
+    user_id = str(call.from_user.id)
     serial_code = call.data.replace("serial_select_", "")
     
     print(f"[CALLBACK] select_serial - serial_code: {serial_code}")
@@ -312,7 +310,10 @@ def select_serial(call):
         bot.answer_callback_query(call.id, "❌ Serial topilmadi!")
         return
     
-    bot.delete_message(call.message.chat.id, call.message.message_id)
+    try:
+        bot.delete_message(call.message.chat.id, call.message.message_id)
+    except:
+        pass
     
     markup = types.InlineKeyboardMarkup()
     
@@ -354,7 +355,10 @@ def add_season_start(call):
     
     print(f"[CALLBACK] add_season_start - serial_code: {serial_code}")
     
-    bot.delete_message(call.message.chat.id, call.message.message_id)
+    try:
+        bot.delete_message(call.message.chat.id, call.message.message_id)
+    except:
+        pass
     bot.send_message(
         call.message.chat.id,
         "🔢 *Fasl raqamini kiriting*\n\n(Masalan: 1, 2, 3... )",
@@ -637,33 +641,33 @@ def delete_serial_menu(msg):
         parse_mode="Markdown"
     )
 
-@bot.callback_query_handler(func=lambda call: call. data == "delete_type_serial")
-def show_delete_serial_menu_from_callback(call):
-    """Callback dan keladigan serial o'chirish menyu"""
-    from serial.serial_db import get_all_serials
+# @bot.callback_query_handler(func=lambda call: call.data == "delete_type_serial")
+# def show_delete_serial_menu_from_callback(call):
+#     """Callback dan keladigan serial o'chirish menyu"""
+#     from serial.serial_db import get_all_serials
     
-    serials_list = get_all_serials()
+#     serials_list = get_all_serials()
     
-    if not serials_list:
-        bot.answer_callback_query(call.id, "📺 Hech qanday serial qo'shilmagan.")
-        return
+#     if not serials_list:
+#         bot.answer_callback_query(call.id, "📺 Hech qanday serial qo'shilmagan.")
+#         return
     
-    markup = types.InlineKeyboardMarkup()
+#     markup = types.InlineKeyboardMarkup()
     
-    for serial in serials_list:
-        markup. add(types.InlineKeyboardButton(
-            f"🎞 {serial['name']}",
-            callback_data=f"delete_serial_{serial['code']}"
-        ))
+#     for serial in serials_list:
+#         markup. add(types.InlineKeyboardButton(
+#             f"🎞 {serial['name']}",
+#             callback_data=f"delete_serial_{serial['code']}"
+#         ))
     
-    markup.add(types.InlineKeyboardButton("🔙 Ortga", callback_data="delete_back_to_admin"))
+#     markup.add(types.InlineKeyboardButton("🔙 Ortga", callback_data="delete_back_to_admin"))
     
-    bot.send_message(
-        call.message.chat.id,
-        "🗑️ *Qaysi serialni o'chirish?*",
-        reply_markup=markup,
-        parse_mode="Markdown"
-    )
+#     bot.send_message(
+#         call.message.chat.id,
+#         "🗑️ *Qaysi serialni o'chirish?*",
+#         reply_markup=markup,
+#         parse_mode="Markdown"
+#     )
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith("delete_serial_"))
 def delete_serial_selected(call):
