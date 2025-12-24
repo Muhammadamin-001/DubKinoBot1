@@ -6,7 +6,7 @@ Foydalanuvchi uchun serialni ko'rish, qismlar, playback
 
 from telebot import types
 from utils.db_config import bot
-from .serial_db import get_serial, get_season, get_episode, get_all_serials
+from .serial_db import get_serial, get_season#, get_episode, get_all_serials
 
 # =================== FOYDALANUVCHI UCHUN SERIAL KO'RISH ===================
 

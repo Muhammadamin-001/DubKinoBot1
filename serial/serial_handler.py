@@ -5,23 +5,22 @@ Serial yuklash, o'chirish, menular va callback handlerlari
 """
 
 from telebot import types
-from utils.db_config import bot, state, serials
+from utils.db_config import bot #, state, serials
 from utils.menu_builder import create_inline_buttons
 from utils.admin_utils import is_admin  # ✅ QOSHILDI
 from config.settings import ADMIN_ID  # ✅ QOSHILDI
 from .  serial_db import (
     create_serial, add_season, add_episode, add_full_files,
     get_serial, get_all_serials, get_season, delete_serial,
-    delete_season, delete_episode, check_serial_code_exists,
+    delete_season, check_serial_code_exists,
     check_episode_exists
 )
 from .serial_states import (
     set_serial_state, clear_serial_state, get_serial_state,
-    get_serial_code_from_state, get_season_number_from_state,
-    get_episode_number_from_state, get_videos_from_state,
+    get_serial_code_from_state,
     is_waiting_for
 )
-import time
+#import time
 
 # =================== SERIAL YUKLASH MENYU ===================
 
@@ -480,7 +479,7 @@ def delete_serial_selected(call):
         callback_data=f"delete_serial_seasons_{serial_code}"
     ))
     markup.add(types.  InlineKeyboardButton(
-        f"❌ Butunlay o'chirish",
+        "❌ Butunlay o'chirish",
         callback_data=f"delete_serial_confirm_{serial_code}"
     ))
     markup.add(types.InlineKeyboardButton("🔙 Ortga", callback_data="delete_serial_menu"))
@@ -553,7 +552,7 @@ def delete_season_or_episode(call):
     season_number = int(parts[4])
     
     serial = get_serial(serial_code)
-    season = get_season(serial_code, season_number)
+    season = get_season(serial, season_number)
     
     if not season:
         bot.answer_callback_query(call.id, "❌ Fasl topilmadi!")
@@ -594,21 +593,7 @@ def delete_season_or_episode(call):
         parse_mode="Markdown"
     )
 
-@bot.callback_query_handler(func=lambda call: call.  data.startswith("delete_episode_"))
-def delete_episode(call):
-    """Qismni o'chirish"""
-    parts = call.data.split("_")
-    serial_code = parts[2]
-    season_number = int(parts[3])
-    episode_number = int(parts[4])
-    
-    if delete_episode(serial_code, season_number, episode_number):
-        bot.answer_callback_query(call.id, f"✅ {episode_number}-qism o'chirildi!")
-        
-        # Qayta qismlari ko'rsatish
-        delete_season_or_episode_refresh(call, serial_code, season_number)
-    else:
-        bot.answer_callback_query(call.id, "❌ Xatolik yuz berdi!")
+
 
 @bot.callback_query_handler(func=lambda call: call.data.  startswith("delete_season_confirm_"))
 def delete_season_all(call):
