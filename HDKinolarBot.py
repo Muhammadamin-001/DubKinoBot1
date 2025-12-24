@@ -33,7 +33,7 @@ from utils.menu_builder import create_inline_buttons
 
 from serial.serial_user import show_serial_for_user
 from movies.movie_handler import send_movie_info
-from . serial_db import (
+from serial.serial_db import (
     get_all_serials#, get_season, delete_serial,
     # delete_season,# delete_episode,
     # check_serial_code_exists,
