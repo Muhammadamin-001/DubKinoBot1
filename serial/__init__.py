@@ -41,8 +41,8 @@ from .serial_user import (
 
 __all__ = [
     # serial_handler. py - FAQAT MAVJUD
-    'upload_serial_menu',
-    'delete_serial_menu',
+    'show_serial_menu_after_upload',
+    'show_delete_serial_menu_from_callback',
     
     # serial_db.py
     'create_serial',
