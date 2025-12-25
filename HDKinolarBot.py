@@ -296,7 +296,7 @@ def delete_movie_confirm(call):
 
 # =================== PAGE HANDLER - ✅ QOSHILDI ===================
 
-@bot.callback_query_handler(func=lambda call: call.  data.  startswith("page_"))
+@bot.callback_query_handler(func=lambda call: call.data.startswith("page_"))
 def page_switch(call):
     """Film kodlari sahifalarini o'tish"""
     try:
@@ -352,12 +352,12 @@ def page_switch(call):
 
 # =================== CALLBACK HANDLERS - QIDIRUSH SAHIFALAR ===================
 
-@bot.callback_query_handler(func=lambda c: c.data.  startswith("search_"))
+@bot.callback_query_handler(func=lambda c: c.data.startswith("search_"))
 def search_page_switch(call):
     """Qidirush natijalari sahifalarini chiqarish - ✅ YANGILANGAN"""
     try:
         parts = call.data.split("_page_")
-        user_id = int(parts[0]. replace("search_", ""))
+        user_id = int(parts[0].replace("search_", ""))
         page = int(parts[1])
         
         if user_id not in search_cache: 
@@ -408,7 +408,7 @@ def search_page_switch(call):
         if btns:
             markup.row(*btns)
         
-        bot. edit_message_text(
+        bot.edit_message_text(
             text,
             chat_id=call.message.chat.id,
             message_id=call.message.message_id,
@@ -622,7 +622,7 @@ def back(msg):
     if str(msg.from_user. id) != ADMIN_ID:
         return
     
-    state. pop(str(msg.from_user.id), None)  # Holatni tozalash
+    state.pop(str(msg.from_user.id), None)  # Holatni tozalash
     
     # Super Admin panelidan kelgan bo'lsa → Admin panelga qaytarish
     admin_panel(msg.chat.id)
