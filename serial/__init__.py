@@ -20,7 +20,6 @@ from .serial_handler import (
     # upload_season_full_video,
     # save_episode_number,
     # save_episode_video,
-    #serial_back_to_admin,
     delete_serial_menu,
     delete_serial_selected,
     delete_serial_all,
@@ -28,7 +27,7 @@ from .serial_handler import (
     delete_season_or_episode,
     # ❌ 'delete_episode' O'CHIRILDI - serial_db.py da bor
     delete_season_all,
-    serial_back_menu,
+    #serial_back_menu,
 )
 
 from .serial_db import (
@@ -84,7 +83,7 @@ __all__ = [
     'delete_serial_seasons',
     'delete_season_or_episode',
     'delete_season_all',
-    'serial_back_menu',
+    #'serial_back_menu',
     
     # serial_db.py
     'create_serial',

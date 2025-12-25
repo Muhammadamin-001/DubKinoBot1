@@ -13,7 +13,7 @@ from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 
 # ⚙️ Konfiguratsiya
-from config. settings import TOKEN, ADMIN_ID #, WEBHOOK_URL, MONGO_URI
+from config.settings import TOKEN, ADMIN_ID#, WEBHOOK_URL, MONGO_URI
 
 # 🛠️ Utilities
 from utils.db_config import (
