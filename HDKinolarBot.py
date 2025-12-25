@@ -28,7 +28,7 @@ from utils.menu_builder import create_inline_buttons
 
 # 🎞️ Serial va Kino modullar
 from serial.serial_handler import (
-    delete_serial_menu, #upload_serial_menu
+    delete_serial_menu #upload_serial_menu
     # serial_back_menu
 )
 
