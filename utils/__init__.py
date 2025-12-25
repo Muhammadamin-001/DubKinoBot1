@@ -3,7 +3,6 @@
 🛠️ UMUMIY YORDAMCHI MODULLAR
 Admin panellar, menu tayyorlash, database konfiguratsiya va misc funksiyalar
 """
-from config.settings import ADMIN
 from .db_config import (
     bot,
     db,
@@ -37,7 +36,6 @@ from .menu_builder import (
 
 __all__ = [
     # Database
-    'ADMIN',
     'bot',
     'db',
     'client',
