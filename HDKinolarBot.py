@@ -2,23 +2,16 @@
 # HDKinolarBot.py - ASOSIY BOT FAYLI
 # ============================================
 
-# ============================================
-# HDKinolarBot.py - ASOSIY BOT FAYLI
-# ============================================
-
-# ============================================
-# HDKinolarBot.py - ASOSIY BOT FAYLI
-# ============================================
-
 # 📦 Standart kutubxonalar
 import os
 import time
 from flask import Flask, request
 import telebot
 from telebot import types
-#from serial.serial_db import get_all_serials
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
+
 # ⚙️ Konfiguratsiya
-from config. settings import TOKEN, ADMIN_ID
+from config. settings import TOKEN, ADMIN_ID #, WEBHOOK_URL, MONGO_URI
 
 # 🛠️ Utilities
 from utils.db_config import (
@@ -31,32 +24,32 @@ from utils.admin_utils import (
 )
 from utils.menu_builder import create_inline_buttons
 
-from serial.serial_user import show_serial_for_user
-from movies.movie_handler import send_movie_info
-from serial.serial_db import (
-    get_all_serials#, get_season, delete_serial,
-    # delete_season,# delete_episode,
-    # check_serial_code_exists,
-    # check_episode_exists
+# 🎞️ Serial va Kino modullar
+from serial.serial_handler import (
+    upload_serial_menu, delete_serial_menu
 )
+from serial.serial_user import show_serial_for_user
+from movies.movie_handler import send_movie_info #, upload_movie, catch_video, movie_code, movie_name, movie_genre, movie_url
+#from movies.movie_db import get_movie, get_all_movies
 
-# from serial.serial_states import (
-#     set_serial_state
-#     )
 # Flask setup
 app = Flask(__name__)
 
 #kanal_link = "https://t.me/DubHDkinolar"
 
-# =================== STATE (HOLAT) ===================
+# =================== STATE (HOLAT) - ✅ TUZATILGAN ===================
+
+#state = {}  # ✅ UNCOMMENTED
 
 user_clicks = {}
-album_buffer = {}
-album_sending = {}
+album_buffer = {}  # ✅ UNCOMMENTED
+album_sending = {}  # ✅ UNCOMMENTED
 
 movie_pages = {}
 user_pages = {}
-search_cache = {}
+search_cache = {}  # ✅ UNCOMMENTED
+
+# ...  QOLGAN KOD ... 
 
 
 
@@ -226,35 +219,35 @@ def send_subscription_request(msg, user_id):
         
 
 #======== Foydalanuvchi kinoni O'chirib yuborsa======
-# @bot.callback_query_handler(func=lambda call: call.data == "delete_movie")
-# def delete_movie_warning(call):
-#     markup = InlineKeyboardMarkup()
-#     markup.add(
-#         InlineKeyboardButton("❌ O'chirish", callback_data="delete_movie_confirm")
-#     )
+@bot.callback_query_handler(func=lambda call: call.data == "delete_movie")
+def delete_movie_warning(call):
+    markup = InlineKeyboardMarkup()
+    markup.add(
+        InlineKeyboardButton("❌ O'chirish", callback_data="delete_movie_confirm")
+    )
 
-#     bot.answer_callback_query(
-#         call.id,
-#         "⚠️ Rostdan ham kinoni o‘chirmoqchimisiz?\n\nYana bir marta bosing ...❌",
-#         show_alert=True
-#     )
+    bot.answer_callback_query(
+        call.id,
+        "⚠️ Rostdan ham kinoni o‘chirmoqchimisiz?\n\nYana bir marta bosing ...❌",
+        show_alert=True
+    )
 
-#     # ❗ XABAR O‘CHMAYDI
-#     # faqat tugma o‘zgaradi
-#     bot.edit_message_reply_markup(
-#         call.message.chat.id,
-#         call.message.message_id,
-#         reply_markup=markup
-#     )
+    # ❗ XABAR O‘CHMAYDI
+    # faqat tugma o‘zgaradi
+    bot.edit_message_reply_markup(
+        call.message.chat.id,
+        call.message.message_id,
+        reply_markup=markup
+    )
     
-# @bot.callback_query_handler(func=lambda call: call.data == "delete_movie_confirm")
-# def delete_movie_confirm(call):
-#     try:
-#         bot.delete_message(call.message.chat.id, call.message.message_id)
-#         bot.answer_callback_query(call.id, "✅ Kino o‘chirildi")
-#     except Exception as e:
-#         print(e)
-#         bot.answer_callback_query(call.id, "❌ Xatolik yuz berdi")
+@bot.callback_query_handler(func=lambda call: call.data == "delete_movie_confirm")
+def delete_movie_confirm(call):
+    try:
+        bot.delete_message(call.message.chat.id, call.message.message_id)
+        bot.answer_callback_query(call.id, "✅ Kino o‘chirildi")
+    except Exception as e:
+        print(e)
+        bot.answer_callback_query(call.id, "❌ Xatolik yuz berdi")
 
     
     
@@ -338,7 +331,6 @@ def page_switch(call):
         if page > 1 and page < pages:
             btns.append(types.InlineKeyboardButton("📌 oxirgi", callback_data=f"page_{pages}"))
             
-     
         if page < pages:
             btns.append(types.InlineKeyboardButton("➡️ Keyingi", callback_data=f"page_{page+1}"))
         
@@ -538,7 +530,7 @@ def start(msg):
         bot.send_message(msg.chat.id, "❌ Bunday kod topilmadi!")
         return
 
-    bot.send_message(msg.chat.id, "🆔 Film kodini kiriting:\n\t(🔍 Yoki film nomini: )")
+    bot.send_message(msg.chat.id, "🆔 Kino kodini kiriting:\n\t(🔍 Yoki kino nomini: )")
 
 
 
@@ -577,147 +569,53 @@ def kodlar(msg):
 
 # =================== FILM YUKLASH MENYU ===================
 
-@bot. message_handler(func=lambda msg: msg.text == "🎬 Film yuklash")
+@bot.message_handler(func=lambda msg: msg.text == "🎬 Film yuklash")
 def upload_content_menu(msg):
     """Film yuklash menyu (kino/serial tanlash) - ✅ YANGI"""
-    user_id = msg.from_user.id
+    user_id = msg.from_user. id
     
     if not (str(user_id) == ADMIN_ID or is_admin(user_id)):
         bot.send_message(msg.chat.id, "❌ Siz admin emassiz!")
         return
     
     buttons = [
-        {"text": "🎥 Kino", "callback": "upload_type_kino"},
+        {"text": "🎥 Kino", "callback":  "upload_type_kino"},
         {"text": "🎞 Serial", "callback": "upload_type_serial"},
-        {"text": "🔙 Ortga", "callback":  "upload_back_to_admin"}
-    ]
-    markup = create_inline_buttons(buttons)
-    
-    bot.send_message(
-        msg.chat.id,
-        "📺 *Film Yuklash - Turini Tanlang*\n\n🎥 Kino yoki 🎞 Serial? ",
-        reply_markup=markup,
-        parse_mode="Markdown"
-    )
-
-
-@bot.callback_query_handler(func=lambda call: call.data == "upload_type_kino")
-def upload_type_kino(call):
-    """Kino yuklash bosilsa"""
-    bot.delete_message(call.message.chat.id, call.message.message_id)
-    bot.send_message(call.message.chat.id, "🎬 Video yuboring (video fayl ko'rinishida).")
-    state[str(call.from_user.id)] = ["waiting_for_video"]
-
-
-# ✅ TUZATILDI:   CALLBACK dan SERIAL MENYU
-@bot.callback_query_handler(func=lambda call: call.data == "upload_type_serial")
-def upload_type_serial(call):
-    """Serial yuklash bosilsa"""
-    bot.delete_message(call.message.chat. id, call.message.message_id)
-    
-    # Serial menyu chiqarish
-    buttons = [
-        {"text": "➕ Yangi Serial", "callback": "serial_add_new"},
-        {"text": "📺 Mavjud Seriallar", "callback": "serial_show_existing"},
         {"text": "🔙 Ortga", "callback": "upload_back_to_admin"}
     ]
     markup = create_inline_buttons(buttons)
     
     bot.send_message(
-        call.message.chat.id,
-        "🎞️ *Serial Yuklash Menyu*\n\nNima qilish? ",
+        msg.chat.id,
+        "📺 *Film Yuklash - Turini Tanlang*\n\n🎥 Kino yoki 🎞 Serial?  ",
         reply_markup=markup,
         parse_mode="Markdown"
     )
 
+
+@bot.callback_query_handler(func=lambda call: call. data == "upload_type_kino")
+def upload_type_kino(call):
+    """Kino yuklash bosilsa - eski logika"""
+    bot.delete_message(call.message.chat.id, call.message.message_id)
+    bot.send_message(call.message.chat.id, "🎬 Video yuboring (video fayl ko'rinishida).")
+    state[str(call.from_user.id)] = ["waiting_for_video"]
+
+@bot.callback_query_handler(func=lambda call: call. data == "upload_type_serial")
+def upload_type_serial(call):
+    """Serial yuklash bosilsa"""
+    bot.delete_message(call.message.chat.id, call.message.message_id)
+    upload_serial_menu(call.message)
+    
 
 @bot.callback_query_handler(func=lambda call: call.data == "upload_back_to_admin")
 def upload_back_to_admin(call):
     """Ortga tugmasi"""
-    bot.delete_message(call.message.chat.id, call.message.message_id)
-    admin_panel(call.message.chat.id)
-
-
-
-
-
-
-
-# =================== FILM O'CHIRISH MENYU ===================
-
-@bot.message_handler(func=lambda msg: msg.text == "❌ Film o'chirish")
-def delete_content_menu(msg):
-    """Film o'chirish menyu (kino/serial tanlash) - ✅ YANGI"""
-    user_id = msg.from_user.id
-    
-    if not (str(user_id) == ADMIN_ID or is_admin(user_id)):
-        bot.send_message(msg.chat.id, "❌ Siz admin emassiz!")
-        return
-    
-    buttons = [
-        {"text": "🎥 Kino", "callback":  "delete_type_kino"},
-        {"text": "🎞 Serial", "callback": "delete_type_serial"},
-        {"text": "🔙 Ortga", "callback": "delete_back_to_admin"}
-    ]
-    markup = create_inline_buttons(buttons)
-    
-    bot.send_message(
-        msg.chat.id,
-        "🗑️ *Film O'chirish - Turini Tanlang*\n\n🎥 Kino yoki 🎞 Serial?",
-        reply_markup=markup,
-        parse_mode="Markdown"
-    )
-
-
-@bot.callback_query_handler(func=lambda call: call.data == "delete_type_kino")
-def delete_type_kino(call):
-    """Kino o'chirish"""
-    bot.delete_message(call.message.chat.id, call.message.message_id)
-    bot.send_message(call.message.chat.id, "❌ O'chiriladigan kinoning kodini kiriting.")
-    state[str(call.from_user. id)] = ["waiting_for_delete_kino"]
-
-
-# ✅ TUZATILDI:  CALLBACK dan SERIAL O'CHIRISH MENYU
-@bot.callback_query_handler(func=lambda call: call.data == "delete_type_serial")
-def delete_type_serial(call):
-    """Serial o'chirish menyu"""
-    bot.delete_message(call.message.chat.id, call.message.message_id)
-    
-    
-    serials_list = get_all_serials()
-    
-    if not serials_list:
-        bot.answer_callback_query(call.id, "📺 Hech qanday serial qo'shilmagan.")
-        return
-    
-    markup = types.InlineKeyboardMarkup()
-    
-    for serial in serials_list:
-        markup.add(types.InlineKeyboardButton(
-            f"🎞 {serial['name']}",
-            callback_data=f"delete_serial_{serial['code']}"
-        ))
-    
-    markup.add(types.InlineKeyboardButton("🔙 Ortga", callback_data="delete_back_to_admin"))
-    
-    bot.send_message(
-        call.message.chat.id,
-        "🗑️ *Qaysi serialni o'chirish?*",
-        reply_markup=markup,
-        parse_mode="Markdown"
-    )
-
-
-@bot.callback_query_handler(func=lambda call: call.data == "delete_back_to_admin")
-def delete_back_to_admin(call):
-    """Ortga tugmasi"""
-    bot.delete_message(call. message.chat.id, call. message.message_id)
+    bot.delete_message(call.message.chat. id, call.message.message_id)
     admin_panel(call.message. chat.id)
 
+    
+    
 
-
-
-#---------------------------------------------------------------------------------------------
     
 @bot.message_handler(func=lambda msg: msg.text == "🔙 Ortga")
 def back(msg):
@@ -940,12 +838,104 @@ def back_user(msg):
     state.pop(str(msg.from_user.id), None)
     bot.send_message(
         msg.chat.id,
-        "🆔 Film kodini kiriting:\n\t(🔍 Yoki film nomini:)",
+        "🆔 Kino kodini kiriting:\n\t(🔍 Yoki kino nomini:)",
         reply_markup=types.ReplyKeyboardRemove()
     )
 
 
+    
+# ====================== KINO YUKLASH ==========================
+# @bot.message_handler(func=lambda msg: msg.text == "🎬 Kino yuklash")
+# def upload_movie(msg):
+#     if not (str(msg.from_user.id) == ADMIN_ID or is_admin(msg.from_user.id)):
+#         return
 
+#     bot.send_message(msg.chat.id, "🎬 Video yuboring (video fayl ko‘rinishida).")
+#     state[str(msg.from_user.id)] = ["waiting_for_video"]
+
+# # ======== KINO KODINI QABUL QILISH ========
+# @bot.message_handler(func=lambda m: str(m.from_user.id) in state 
+#                      and state[str(m.from_user.id)][0] == "waiting_for_video",
+#                      content_types=['video'])
+# def catch_video(msg):
+#     user = str(msg.from_user.id)
+#     file_id = msg.video.file_id
+#     state[user] = ["waiting_for_code", file_id]
+#     bot.send_message(msg.chat.id, "🆔 Kino uchun kod kiriting:")
+    
+# # ======== KINO NOMI ========
+# @bot.message_handler(func=lambda msg: str(msg.from_user.id) in state and state[str(msg.from_user.id)][0] == "waiting_for_code")
+# def movie_code(msg):
+#     user = str(msg.from_user.id)
+#     file_id = state[user][1]
+#     code = msg.text.strip()
+    
+#     # === 1) KOD BORLIGINI TEKSHIRAMIZ ===
+#     if movies.find_one({"code": code}):
+#         bot.send_message(
+#             msg.chat.id,
+#             f"⚠️ *Bu kod allaqachon mavjud!* #-({code})\nBoshqa kod kiriting:",
+#             parse_mode="Markdown"
+#         )
+#         return   # state o'zgarmaydi → admin qayta kod kiritadi
+
+#    # === 2) KOD YANGI BO'LSA DAVOM ETADI ===
+
+#     state[user] = ["waiting_for_name", file_id, code]
+#     bot.send_message(msg.chat.id, "🎬 Kino nomini kiriting:")
+
+# # ======== KINO JANRI ========
+# @bot.message_handler(func=lambda msg: str(msg.from_user.id) in state and state[str(msg.from_user.id)][0] == "waiting_for_name")
+# def movie_name(msg):
+#     user = str(msg.from_user.id)
+#     file_id = state[user][1]
+#     code = state[user][2]
+#     name = msg.text.strip()
+
+#     state[user] = ["waiting_for_genre", file_id, code, name]
+#     bot.send_message(msg.chat.id, "📚 Kino janrini kiriting:")
+
+
+# @bot.message_handler(func=lambda msg: str(msg.from_user.id) in state and state[str(msg.from_user.id)][0] == "waiting_for_genre")
+# def movie_genre(msg):
+#     user = str(msg.from_user.id)
+#     file_id = state[user][1]
+#     code = state[user][2]
+#     name = state[user][3]
+#     genre = msg.text.strip()
+
+#     state[user] = ["waiting_for_url", file_id, code, name, genre]
+#     bot.send_message(msg.chat.id, "💽Formati:")
+
+
+# # ======== KINO URL / INFO ========
+# @bot.message_handler(func=lambda msg: str(msg.from_user.id) in state and state[str(msg.from_user.id)][0] == "waiting_for_url")
+# def movie_url(msg):
+#     user = str(msg.from_user.id)
+#     file_id = state[user][1]
+#     code = state[user][2]
+#     name = state[user][3]
+#     genre = state[user][4]
+#     formati= msg.text.strip()
+
+
+#     # MongoDB-da code kaliti bo'lib, qiymat dict shaklida saqlaymiz
+#     movies.update_one(
+#         {"code": code},  # filter
+#         {"$set": {
+#             "file_id": file_id,
+#             "name": name,       
+#             "formati": formati,    
+#             "genre": genre,      
+#             "url": "@DubHDkinolar",
+#             "urlbot": "@DubKinoBot"
+#         }},
+#         upsert=True     #agar code mavjud bo‘lmasa, yangi document yaratadi
+#     )
+    
+    
+#     bot.send_message(msg.chat.id, "✅ Kino muvaffaqiyatli qo‘shildi!")
+#     del state[user]
 
 
 
@@ -1062,7 +1052,50 @@ def do_broadcast(msg):
 
 
 
+# =================== FILM O'CHIRISH MENYU ===================
 
+@bot.message_handler(func=lambda msg: msg. text == "❌ Film o'chirish")
+def delete_content_menu(msg):
+    """Film o'chirish menyu (kino/serial tanlash) - ✅ YANGI"""
+    user_id = msg.from_user.id
+    
+    if not (str(user_id) == ADMIN_ID or is_admin(user_id)):
+        bot.send_message(msg.chat.id, "❌ Siz admin emassiz!")
+        return
+    
+    buttons = [
+        {"text": "🎥 Kino", "callback":  "delete_type_kino"},
+        {"text": "🎞 Serial", "callback": "delete_type_serial"},
+        {"text": "🔙 Ortga", "callback": "delete_back_to_admin"}
+    ]
+    markup = create_inline_buttons(buttons)
+    
+    bot.send_message(
+        msg.chat.id,
+        "🗑️ *Film O'chirish - Turini Tanlang*\n\n🎥 Kino yoki 🎞 Serial? ",
+        reply_markup=markup,
+        parse_mode="Markdown"
+    )
+
+@bot.callback_query_handler(func=lambda call: call.data == "delete_type_kino")
+def delete_type_kino(call):
+    """Kino o'chirish - eski logika"""
+    bot.delete_message(call.message.chat.id, call.message.message_id)
+    bot.send_message(call.message.chat.id, "❌ O'chirilgan kinoning kodini kiriting.")
+    state[str(call.from_user. id)] = ["waiting_for_delete_kino"]
+
+@bot.callback_query_handler(func=lambda call: call.data == "delete_type_serial")
+def delete_type_serial(call):
+    """Serial o'chirish menyu - ✅ YANGI"""
+    bot.delete_message(call.message.chat.id, call.message.message_id)
+    delete_serial_menu(call.message)
+
+@bot.callback_query_handler(func=lambda call: call.data == "delete_back_to_admin")
+def delete_back_to_admin(call):
+    """Ortga tugmasi"""
+    bot.delete_message(call. message.chat.id, call. message.message_id)
+    admin_panel(call.message. chat.id)
+    
     
 
 # =================== FILM KODLARI (Admin uchun) ===================
@@ -1111,7 +1144,7 @@ def movie_list(msg):
 @bot.message_handler(func=lambda msg: msg.text == "📥 Seriallar")
 def show_user_serials(msg):
     """Foydalanuvchi uchun seriallar ro'yxati"""
-    user = msg.from_user.id
+    user = msg. from_user.id
     
     if not check_sub(user):
         upload_mdb(msg)

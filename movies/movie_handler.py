@@ -12,72 +12,6 @@ from config.settings import ADMIN_ID
 
 kanal_link = "https://t.me/DubHDkinolar"
 
-
-
-
-def send_movie_info(chat_id, kino_kodi):
-    """Kino ma'lumotini yuborish"""
-    movie = movies.find_one({"code": kino_kodi})
-    if movie:
-        file_id = movie["file_id"]
-        code = movie["code"]
-        markup = types.InlineKeyboardMarkup()
-        markup.add(types.InlineKeyboardButton("🎬 Kanalimiz", url=kanal_link))
-        markup.add(types.InlineKeyboardButton("❌", callback_data="delete_movie"))
-        
-        caption_text = (
-            f"🎬 {movie['name']} \n"
-            f"{'─' * 15}\n"
-            f"💽 Formati: {movie['formati']}\n"
-            f"🎞 Janri: {movie['genre']}\n"
-            f"🆔 Kod: {code}\n\n"
-            f"🤖 Botimiz: {movie['urlbot']}"
-        )
-        bot.send_video(
-            chat_id,
-            file_id,
-            caption=caption_text,
-            reply_markup=markup
-        )
-    else:
-        bot.send_message(chat_id, "❌ Bunday kod bo'yicha kino topilmadi.")
-
-@bot.callback_query_handler(func=lambda call: call.data == "delete_movie")
-def delete_movie_warning(call):
-    """Kino o'chirish ogohlantirish"""
-    markup = types.InlineKeyboardMarkup()
-    markup.add(
-        types.InlineKeyboardButton("❌ O'chirish", callback_data="delete_movie_confirm")
-    )
-
-    bot.answer_callback_query(
-        call.id,
-        "⚠️ Rostdan ham kinoni o'chirmoqchimisiz?\n\nYana bir marta bosing ... ❌",
-        show_alert=True
-    )
-
-    bot.edit_message_reply_markup(
-        call.message.chat.id,
-        call.message.message_id,
-        reply_markup=markup
-    )
-    
-@bot.callback_query_handler(func=lambda call: call.data == "delete_movie_confirm")
-def delete_movie_confirm(call):
-    """Kino o'chirish tasdiqlash"""
-    try:
-        bot.delete_message(call.message.chat.id, call.message.message_id)
-        bot.answer_callback_query(call.id, "✅ Kino o'chirildi")
-    except Exception as e:
-        print(e)
-        bot.answer_callback_query(call.id, "❌ Xatolik yuz berdi")
-        
-        
-        
-        
-        
-        
-
 # =================== KINO YUKLASH ===================
 
 @bot.message_handler(func=lambda msg: msg.text == "🎬 Kino yuklash")
@@ -168,3 +102,59 @@ def movie_url(msg):
     bot.send_message(msg.chat.id, "✅ Kino muvaffaqiyatli qo'shildi!")
     del state[user]
 
+def send_movie_info(chat_id, kino_kodi):
+    """Kino ma'lumotini yuborish"""
+    movie = movies.find_one({"code": kino_kodi})
+    if movie:
+        file_id = movie["file_id"]
+        code = movie["code"]
+        markup = types.InlineKeyboardMarkup()
+        markup.add(types.InlineKeyboardButton("🎬 Kanalimiz", url=kanal_link))
+        markup.add(types.InlineKeyboardButton("❌", callback_data="delete_movie"))
+        
+        caption_text = (
+            f"🎬 {movie['name']} \n"
+            f"{'─' * 15}\n"
+            f"💽 Formati: {movie['formati']}\n"
+            f"🎞 Janri: {movie['genre']}\n"
+            f"🆔 Kod: {code}\n\n"
+            f"🤖 Botimiz: {movie['urlbot']}"
+        )
+        bot.send_video(
+            chat_id,
+            file_id,
+            caption=caption_text,
+            reply_markup=markup
+        )
+    else:
+        bot.send_message(chat_id, "❌ Bunday kod bo'yicha kino topilmadi.")
+
+@bot.callback_query_handler(func=lambda call: call.data == "delete_movie")
+def delete_movie_warning(call):
+    """Kino o'chirish ogohlantirish"""
+    markup = types.InlineKeyboardMarkup()
+    markup.add(
+        types.InlineKeyboardButton("❌ O'chirish", callback_data="delete_movie_confirm")
+    )
+
+    bot.answer_callback_query(
+        call.id,
+        "⚠️ Rostdan ham kinoni o'chirmoqchimisiz?\n\nYana bir marta bosing ... ❌",
+        show_alert=True
+    )
+
+    bot.edit_message_reply_markup(
+        call.message.chat.id,
+        call.message.message_id,
+        reply_markup=markup
+    )
+    
+@bot.callback_query_handler(func=lambda call: call.data == "delete_movie_confirm")
+def delete_movie_confirm(call):
+    """Kino o'chirish tasdiqlash"""
+    try:
+        bot.delete_message(call.message.chat.id, call.message.message_id)
+        bot.answer_callback_query(call.id, "✅ Kino o'chirildi")
+    except Exception as e:
+        print(e)
+        bot.answer_callback_query(call.id, "❌ Xatolik yuz berdi")
