@@ -26,8 +26,10 @@ from utils.menu_builder import create_inline_buttons
 
 # 🎞️ Serial va Kino modullar
 from serial.serial_handler import (
-    upload_serial_menu, delete_serial_menu
+    upload_serial_menu, delete_serial_menu, register_serial_handlers
 )
+
+# import serial.serial_handler
 from serial.serial_user import show_serial_for_user
 from movies.movie_handler import send_movie_info #, upload_movie, catch_video, movie_code, movie_name, movie_genre, movie_url
 #from movies.movie_db import get_movie, get_all_movies
@@ -128,7 +130,11 @@ def search_content_by_code_or_name(query):
 #         bot.send_message(chat_id, "❌ Bunday kod bo‘yicha kino topilmadi.")
         
 
-
+# =================== EKSPORT UCHUN ===================
+def register_serial_handlers(bot_instance):
+    """Serial handlerlarni ro'yxatdan o'tkazish"""
+    # Bu funksiya hech narsa qilmaydi, faqat import uchun
+    pass
 
 
 
