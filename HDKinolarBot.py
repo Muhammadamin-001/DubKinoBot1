@@ -11,9 +11,10 @@ from telebot import types
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 
-
+# from utils.admin_utils import is_admin
+# from config.settings import ADMIN_ID
 # ⚙️ Konfiguratsiya
-from config.settings import TOKEN, ADMIN_ID#, WEBHOOK_URL, MONGO_URI
+from config.settings import TOKEN, ADMIN_ID #, WEBHOOK_URL, MONGO_URI
 
 # 🛠️ Utilities
 from utils.db_config import (
