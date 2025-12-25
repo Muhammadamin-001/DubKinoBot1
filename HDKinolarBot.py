@@ -41,18 +41,18 @@ from movies.movie_handler import send_movie_info #, upload_movie, catch_video, m
 #from utils.menu_builder import create_inline_buttons
 # from utils.admin_utils import is_admin
 # from config.settings import ADMIN_ID
-from serial.serial_db import (
-    create_serial, add_season, add_episode, add_full_files,
-    get_serial, get_all_serials,# get_season, delete_serial,
-    #delete_season, delete_episode,  # ✅ QOSHILDI
-    check_serial_code_exists,
-    check_episode_exists
-)
-from serial.serial_states import (
-    set_serial_state, clear_serial_state, get_serial_state,
-    get_serial_code_from_state,
-    is_waiting_for
-)
+from serial.serial_db import (get_all_serials)
+#     create_serial, add_season, add_episode, add_full_files,
+#     get_serial, # get_season, delete_serial,
+#     #delete_season, delete_episode,  # ✅ QOSHILDI
+#     check_serial_code_exists,
+#     check_episode_exists
+# )
+# from serial.serial_states import (
+#     set_serial_state, clear_serial_state, get_serial_state,
+#     get_serial_code_from_state,
+#     is_waiting_for
+# )
 
 
 
