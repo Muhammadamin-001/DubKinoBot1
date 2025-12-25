@@ -807,11 +807,14 @@ def add_new_serial_start(call):
     user_id = str(call.from_user.id)
     
     bot.delete_message(call.message.chat.id, call.message.message_id)
-    bot.send_message(
-        call.message.chat.id,
-        "🆔 *Serial kodini kiriting*\n\n(Masalan: SER001 yoki Breaking_Bad)",
-        parse_mode="Markdown"
-    )
+    try:
+        bot.send_message(
+            call.message.chat.id,
+            "🆔 *Serial kodini kiriting:*\n\n(Masalan: SER001 yoki Breaking\\_Bad)",
+            parse_mode="Markdown"
+        )
+    except Exception as e:
+        print("SEND MESSAGE ERROR:", e)
     
     # ✅ TO'G'RI STATE
     state[user_id] = ["serial_waiting_code"]
@@ -822,11 +825,14 @@ def create_new_serial_from_list(call):
     user_id = str(call.from_user.id)
     
     bot.delete_message(call.message.chat.id, call.message.message_id)
-    bot.send_message(
-        call.message.chat.id,
-        "🆔 *Serial kodini kiriting*\n\n(Masalan: SER001 yoki Breaking_Bad)",
-        parse_mode="Markdown"
-    )
+    try:
+        bot.send_message(
+            call.message.chat.id,
+            "🆔 *Serial kodini kiriting:*\n\n(Masalan: SER001 yoki Breaking\\_Bad)",
+            parse_mode="Markdown"
+        )
+    except Exception as e:
+        print("SEND MESSAGE ERROR:", e)
     
     state[user_id] = ["serial_waiting_code"]
 
