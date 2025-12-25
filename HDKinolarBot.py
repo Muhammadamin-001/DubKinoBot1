@@ -658,7 +658,7 @@ def kodlar(msg):
 @bot.message_handler(func=lambda msg: msg.text == "🎬 Film yuklash")
 def upload_content_menu(msg):
     """Film yuklash menyu (kino/serial tanlash) - ✅ YANGI"""
-    user_id = msg.from_user. id
+    user_id = msg.from_user.id
     
     if not (str(user_id) == ADMIN_ID or is_admin(user_id)):
         bot.send_message(msg.chat.id, "❌ Siz admin emassiz!")
@@ -685,12 +685,34 @@ def upload_type_kino(call):
     bot.delete_message(call.message.chat.id, call.message.message_id)
     bot.send_message(call.message.chat.id, "🎬 Video yuboring (video fayl ko'rinishida).")
     state[str(call.from_user.id)] = ["waiting_for_video"]
+    
 
-@bot.callback_query_handler(func=lambda call: call. data == "upload_type_serial")
+@bot.callback_query_handler(func=lambda call: call.data == "upload_type_serial")
 def upload_type_serial(call):
-    """Serial yuklash bosilsa"""
+    """Serial yuklash bosilsa - ✅ TUZATILGAN"""
+    user_id = call.from_user.id
+    
+    # ✅ Admin tekshiruvini bu yerda qilish
+    if not (str(user_id) == ADMIN_ID or is_admin(user_id)):
+        bot.answer_callback_query(call.id, "❌ Siz admin emassiz!")
+        return
+    
     bot.delete_message(call.message.chat.id, call.message.message_id)
-    upload_serial_menu(call.message)
+    
+    # ✅ TO'G'RIDAN-TO'G'RI MENYU KO'RSATISH
+    buttons = [
+        {"text": "➕ Yangi Serial", "callback": "serial_add_new"},
+        {"text": "📺 Mavjud Seriallar", "callback": "serial_show_existing"},
+        {"text": "🔙 Ortga", "callback": "upload_back_to_admin"}
+    ]
+    markup = create_inline_buttons(buttons)
+    
+    bot.send_message(
+        call.message.chat.id,
+        "🎞️ *Serial Yuklash Menyu*\n\nNima qilmoqchisiz?",
+        reply_markup=markup,
+        parse_mode="Markdown"
+    )
     
 
 @bot.callback_query_handler(func=lambda call: call.data == "upload_back_to_admin")
@@ -710,29 +732,29 @@ def upload_back_to_admin(call):
 
 # =================== SERIAL YUKLASH MENYU ===================
 
-@bot.message_handler(func=lambda msg: msg.text == "🎞 Serial yuklash")
-def upload_serial_menu(msg):
-    """Serial yuklash asosiy menyu"""
-    user_id = msg.from_user.id
+# @bot.message_handler(func=lambda msg: msg.text == "🎞 Serial yuklash")
+# def upload_serial_menu(msg):
+#     """Serial yuklash asosiy menyu"""
+#     user_id = msg.from_user.id
     
-    # Admin tekshiruvi
-    if not (str(user_id) == ADMIN_ID or is_admin(user_id)):
-        bot.send_message(msg.chat.id, "❌ Siz admin emassiz!")
-        return
+#     # Admin tekshiruvi
+#     if not (str(user_id) == ADMIN_ID or is_admin(user_id)):
+#         bot.send_message(msg.chat.id, "❌ Siz admin emassiz!")
+#         return
     
-    buttons = [
-        {"text": "➕ Yangi Serial", "callback": "serial_add_new"},
-        {"text": "📺 Mavjud Seriallar", "callback": "serial_show_existing"},
-        {"text": "🔙 Ortga", "callback": "serial_back_to_admin"}
-    ]
-    markup = create_inline_buttons(buttons)
+#     buttons = [
+#         {"text": "➕ Yangi Serial", "callback": "serial_add_new"},
+#         {"text": "📺 Mavjud Seriallar", "callback": "serial_show_existing"},
+#         {"text": "🔙 Ortga", "callback": "serial_back_to_admin"}
+#     ]
+#     markup = create_inline_buttons(buttons)
     
-    bot.send_message(
-        msg.chat.id,
-        "🎞️ *Serial Yuklash Menyu*\n\nNima qilmoqchisiz?",
-        reply_markup=markup,
-        parse_mode="Markdown"
-    )
+#     bot.send_message(
+#         msg.chat.id,
+#         "🎞️ *Serial Yuklash Menyu*\n\nNima qilmoqchisiz?",
+#         reply_markup=markup,
+#         parse_mode="Markdown"
+#     )
 
 # =================== MAVJUD SERIALLAR ===================
 
