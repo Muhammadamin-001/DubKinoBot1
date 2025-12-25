@@ -28,7 +28,8 @@ from utils.menu_builder import create_inline_buttons
 
 # 🎞️ Serial va Kino modullar
 from serial.serial_handler import (
-    delete_serial_menu, #upload_serial_menu 
+    delete_serial_menu, #upload_serial_menu
+    # serial_back_menu
 )
 
 # import serial.serial_handler
@@ -1105,7 +1106,7 @@ def save_episode_video(msg):
 @bot.callback_query_handler(func=lambda call: call.data == "serial_back_to_admin")
 def serial_back_menu(call):
     """Asosiy serial menuyga qaytish"""
-    bot.  delete_message(call.message.  chat. id, call.message.  message_id)
+    bot.delete_message(call.message.chat.id, call.message.message_id)
     upload_serial_menu(call.message)
 
 
