@@ -1493,11 +1493,6 @@ def delete_type_kino(call):
     bot.send_message(call.message.chat.id, "❌ O'chirilgan kinoning kodini kiriting.")
     state[str(call.from_user.id)] = ["waiting_for_delete_kino"]
 
-@bot.callback_query_handler(func=lambda call: call.data == "delete_type_serial")
-def delete_type_serial(call):
-    """Serial o'chirish menyu - ✅ YANGI"""
-    bot.delete_message(call.message.chat.id, call.message.message_id)
-    delete_serial_menu(call.message)
 
 @bot.callback_query_handler(func=lambda call: call.data == "delete_back_to_admin")
 def delete_back_to_admin(call):
@@ -1505,11 +1500,52 @@ def delete_back_to_admin(call):
     bot.delete_message(call. message.chat.id, call. message.message_id)
     admin_panel(call.message. chat.id)
     
-    
-  # ============================================
-# SERIAL O'CHIRISH HANDLERS - HDKinolarBot.py ga QO'SHISH
-# Line 1200 atrofiga qo'shing (Serial handlers qismiga)
+
+
 # ============================================
+# SERIAL O'CHIRISH - TO'LIQ TUZATILGAN
+# HDKinolarBot.py da Line 1550 atrofidagi MAVJUD kodlarni ALMASHTIRING
+# ============================================
+
+@bot.callback_query_handler(func=lambda call: call.data == "delete_type_serial")
+def delete_type_serial(call):
+    """Serial o'chirish menyu - ✅ TUZATILGAN"""
+    user_id = call.from_user.id
+    
+    if not (str(user_id) == ADMIN_ID or is_admin(user_id)):
+        bot.answer_callback_query(call.id, "❌ Ruxsat yo'q!")
+        return
+    
+    # ✅ SERIALLAR RO'YXATINI OLISH
+    serials_list = list(serials.find({}, {"_id": 0, "code": 1, "name": 1}))
+    
+    bot.delete_message(call.message.chat.id, call.message.message_id)
+    
+    if not serials_list:
+        bot.send_message(
+            call.message.chat.id,
+            "📺 Hech qanday serial yo'q.",
+            parse_mode="Markdown"
+        )
+        return
+    
+    # ✅ SERIALLAR TUGMALARI
+    markup = types.InlineKeyboardMarkup()
+    
+    for serial in serials_list:
+        markup.add(types.InlineKeyboardButton(
+            f"🎞 {serial['name']}",
+            callback_data=f"delete_serial_{serial['code']}"
+        ))
+    
+    markup.add(types.InlineKeyboardButton("🔙 Ortga", callback_data="delete_back_to_admin"))
+    
+    bot.send_message(
+        call.message.chat.id,
+        "🗑️ *Qaysi serialni o'chirish?*\n\nSerialni tanlang:",
+        reply_markup=markup,
+        parse_mode="Markdown"
+    )
 
 # =================== SERIAL O'CHIRISH CALLBACK ===================
 
@@ -1542,10 +1578,11 @@ def delete_serial_selected(call):
     markup = types.InlineKeyboardMarkup()
     
     # Fasllarni boshqarish
-    markup.add(types.InlineKeyboardButton(
-        f"📺 Fasllarni boshqarish ({season_count} mavsum)",
-        callback_data=f"delete_serial_seasons_{serial_code}"
-    ))
+    if season_count > 0:
+        markup.add(types.InlineKeyboardButton(
+            f"📺 Fasllarni boshqarish ({season_count} mavsum)",
+            callback_data=f"delete_serial_seasons_{serial_code}"
+        ))
     
     # Butunlay o'chirish
     markup.add(types.InlineKeyboardButton(
@@ -1621,9 +1658,11 @@ def delete_serial_seasons(call):
     seasons = serial.get("seasons", [])
     
     if not seasons:
+        markup.add(types.InlineKeyboardButton("🔙 Ortga", callback_data=f"delete_serial_{serial_code}"))
         bot.send_message(
             call.message.chat.id,
             f"🎞 *{serial['name']}*\n\n❌ Hech qanday mavsum yo'q.",
+            reply_markup=markup,
             parse_mode="Markdown"
         )
         return
@@ -1836,9 +1875,7 @@ def delete_episode_confirm(call):
                 parse_mode="Markdown"
             )
     else:
-        bot.answer_callback_query(call.id, "❌ Xatolik yuz berdi!")  
-  
-
+        bot.answer_callback_query(call.id, "❌ Xatolik yuz berdi!")
 
 
 
