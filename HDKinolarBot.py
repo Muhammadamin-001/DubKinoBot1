@@ -209,7 +209,7 @@ def check(call):
         
         bot.send_message(
             chat_id, 
-            "✔ Obuna tasdiqlandi! ✅\n\n🎬 Kino kodini yuboring:\n\t(🔍 Yoki kino nomini:)"
+            "✔ Obuna tasdiqlandi! ✅\n\n🎬 Film kodini yuboring:\n\t(🔍 Yoki film nomi orqali toping:)"
         )
         bot.answer_callback_query(call.id, "✅ Tasdiqlandi!")
     
@@ -565,7 +565,7 @@ def start(msg):
         text = "🔐 *Admin paneli*"
     else:
         markup=user_panel()
-        text = "🆔 *Kino kodini kiriting*:\n\t(🔍 Yoki kino nomini: )"
+        text = "🆔 *Film kodini kiriting*:\n\t(🔍 Yoki Film nomini: )"
 
     bot.send_message(
         msg.chat.id, 
@@ -579,35 +579,7 @@ def start(msg):
     
  
 
-# ====================== ADMIN PANEL ===========================
-# @bot.message_handler(commands=['panel'])
-# def panel(msg):
-#     user = msg.from_user.id
-#     if not check_sub(user):
-#         upload_mdb(msg)
-#         return
-    
-#     if (str(msg.from_user.id) == ADMIN_ID or is_admin(msg.from_user.id)):
-#         admin_panel(msg.chat.id)
-#     else:
-#         bot.send_message(msg.chat.id, "❌ Diqqat! Bu faqat admin uchun.")
-        
-# @bot.message_handler(commands=['kodlar'])
-# def kodlar(msg):
-#     user = msg.from_user.id
-#     if not check_sub(user):
-#         upload_mdb(msg)
-#         return
-#     if (str(msg.from_user.id) == ADMIN_ID or is_admin(msg.from_user.id)):
-#         bot.send_message(msg.chat.id, "❗ Bu komanda admin uchun emas.")
-#         return
-    
-#     user_panel(msg.chat.id)
- 
 
-
-
-# HDKinolarBot.py da qo'shish:
 
 # =================== FILM YUKLASH MENYU ===================
 
@@ -1376,19 +1348,6 @@ def back_panel(msg):
         reply_markup=markup
         )
     
-    
-# --- USER uchun ORTGA tugmasi (ADMIN bo'lmaganlar uchun) ---
-# @bot.message_handler(func=lambda m: m.text == "🔙")
-# def back_user(msg):
-#     if (str(msg.from_user.id) == ADMIN_ID or is_admin(msg.from_user.id)):
-#         return
-    
-#     state.pop(str(msg.from_user.id), None)
-#     bot.send_message(
-#         msg.chat.id,
-#         "🆔 Kino kodini kiriting:\n\t(🔍 Yoki kino nomini:)",
-#         reply_markup=types.ReplyKeyboardRemove()
-#     )
 
 
     
@@ -2166,7 +2125,7 @@ def universal_handler(msg):
     
     # 3️⃣ QIDIRISH
     if not text:
-        bot.send_message(msg.chat.id, "❌ Kino kodi yoki nomini kiriting!")
+        bot.send_message(msg.chat.id, "❌ Film kodi yoki nomini kiriting!")
         return
     
     result = search_content_by_code_or_name(text)
@@ -2187,7 +2146,7 @@ def universal_handler(msg):
     if result[0] == "too_short":
         bot.send_message(
             msg.chat.id,
-            "❌ Kamina 3 ta belgi kiriting!\n\t(🔍 Kino nomini bot topishi kerak. )"
+            "❌ Kamina 3 ta belgi kiriting!\n\t(🔍 Film nomini topishga yordam bering.)"
         )
         return
     
