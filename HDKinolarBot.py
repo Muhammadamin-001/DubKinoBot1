@@ -509,7 +509,13 @@ def delete_stats_message(call):
 def upload_back(call):
     """Ortga tugmasi"""
     bot.delete_message(call.message.chat.id, call.message.message_id)
-    admin_panel()
+    markup = admin_panel()
+    bot.send_message(
+        call.msg.chat.id,
+        "🔐 *Admin paneli*",
+        parse_mode="Markdown",
+        reply_markup=markup
+    )
 
 
 
@@ -671,7 +677,13 @@ def upload_type_serial(call):
 def upload_back_to_admin(call):
     """Ortga tugmasi"""
     bot.delete_message(call.message.chat. id, call.message.message_id)
-    admin_panel()
+    markup = admin_panel()
+    bot.send_message(
+        call.message.chat.id,
+        "🔐 *Admin paneli*",
+        parse_mode="Markdown",
+        reply_markup=markup
+    )
 
     
     
@@ -1124,7 +1136,14 @@ def save_episode_number(msg):
 def serial_back_to_admin(call):
     """Admin panelga qaytish"""
     bot.delete_message(call.message.chat.id, call.message.message_id)
-    admin_panel()
+    markup = admin_panel()
+    bot.send_message(
+        call.message.chat.id,
+        "🔐 *Admin paneli*",
+        parse_mode="Markdown",
+        reply_markup=markup
+    )
+
 
 
 
@@ -1138,7 +1157,13 @@ def back(msg):
     state.pop(str(msg.from_user.id), None)  # Holatni tozalash
     
     # Super Admin panelidan kelgan bo'lsa → Admin panelga qaytarish
-    admin_panel()
+    markup = admin_panel()
+    bot.send_message(
+        msg.chat.id,
+        "🔐 *Admin paneli*",
+        parse_mode="Markdown",
+        reply_markup=markup
+    )
 
 @bot.message_handler(func=lambda msg: msg.text == "💼 Super Admin")
 def open_super_admin_panel(msg):
@@ -1178,12 +1203,12 @@ def save_channel_link(msg):
     
     # Kanal ID'sini so'rash
     bot.send_message(msg.chat.id, "🆔 Kanal ID'sini kiriting (masalan: -1001234567890):\n\n💡 Kanal ID'sini qanday topish:\n1. @username_to_id_bot ga /start yuboring\n2. Kanal nomini kiriting\n3. Bot kanal ID'sini beradi")
-    state[str(msg. from_user.id)] = ["waiting_for_channel_id", channel_link]
+    state[str(msg.from_user.id)] = ["waiting_for_channel_id", channel_link]
 
 @bot.message_handler(func=lambda msg: str(msg.from_user.id) in state 
                      and state[str(msg. from_user.id)][0] == "waiting_for_channel_id")
 def save_channel_id(msg):
-    channel_id_text = msg.  text.strip()
+    channel_id_text = msg.text.strip()
     channel_link = state[str(msg.from_user.id)][1]
     
     # Kanal ID'sini tekshirish
@@ -1521,7 +1546,13 @@ def delete_type_kino(call):
 def delete_back_to_admin(call):
     """Ortga tugmasi"""
     bot.delete_message(call. message.chat.id, call. message.message_id)
-    admin_panel()
+    markup = admin_panel()
+    bot.send_message(
+        call.msg.chat.id,
+        "🔐 *Admin paneli*",
+        parse_mode="Markdown",
+        reply_markup=markup
+    )
     
 
 
@@ -1920,7 +1951,13 @@ def delete_episode_confirm(call):
 def delete_back_menu(call):
     """Admin paneliga qaytish - ✅ TUZATILGAN"""
     bot.delete_message(call.message.chat.id, call.message.message_id)
-    admin_panel()
+    markup = admin_panel()
+    bot.send_message(
+        call.msg.chat.id,
+        "🔐 *Admin paneli*",
+        parse_mode="Markdown",
+        reply_markup=markup
+    )
 
 @bot.callback_query_handler(func=lambda call: call.data == "delete_serial_menu")
 def delete_serial_menu_callback(call):
