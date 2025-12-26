@@ -12,10 +12,10 @@ from .db_config import bot, admins_collection, channels_collection, users_collec
 def admin_panel(chat_id):
     """Admin Panel"""
     btn = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    btn.add("🎬 Film yuklash", "📂 Film kodlari")
-    btn.add("📥 Seriallar", "❌ Film o'chirish")
-    btn.add("♻️ Statistika", "💼 Super Admin")
-    btn.add("⏻ Exit")
+    btn.add("🎬 Film yuklash", "📂 Kinolar")
+    btn.add("❌ Film o'chirish", "📥 Seriallar")
+    btn.add("💼 Super Admin", "♻️ Statistika")
+    btn.add("⏻ STOP")
     bot.send_message(chat_id, "🔐 Admin Paneli", reply_markup=btn)
 
 def super_admin_panel(chat_id):
@@ -30,9 +30,8 @@ def super_admin_panel(chat_id):
 def user_panel(chat_id):
     """User Panel - ✅ YANGILANGAN"""
     btn = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    btn.add("📂 Film kodlari", "📥 Seriallar")
+    btn.add("📂 Kinolar", "📥 Seriallar")
     btn.add("🎁 Donat", "📊 Top 10")
-    btn.add("🔙")
     bot.send_message(chat_id, "🔐 Kino va Seriallar", reply_markup=btn)
 
 # === Obuna Tekshirish ===

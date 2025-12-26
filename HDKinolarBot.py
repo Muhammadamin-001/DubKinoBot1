@@ -517,7 +517,7 @@ def upload_back(call):
 @bot.message_handler(commands=['start'])
 def start(msg):
     """Start komandasi"""
-    user = msg. from_user.id
+    user = msg.from_user.id
     
     kino_kodi = None
     if ' ' in msg.text:
@@ -552,38 +552,43 @@ def start(msg):
         
         bot.send_message(msg.chat.id, "❌ Bunday kod topilmadi!")
         return
+    
+    if (str(user) == ADMIN_ID or is_admin(user)):
+        admin_panel(msg.chat.id)
+    else:
+        user_panel(msg.chat.id)
 
     bot.send_message(msg.chat.id, "🆔 Kino kodini kiriting:\n\t(🔍 Yoki kino nomini: )")
-
+    
 
 
     
  
 
 # ====================== ADMIN PANEL ===========================
-@bot.message_handler(commands=['panel'])
-def panel(msg):
-    user = msg.from_user.id
-    if not check_sub(user):
-        upload_mdb(msg)
-        return
+# @bot.message_handler(commands=['panel'])
+# def panel(msg):
+#     user = msg.from_user.id
+#     if not check_sub(user):
+#         upload_mdb(msg)
+#         return
     
-    if (str(msg.from_user.id) == ADMIN_ID or is_admin(msg.from_user.id)):
-        admin_panel(msg.chat.id)
-    else:
-        bot.send_message(msg.chat.id, "❌ Diqqat! Bu faqat admin uchun.")
+#     if (str(msg.from_user.id) == ADMIN_ID or is_admin(msg.from_user.id)):
+#         admin_panel(msg.chat.id)
+#     else:
+#         bot.send_message(msg.chat.id, "❌ Diqqat! Bu faqat admin uchun.")
         
-@bot.message_handler(commands=['kodlar'])
-def kodlar(msg):
-    user = msg.from_user.id
-    if not check_sub(user):
-        upload_mdb(msg)
-        return
-    if (str(msg.from_user.id) == ADMIN_ID or is_admin(msg.from_user.id)):
-        bot.send_message(msg.chat.id, "❗ Bu komanda admin uchun emas.")
-        return
+# @bot.message_handler(commands=['kodlar'])
+# def kodlar(msg):
+#     user = msg.from_user.id
+#     if not check_sub(user):
+#         upload_mdb(msg)
+#         return
+#     if (str(msg.from_user.id) == ADMIN_ID or is_admin(msg.from_user.id)):
+#         bot.send_message(msg.chat.id, "❗ Bu komanda admin uchun emas.")
+#         return
     
-    user_panel(msg.chat.id)
+#     user_panel(msg.chat.id)
  
 
 
@@ -1321,26 +1326,28 @@ def delete_admin(msg):
 
 
 # ====================== PANELNI YOPISH =========================
-@bot.message_handler(func=lambda msg: msg.text == "⏻ Exit")
+@bot.message_handler(func=lambda msg: msg.text == "⏻ STOP")
 def back_panel(msg):
     if not (str(msg.from_user.id) == ADMIN_ID or is_admin(msg.from_user.id)):
         return
     
     state.pop(str(msg.from_user.id), None)
+    #== Admin panel qayta ochiladi===
+    admin_panel(msg.chat.id)
     bot.send_message(msg.chat.id, "🆔 Kino kodini kiriting:\n\t(🔍 Yoki kino nomini:)", reply_markup=types.ReplyKeyboardRemove())
     
 # --- USER uchun ORTGA tugmasi (ADMIN bo'lmaganlar uchun) ---
-@bot.message_handler(func=lambda m: m.text == "🔙")
-def back_user(msg):
-    if (str(msg.from_user.id) == ADMIN_ID or is_admin(msg.from_user.id)):
-        return
+# @bot.message_handler(func=lambda m: m.text == "🔙")
+# def back_user(msg):
+#     if (str(msg.from_user.id) == ADMIN_ID or is_admin(msg.from_user.id)):
+#         return
     
-    state.pop(str(msg.from_user.id), None)
-    bot.send_message(
-        msg.chat.id,
-        "🆔 Kino kodini kiriting:\n\t(🔍 Yoki kino nomini:)",
-        reply_markup=types.ReplyKeyboardRemove()
-    )
+#     state.pop(str(msg.from_user.id), None)
+#     bot.send_message(
+#         msg.chat.id,
+#         "🆔 Kino kodini kiriting:\n\t(🔍 Yoki kino nomini:)",
+#         reply_markup=types.ReplyKeyboardRemove()
+#     )
 
 
     
@@ -1937,10 +1944,10 @@ def delete_serial_menu_callback(call):
 
 # =================== FILM KODLARI (Admin uchun) ===================
 
-@bot.message_handler(func=lambda msg: msg.text == "📂 Film kodlari")
+@bot.message_handler(func=lambda msg: msg.text == "📂 Kinolar")
 def movie_list(msg):
     """Film kodlari ro'yxati (Admin uchun)"""
-    user = msg.from_user. id
+    user = msg.from_user.id
     
     if not check_sub(user):
         upload_mdb(msg)
