@@ -555,11 +555,15 @@ def start(msg):
     #==== Admin va user panel ochish ===
     
     if (str(user) == ADMIN_ID or is_admin(user)):
-        admin_panel(msg.chat.id)
+        markup = admin_panel()
+        text = "🔐 *Admin paneli*"
     else:
-        user_panel(msg.chat.id)
+        markup=user_panel()
+        text = "🆔 *Kino kodini kiriting*:\n\t(🔍 Yoki kino nomini: )"
 
-    #bot.send_message(msg.chat.id, "🆔 Kino kodini kiriting:\n\t(🔍 Yoki kino nomini: )")
+    bot.send_message(msg.chat.id, text, 
+        parse_mode="Markdown",
+        reply_markup=markup)
     
 
 
