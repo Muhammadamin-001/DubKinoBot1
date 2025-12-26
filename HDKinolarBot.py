@@ -552,6 +552,7 @@ def start(msg):
         
         bot.send_message(msg.chat.id, "❌ Bunday kod topilmadi!")
         return
+    #==== Admin va user panel ochish ===
     
     if (str(user) == ADMIN_ID or is_admin(user)):
         admin_panel(msg.chat.id)
@@ -1326,7 +1327,7 @@ def delete_admin(msg):
 
 
 # ====================== PANELNI YOPISH =========================
-@bot.message_handler(func=lambda msg: msg.text == "⏻ STOP")
+@bot.message_handler(func=lambda msg: msg.text == "⛔ STOP".red)
 def back_panel(msg):
     if not (str(msg.from_user.id) == ADMIN_ID or is_admin(msg.from_user.id)):
         return
@@ -1334,7 +1335,7 @@ def back_panel(msg):
     state.pop(str(msg.from_user.id), None)
     #== Admin panel qayta ochiladi===
     admin_panel(msg.chat.id)
-    bot.send_message(msg.chat.id, "🆔 Kino kodini kiriting:\n\t(🔍 Yoki kino nomini:)", reply_markup=types.ReplyKeyboardRemove())
+    bot.send_message(msg.chat.id, "🚫 Jarayon to'xtatildi!", reply_markup=types.ReplyKeyboardRemove())
     
 # --- USER uchun ORTGA tugmasi (ADMIN bo'lmaganlar uchun) ---
 # @bot.message_handler(func=lambda m: m.text == "🔙")
@@ -1905,7 +1906,7 @@ def delete_back_menu(call):
     """Admin paneliga qaytish - ✅ TUZATILGAN"""
     bot.delete_message(call.message.chat.id, call.message.message_id)
     from utils.admin_utils import admin_panel
-    admin_panel(call. message.  chat. id)
+    admin_panel(call. message.  chat.id)
 
 @bot.callback_query_handler(func=lambda call: call.data == "delete_serial_menu")
 def delete_serial_menu_callback(call):
