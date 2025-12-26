@@ -16,7 +16,7 @@ def admin_panel(chat_id):
     btn.add("❌ Film o'chirish", "📥 Seriallar")
     btn.add("💼 Super Admin", "♻️ Statistika")
     btn.add("⛔ STOP")
-    bot.send_message(chat_id, reply_markup=btn)
+    bot.send_message(chat_id, "🔐 Admin paneli", reply_markup=btn)
 
 def super_admin_panel(chat_id):
     """Super Admin Panel"""
@@ -32,7 +32,7 @@ def user_panel(chat_id):
     btn = types.ReplyKeyboardMarkup(resize_keyboard=True)
     btn.add("📂 Kinolar", "📥 Seriallar")
     btn.add("🎁 Donat", "📊 Top 10")
-    bot.send_message(chat_id, reply_markup=btn)
+    bot.send_message(chat_id, "🆔 Kino kodini kiriting:\n\t(🔍 Yoki kino nomini: )", reply_markup=btn)
 
 # === Obuna Tekshirish ===
 def check_sub(user_id):

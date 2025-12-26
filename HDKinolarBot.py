@@ -559,7 +559,7 @@ def start(msg):
     else:
         user_panel(msg.chat.id)
 
-    bot.send_message(msg.chat.id, "🆔 Kino kodini kiriting:\n\t(🔍 Yoki kino nomini: )")
+    #bot.send_message(msg.chat.id, "🆔 Kino kodini kiriting:\n\t(🔍 Yoki kino nomini: )")
     
 
 
