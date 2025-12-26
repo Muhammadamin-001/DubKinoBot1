@@ -9,7 +9,7 @@ from .db_config import bot, admins_collection, channels_collection, users_collec
 #from config.settings import ADMIN_ID
 
 # === Admin Panel - ✅ YANGILANGAN ===
-def admin_panel(chat_id):
+def admin_panel():
     """Admin Panel"""
     btn = types.ReplyKeyboardMarkup(resize_keyboard=True)
     btn.add("🎬 Film yuklash", "📂 Kinolar")
@@ -28,7 +28,7 @@ def super_admin_panel(chat_id):
     btn.add("🔙 Ortga")
     bot.send_message(chat_id, "👑 Super Admin Paneli", reply_markup=btn)
 
-def user_panel(chat_id):
+def user_panel():
     """User Panel - ✅ YANGILANGAN"""
     btn = types.ReplyKeyboardMarkup(resize_keyboard=True)
     btn.add("📂 Kinolar", "📥 Seriallar")

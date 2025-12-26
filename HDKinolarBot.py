@@ -561,9 +561,12 @@ def start(msg):
         markup=user_panel()
         text = "🆔 *Kino kodini kiriting*:\n\t(🔍 Yoki kino nomini: )"
 
-    bot.send_message(msg.chat.id, text, 
+    bot.send_message(
+        msg.chat.id, 
+        text, 
         parse_mode="Markdown",
-        reply_markup=markup)
+        reply_markup=markup
+        )
     
 
 
