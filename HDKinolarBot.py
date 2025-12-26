@@ -509,7 +509,7 @@ def delete_stats_message(call):
 def upload_back(call):
     """Ortga tugmasi"""
     bot.delete_message(call.message.chat.id, call.message.message_id)
-    admin_panel(call.message.chat.id)
+    admin_panel()
 
 
 
@@ -671,7 +671,7 @@ def upload_type_serial(call):
 def upload_back_to_admin(call):
     """Ortga tugmasi"""
     bot.delete_message(call.message.chat. id, call.message.message_id)
-    admin_panel(call.message. chat.id)
+    admin_panel()
 
     
     
@@ -1124,7 +1124,7 @@ def save_episode_number(msg):
 def serial_back_to_admin(call):
     """Admin panelga qaytish"""
     bot.delete_message(call.message.chat.id, call.message.message_id)
-    admin_panel(call.message.chat.id)
+    admin_panel()
 
 
 
@@ -1138,7 +1138,7 @@ def back(msg):
     state.pop(str(msg.from_user.id), None)  # Holatni tozalash
     
     # Super Admin panelidan kelgan bo'lsa → Admin panelga qaytarish
-    admin_panel(msg.chat.id)
+    admin_panel()
 
 @bot.message_handler(func=lambda msg: msg.text == "💼 Super Admin")
 def open_super_admin_panel(msg):
@@ -1334,15 +1334,23 @@ def delete_admin(msg):
 
 
 # ====================== PANELNI YOPISH =========================
-@bot.message_handler(func=lambda msg: msg.text == "⛔ STOP".red)
+@bot.message_handler(func=lambda msg: msg.text == "⛔ STOP")
 def back_panel(msg):
     if not (str(msg.from_user.id) == ADMIN_ID or is_admin(msg.from_user.id)):
         return
     
     state.pop(str(msg.from_user.id), None)
     #== Admin panel qayta ochiladi===
-    admin_panel(msg.chat.id)
-    bot.send_message(msg.chat.id, "🚫 Jarayon to'xtatildi!", reply_markup=types.ReplyKeyboardRemove())
+    markup = admin_panel()
+    text = "🚫 Jarayon to'xtatildi!"
+    
+    bot.send_message(
+        msg.chat.id, 
+        text, 
+        parse_mode="Markdown",
+        reply_markup=markup
+        )
+    
     
 # --- USER uchun ORTGA tugmasi (ADMIN bo'lmaganlar uchun) ---
 # @bot.message_handler(func=lambda m: m.text == "🔙")
@@ -1513,7 +1521,7 @@ def delete_type_kino(call):
 def delete_back_to_admin(call):
     """Ortga tugmasi"""
     bot.delete_message(call. message.chat.id, call. message.message_id)
-    admin_panel(call.message. chat.id)
+    admin_panel()
     
 
 
@@ -1912,8 +1920,7 @@ def delete_episode_confirm(call):
 def delete_back_menu(call):
     """Admin paneliga qaytish - ✅ TUZATILGAN"""
     bot.delete_message(call.message.chat.id, call.message.message_id)
-    from utils.admin_utils import admin_panel
-    admin_panel(call. message.  chat.id)
+    admin_panel()
 
 @bot.callback_query_handler(func=lambda call: call.data == "delete_serial_menu")
 def delete_serial_menu_callback(call):
