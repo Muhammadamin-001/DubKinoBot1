@@ -9,12 +9,13 @@ import time
 
 # =================== CREATE OPERATIONS ===================
 
-def create_serial(code, name, image_file_id):
+def create_serial(code, name, description, image_file_id):
     """Serial yaratish"""
     try:
         serials.insert_one({
             "code": code,
             "name": name,
+            "description": description,
             "image":  image_file_id,
             "seasons": [],
             "created_date": time.time()

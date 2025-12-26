@@ -26,11 +26,13 @@ def upload_movie(msg):
         InlineKeyboardButton("⛔️ Exit", callback_data="exit_upload_movie")
     )
     bot.send_message(msg.chat.id, 
-                     "🎬 *Video yuboring (video fayl ko'rinishida).*",
+                     "🎬 Video yuboring (video fayl ko'rinishida)",
                      parse_mode="Markdown",
                      reply_markup=markup
                      )
     state[str(msg.from_user.id)] = ["waiting_for_video"]
+    
+    
     
     
 #======*** kino yuklashni to'xtatish ****==========

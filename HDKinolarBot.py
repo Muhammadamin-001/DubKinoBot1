@@ -28,8 +28,8 @@ from utils.admin_utils import (
 from utils.menu_builder import create_inline_buttons
 
 from serial.serial_user import show_serial_for_user
-from serial.serial_db import (get_all_serials, code)
-from movies.movie_handler import send_movie_info
+from serial.serial_db import get_all_serials
+from movies.movie_handler import send_movie_info, code
 
 # 🎞️ Serial va Kino modullar
 # from serial.serial_handler import (
@@ -820,7 +820,28 @@ def save_serial_name(msg):
     )
     
     # ✅ STATE YANGILASH - rasm kutish
-    state[user_id] = ["serial_waiting_image", serial_code, serial_name]
+    state[user_id] = ["serial_waiting_description", serial_code, serial_name]
+    
+#========= Haqida tavsif ==========
+
+@bot.message_handler(func=lambda msg: str(msg.from_user.id) in state 
+                     and state[str(msg.from_user.id)][0] == "serial_waiting_description")
+def save_serial_description(msg):
+    """Serial tavsifini saqlash va RASM SO'RASH"""
+    user_id = str(msg.from_user.id)
+    serial_code = state[user_id][1]
+    serial_name = state[user_id][2]
+    serial_description = msg.text.strip()
+    
+    # ✅ RASM SO'RASH
+    bot.send_message(
+        msg.chat.id,
+        "🖼 *Serial rasmini yuboring*\n\n(Rasm yoki foto ko'rinishida)",
+        parse_mode="Markdown"
+    )
+    
+    # ✅ STATE YANGILASH - rasm kutish
+    state[user_id] = ["serial_waiting_image", serial_code, serial_name, serial_description]
 
 # =================== SERIAL RASMI QABUL QILISH ===================
 
@@ -832,12 +853,14 @@ def save_serial_image(msg):
     user_id = str(msg.from_user.id)
     serial_code = state[user_id][1]
     serial_name = state[user_id][2]
+    serial_description = state[user_id][3]
     image_file_id = msg.photo[-1].file_id
     
     # ✅ SERIALNI BAZAGA QO'SHISH (RASM BILAN)
     serials.insert_one({
         "code": serial_code,
         "name": serial_name,
+        "description": serial_description,
         "image": image_file_id,  # ← RASM QO'SHILDI
         "seasons": []
     })
@@ -846,9 +869,10 @@ def save_serial_image(msg):
         msg.chat.id,
         f"✅ *Serial yaratildi!*\n\n"
         f"📺 Nomi: {serial_name}\n"
-        f"🆔 Kod: `{serial_code}`\n\n"
+        f"🆔 Kod: `{serial_code}`\n"
+        f"📝 Tavsif: {serial_description[:50]}...\n\n"
         f"Endi bu serialga mavsum va qismlar qo'shishingiz mumkin.\n\n"
-        f"Menyu: /panel → 🎞 Serial yuklash → 📺 Mavjud Seriallar",
+        f"Menyu: Serial → 🎞 Serial yuklash → 📺 Mavjud Seriallar",
         parse_mode="Markdown"
     )
     
@@ -2017,7 +2041,7 @@ def show_user_serials(msg):
         upload_mdb(msg)
         return
     
-    serials_list = list(serials.find({}, {"_id": 0, "code": 1, "name": 1, "image": 1}))
+    serials_list = list(serials.find({}, {"_id": 0, "code": 1, "name": 1, "description": 1, "image": 1}))
     
     if not serials_list: 
         bot.send_message(msg.chat.id, "📺 Hech qanday serial qo'shilmagan.")
@@ -2050,7 +2074,7 @@ def user_view_serial(call):
 @bot.callback_query_handler(func=lambda call: call.data == "user_back_from_serials")
 def user_back_from_serials(call):
     """Seriallardan ortga"""
-    bot.delete_message(call.message.chat. id, call.message.message_id)
+    bot.delete_message(call.message.chat.id, call.message.message_id)
     user_panel(call.message.chat.id)
 
 

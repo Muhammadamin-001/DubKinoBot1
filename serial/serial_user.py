@@ -183,7 +183,7 @@ def user_back(call):
     bot.delete_message(call.message.chat.id, call.message.message_id)
     bot.send_message(
         call.message.chat.id,
-        "🆔 Kino kodini kiriting:\n\t(🔍 Yoki kino nomini: )"
+        "🆔 Film kodini kiriting:\n\t(🔍 Yoki kino/serial nomini: )"
     )
 
 def search_serial_results(chat_id, search_results):
