@@ -887,6 +887,33 @@ def save_serial_name(msg):
     
     # State tozalash
     del state[user_id]
+    
+
+# @bot.message_handler(func=lambda msg: is_waiting_for(msg.from_user.id, "serial_waiting_image"),
+#                      content_types=['photo'])
+# def save_serial_image(msg):
+#     """Serial rasmi saqlash"""
+#     user_id = msg.from_user.id
+#     state_data = get_serial_state(user_id)
+#     serial_code = state_data[1]
+#     serial_name = state_data[2]
+#     image_file_id = msg.photo[-1].file_id
+    
+#     # Bazaga saqlash
+#     create_serial(serial_code, serial_name, image_file_id)
+    
+#     bot.send_message(
+#         msg.chat.id,
+#         f"✅ *Serial '{serial_name}' yaratildi!*\n\n"
+#         f"🆔 Kod: `{serial_code}`\n\n"
+#         f"📺 Endi fasl qo'shishingiz mumkin.",
+#         parse_mode="Markdown"
+#     )
+    
+#     clear_serial_state(user_id)
+    
+#     # Qayta menyu ko'rsatish
+#     show_serials_or_add_temp(msg.chat.id)
 
 # =================== SERIALNI TANLASH (Qism qo'shish) ===================
 
@@ -1006,13 +1033,59 @@ def ask_episode_video(call):
     user_id = str(call.from_user.id)
     
     bot.delete_message(call.message.chat.id, call.message.message_id)
+    
+    markup = InlineKeyboardMarkup()
+    markup.add(
+    InlineKeyboardButton("⛔️ Exit", callback_data="exit_upload")
+    )
+
     bot.send_message(
         call.message.chat.id,
-        "🎬 *Qism videosini yuboring*\n\n(Video fayl ko'rinishida)",
+        "🎬 *Qism videosini yuboring*\n\n"
+        "⛔️ Tugatish uchun `stop` yozing yoki Exit tugmasini bosing",
+        parse_mode="Markdown",
+        reply_markup=markup
+    )
+
+    state[user_id] = ["waiting_episode_video", serial_code, season_num]
+
+
+#==========*** Jarayonni to'xtatish uchun ***====
+@bot.message_handler(func=lambda msg:
+    str(msg.from_user.id) in state
+    and state[str(msg.from_user.id)][0] == "waiting_episode_video"
+    and msg.text
+    and msg.text.lower() in ["stop", "exit", "bekor"]
+)
+def exit_by_text(msg):
+    user_id = str(msg.from_user.id)
+
+    del state[user_id]
+
+    bot.send_message(
+        msg.chat.id,
+        "✅ Jarayon bekor qilindi",
         parse_mode="Markdown"
     )
-    
-    state[user_id] = ["waiting_episode_video", serial_code, season_num]
+
+
+
+@bot.callback_query_handler(func=lambda call: call.data == "exit_upload")
+def exit_by_button(call):
+    user_id = str(call.from_user.id)
+
+    if user_id in state:
+        del state[user_id]
+
+    bot.answer_callback_query(call.id)
+    bot.send_message(
+        call.message.chat.id,
+        "✅ Jarayon bekor qilindi",
+        parse_mode="Markdown"
+    )
+#=====***********================
+
+
 
 @bot.message_handler(func=lambda msg: str(msg.from_user.id) in state 
                      and state[str(msg.from_user.id)][0] == "waiting_episode_video",
@@ -1074,16 +1147,21 @@ def save_episode_number(msg):
         }}}
     )
     
+    markup = InlineKeyboardMarkup()
+    markup.add(
+    InlineKeyboardButton("⛔️ Exit", callback_data="exit_upload")
+    )
     bot.send_message(
         msg.chat.id,
-        f"✅ *Qism qo'shildi!*\n\n"
-        f"📺 Serial: {serial['name']}\n"
-        f"🎬 {season_num}-Mavsum, {episode_num}-qism\n\n"
-        f"Yana qism qo'shish: /panel → 🎞 Serial yuklash",
-        parse_mode="Markdown"
+        f"✅ *{episode_num}-qism qo'shildi!*\n\n"
+        "🎬 Yana video yuborishingiz mumkin\n"
+        "⛔️ Tugatish uchun `stop` yozing yoki Exit tugmasini bosing",
+        parse_mode="Markdown", 
+        reply_markup=markup
     )
     
-    del state[user_id]
+    state[user_id] = ["waiting_episode_video", serial_code, season_num]
+
 
 # =================== ORTGA TUGMALARI ===================
 

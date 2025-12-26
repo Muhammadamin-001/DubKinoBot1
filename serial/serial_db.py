@@ -69,7 +69,7 @@ def add_episode(serial_code, season_number, episode_number, file_id):
 def add_full_files(serial_code, season_number, file_ids):
     """To'liq fasl videolari qo'shish"""
     try:
-        serials. update_one(
+        serials.update_one(
             {
                 "code": serial_code,
                 "seasons.season_number": season_number
