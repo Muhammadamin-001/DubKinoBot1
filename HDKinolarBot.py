@@ -27,6 +27,10 @@ from utils.admin_utils import (
 )
 from utils.menu_builder import create_inline_buttons
 
+from serial.serial_user import show_serial_for_user
+from serial.serial_db import (get_all_serials, code)
+from movies.movie_handler import send_movie_info
+
 # 🎞️ Serial va Kino modullar
 # from serial.serial_handler import (
 #     delete_serial_menu #upload_serial_menu
@@ -34,15 +38,14 @@ from utils.menu_builder import create_inline_buttons
 # )
 
 # import serial.serial_handler
-from serial.serial_user import show_serial_for_user
-from movies.movie_handler import send_movie_info #, upload_movie, catch_video, movie_code, movie_name, movie_genre, movie_url
+#, upload_movie, catch_video, movie_code, movie_name, movie_genre, movie_url
 #from movies.movie_db import get_movie, get_all_movies
 
 #from utils.db_config import bot, state, serials  # ✅ TUZATILGAN
 #from utils.menu_builder import create_inline_buttons
 # from utils.admin_utils import is_admin
 # from config.settings import ADMIN_ID
-from serial.serial_db import (get_all_serials)
+
 #     create_serial, add_season, add_episode, add_full_files,
 #     get_serial, # get_season, delete_serial,
 #     #delete_season, delete_episode,  # ✅ QOSHILDI
@@ -782,7 +785,7 @@ def save_serial_code(msg):
     serial_code = msg.text.strip()
     
     # Kod allaqachon borligini tekshirish
-    if serials.find_one({"code": serial_code}):
+    if serials.find_one({"code": serial_code}) or movies.find_one({"code": code}):
         bot.send_message(
             msg.chat.id,
             f"⚠️ *Bu kod allaqachon mavjud!*\n\n🆔 Kod: `{serial_code}`\n\nBoshqa kod kiriting:",

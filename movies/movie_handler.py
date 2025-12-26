@@ -5,10 +5,11 @@ Kino yuklash, o'chirish va boshqarish
 """
 
 from telebot import types
-from utils.db_config import bot, state, movies
+from utils.db_config import bot, state, movies, serials
 from utils.admin_utils import is_admin
 from config.settings import ADMIN_ID
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
+from serial.serial_db import serial_code
 #import time
 
 kanal_link = "https://t.me/DubHDkinolar"
@@ -85,7 +86,7 @@ def movie_code(msg):
     code = msg.text. strip()
     
     # Kod bormi tekshirish
-    if movies.find_one({"code": code}):
+    if serials.find_one({"code": serial_code}) or movies.find_one({"code": code}):
         bot.send_message(
             msg.chat.id,
             f"⚠️ *Bu kod allaqachon mavjud!* #{code}\nBoshqa kod kiriting:",
