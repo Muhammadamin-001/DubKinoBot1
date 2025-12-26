@@ -183,32 +183,7 @@ def show_serials_or_add_temp(chat_id):
 
 
 
-# def send_movie_info(chat_id, kino_kodi):
-#     movie = movies.find_one({"code": kino_kodi})  # Kino kodi bo'yicha ma'lumot
-#     if movie:
-#         file_id = movie["file_id"]
-#         code = movie["code"]
-#         markup = types.InlineKeyboardMarkup()
-#         markup.add(types.InlineKeyboardButton("🎬 Kanalimiz", url = kanal_link))  # Kanal linki
-#         markup.add(types.InlineKeyboardButton("❌", callback_data="delete_movie"))
-#         # Kino haqida ma'lumot yuboriladi
-#         caption_text = (
-#                 f"🎬 {movie['name']} \n"
-#                 f"{'─' * 15}\n"
-#                 f"💽 Formati: {movie['formati']}\n"
-#                 f"🎞 Janri: {movie['genre']}\n"
-#                 f"🆔 Kod: {code}\n\n"
-#                 f"🤖 Botimiz: {movie['urlbot']}"
-#         )
-#         bot.send_video(
-#             chat_id,
-#             file_id,
-#             caption = caption_text,
-#             reply_markup=markup
-#         )
-        
-#     else:
-#         bot.send_message(chat_id, "❌ Bunday kod bo‘yicha kino topilmadi.")
+
         
 
 # =================== EKSPORT UCHUN ===================
@@ -338,44 +313,6 @@ def delete_movie_confirm(call):
     
     
         
-
-# @bot.callback_query_handler(func=lambda c: c.data.startswith("page_"))
-# def page_switch(call):
-#     page = int(call.data.split("_")[1])
-#     all_movies = list(movies.find({}, {"_id": 0}))
-#     total = len(all_movies)
-#     text, pages = get_movie_page(page)
-    
-#     text += f" \t📚| Sahifa: {page}/{pages}\n\n"
-#     markup = types.InlineKeyboardMarkup()
-#     btns = []
-
-#     if page > 1:
-#         btns.append(types.InlineKeyboardButton("⬅️ Back", callback_data=f"page_{page-1}"))
-        
-        
-#     if page > 1 and page < pages:
-#         btns.append(types.InlineKeyboardButton("📌 Last", callback_data=f"page_{pages}"))
-        
-#     if page < pages:
-#         btns.append(types.InlineKeyboardButton("➡️ Next", callback_data=f"page_{page+1}"))
-        
-#     # O'chirish tugmasi qo'shish
-#     btns.append(types.InlineKeyboardButton("❌", callback_data="delete_msg_list"))
-       
-#     if btns:
-#         markup.row(*btns)
-
-#     try:
-#         bot.edit_message_text(
-#             f"🎬 *Kino ro‘yxati:*\n\n📊 Topildi: {total} ta kino |\n\n" + text,
-#             chat_id=call.message.chat.id,
-#             message_id=call.message.message_id,
-#             parse_mode="Markdown",
-#             reply_markup=markup
-#             )
-#     except:
-#         pass
 
 
 
@@ -683,7 +620,9 @@ def upload_content_menu(msg):
 def upload_type_kino(call):
     """Kino yuklash bosilsa - eski logika"""
     bot.delete_message(call.message.chat.id, call.message.message_id)
-    bot.send_message(call.message.chat.id, "🎬 Video yuboring (video fayl ko'rinishida).")
+    
+    bot.send_message(call.message.chat.id,
+                     "🎬 *Video yuboring (video fayl ko'rinishida).*")
     state[str(call.from_user.id)] = ["waiting_for_video"]
     
 
@@ -1402,98 +1341,7 @@ def back_user(msg):
 
 
     
-# ====================== KINO YUKLASH ==========================
-# @bot.message_handler(func=lambda msg: msg.text == "🎬 Kino yuklash")
-# def upload_movie(msg):
-#     if not (str(msg.from_user.id) == ADMIN_ID or is_admin(msg.from_user.id)):
-#         return
 
-#     bot.send_message(msg.chat.id, "🎬 Video yuboring (video fayl ko‘rinishida).")
-#     state[str(msg.from_user.id)] = ["waiting_for_video"]
-
-# # ======== KINO KODINI QABUL QILISH ========
-# @bot.message_handler(func=lambda m: str(m.from_user.id) in state 
-#                      and state[str(m.from_user.id)][0] == "waiting_for_video",
-#                      content_types=['video'])
-# def catch_video(msg):
-#     user = str(msg.from_user.id)
-#     file_id = msg.video.file_id
-#     state[user] = ["waiting_for_code", file_id]
-#     bot.send_message(msg.chat.id, "🆔 Kino uchun kod kiriting:")
-    
-# # ======== KINO NOMI ========
-# @bot.message_handler(func=lambda msg: str(msg.from_user.id) in state and state[str(msg.from_user.id)][0] == "waiting_for_code")
-# def movie_code(msg):
-#     user = str(msg.from_user.id)
-#     file_id = state[user][1]
-#     code = msg.text.strip()
-    
-#     # === 1) KOD BORLIGINI TEKSHIRAMIZ ===
-#     if movies.find_one({"code": code}):
-#         bot.send_message(
-#             msg.chat.id,
-#             f"⚠️ *Bu kod allaqachon mavjud!* #-({code})\nBoshqa kod kiriting:",
-#             parse_mode="Markdown"
-#         )
-#         return   # state o'zgarmaydi → admin qayta kod kiritadi
-
-#    # === 2) KOD YANGI BO'LSA DAVOM ETADI ===
-
-#     state[user] = ["waiting_for_name", file_id, code]
-#     bot.send_message(msg.chat.id, "🎬 Kino nomini kiriting:")
-
-# # ======== KINO JANRI ========
-# @bot.message_handler(func=lambda msg: str(msg.from_user.id) in state and state[str(msg.from_user.id)][0] == "waiting_for_name")
-# def movie_name(msg):
-#     user = str(msg.from_user.id)
-#     file_id = state[user][1]
-#     code = state[user][2]
-#     name = msg.text.strip()
-
-#     state[user] = ["waiting_for_genre", file_id, code, name]
-#     bot.send_message(msg.chat.id, "📚 Kino janrini kiriting:")
-
-
-# @bot.message_handler(func=lambda msg: str(msg.from_user.id) in state and state[str(msg.from_user.id)][0] == "waiting_for_genre")
-# def movie_genre(msg):
-#     user = str(msg.from_user.id)
-#     file_id = state[user][1]
-#     code = state[user][2]
-#     name = state[user][3]
-#     genre = msg.text.strip()
-
-#     state[user] = ["waiting_for_url", file_id, code, name, genre]
-#     bot.send_message(msg.chat.id, "💽Formati:")
-
-
-# # ======== KINO URL / INFO ========
-# @bot.message_handler(func=lambda msg: str(msg.from_user.id) in state and state[str(msg.from_user.id)][0] == "waiting_for_url")
-# def movie_url(msg):
-#     user = str(msg.from_user.id)
-#     file_id = state[user][1]
-#     code = state[user][2]
-#     name = state[user][3]
-#     genre = state[user][4]
-#     formati= msg.text.strip()
-
-
-#     # MongoDB-da code kaliti bo'lib, qiymat dict shaklida saqlaymiz
-#     movies.update_one(
-#         {"code": code},  # filter
-#         {"$set": {
-#             "file_id": file_id,
-#             "name": name,       
-#             "formati": formati,    
-#             "genre": genre,      
-#             "url": "@DubHDkinolar",
-#             "urlbot": "@DubKinoBot"
-#         }},
-#         upsert=True     #agar code mavjud bo‘lmasa, yangi document yaratadi
-#     )
-    
-    
-#     bot.send_message(msg.chat.id, "✅ Kino muvaffaqiyatli qo‘shildi!")
-#     del state[user]
 
 
 

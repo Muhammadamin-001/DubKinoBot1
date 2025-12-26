@@ -8,6 +8,7 @@ from telebot import types
 from utils.db_config import bot, state, movies
 from utils.admin_utils import is_admin
 from config.settings import ADMIN_ID
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 #import time
 
 kanal_link = "https://t.me/DubHDkinolar"
@@ -19,9 +20,52 @@ def upload_movie(msg):
     """Kino yuklashni boshlash"""
     if not (str(msg.from_user.id) == ADMIN_ID or is_admin(msg.from_user.id)):
         return
-
-    bot.send_message(msg.chat.id, "🎬 Video yuboring (video fayl ko'rinishida).")
+    markup = InlineKeyboardMarkup()
+    markup.add(
+        InlineKeyboardButton("⛔️ Exit", callback_data="exit_upload_movie")
+    )
+    bot.send_message(msg.chat.id, 
+                     "🎬 *Video yuboring (video fayl ko'rinishida).*",
+                     parse_mode="Markdown",
+                     reply_markup=markup
+                     )
     state[str(msg.from_user.id)] = ["waiting_for_video"]
+    
+    
+#======*** kino yuklashni to'xtatish ****==========
+
+@bot.message_handler(func=lambda msg:
+    str(msg.from_user.id) in state
+    and msg.text
+    and msg.text.lower() in ["stop", "exit", "bekor"]
+)
+def exit_process(msg):
+    user_id = str(msg.from_user.id)
+    del state[user_id]
+
+    bot.send_message(msg.chat.id, "✅ Jarayon yakunlandi")
+
+@bot.callback_query_handler(func=lambda call: call.data == "exit_upload_movie")
+def exit_by_button(call):
+    user_id = str(call.from_user.id)
+
+    if user_id in state:
+        del state[user_id]
+
+    bot.answer_callback_query(call.id)
+    bot.send_message(
+        call.message.chat.id,
+        "✅ Jarayon bekor qilindi",
+        parse_mode="Markdown",
+    )
+
+
+
+
+
+#===========*********************=============================
+
+
 
 @bot.message_handler(func=lambda m: str(m.from_user.id) in state 
                      and state[str(m.from_user.id)][0] == "waiting_for_video",
@@ -98,9 +142,23 @@ def movie_url(msg):
         }},
         upsert=True
     )
+    markup = InlineKeyboardMarkup()
+    markup.add(
+        InlineKeyboardButton("⛔️ Exit", callback_data="exit_upload_movie")
+    )
+
+    bot.send_message(
+        msg.chat.id,
+        "✅ *Kino muvaffaqiyatli qo'shildi!*\n\n"
+        "🎬 Yana video yuborishingiz mumkin\n"
+        "⛔️ Tugatish uchun `stop` yozing yoki Exit tugmasini bosing",
+        parse_mode="Markdown",
+        reply_markup=markup
+    )
     
-    bot.send_message(msg.chat.id, "✅ Kino muvaffaqiyatli qo'shildi!")
-    del state[user]
+    state[user] = ["waiting_for_video"]
+
+
 
 def send_movie_info(chat_id, kino_kodi):
     """Kino ma'lumotini yuborish"""
@@ -128,6 +186,7 @@ def send_movie_info(chat_id, kino_kodi):
         )
     else:
         bot.send_message(chat_id, "❌ Bunday kod bo'yicha kino topilmadi.")
+        
 
 @bot.callback_query_handler(func=lambda call: call.data == "delete_movie")
 def delete_movie_warning(call):
