@@ -596,7 +596,8 @@ def upload_type_kino(call):
     bot.delete_message(call.message.chat.id, call.message.message_id)
     
     bot.send_message(call.message.chat.id,
-                     "🎬 *Video yuboring (video fayl ko'rinishida)*")
+                     "🎬 *Video yuboring (video fayl ko'rinishida)*",
+                     pase_mode="Markdown")
     state[str(call.from_user.id)] = ["waiting_for_video"]
     
 
