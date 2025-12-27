@@ -157,9 +157,9 @@ def send_episode_to_user(call):
     serial = get_serial(serial_code)
     
     markup = types.InlineKeyboardMarkup()
-    markup.add(types.InlineKeyboardButton("🔙", callback_data=f"user_season_{serial_code}_{season_number}"))
+    markup.add(types.InlineKeyboardButton("❌", callback_data="delete_seria"))
     
-    caption = f"🎞 *{serial['name']}*\n{season_number}-fasl, {episode_number}-qism"
+    caption = f"🎞 *{serial['name']}*\n{season_number}-fasl, {episode_number}-qism\n\n🤖 Bot manzili: @DubKinoBot"
     
     bot.send_video(
         call.message.chat.id,
@@ -168,6 +168,41 @@ def send_episode_to_user(call):
         parse_mode="Markdown",
         reply_markup=markup
     )
+    
+
+#======== Foydalanuvchi kinoni O'chirib yuborsa======
+@bot.callback_query_handler(func=lambda call: call.data == "delete_seria")
+def delete_movie_warning(call):
+    markup = types.InlineKeyboardMarkup()
+    markup.add(
+        types.InlineKeyboardButton("❌ O'chirish", callback_data="delete_movie_confirm")
+    )
+
+    bot.answer_callback_query(
+        call.id,
+        "⚠️ Rostdan ham kinoni o‘chirmoqchimisiz?\n\nYana bir marta bosing ...❌",
+        show_alert=True
+    )
+
+    # ❗ XABAR O‘CHMAYDI
+    # faqat tugma o‘zgaradi
+    bot.edit_message_reply_markup(
+        call.message.chat.id,
+        call.message.message_id,
+        reply_markup=markup
+    )
+    
+@bot.callback_query_handler(func=lambda call: call.data == "delete_movie_confirm")
+def delete_movie_confirm(call):
+    try:
+        bot.delete_message(call.message.chat.id, call.message.message_id)
+        bot.answer_callback_query(call.id, "✅ Kino o‘chirildi")
+    except Exception as e:
+        print(e)
+        bot.answer_callback_query(call.id, "❌ Xatolik yuz berdi")
+
+
+
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith("user_serial_"))
 def user_serial_back(call):
