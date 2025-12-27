@@ -31,35 +31,7 @@ from serial.serial_user import show_serial_for_user
 from serial.serial_db import get_all_serials
 from movies.movie_handler import send_movie_info
 
-# 🎞️ Serial va Kino modullar
-# from serial.serial_handler import (
-#     delete_serial_menu #upload_serial_menu
-#     # serial_back_menu
-# )
 
-# import serial.serial_handler
-#, upload_movie, catch_video, movie_code, movie_name, movie_genre, movie_url
-
-#from utils.db_config import bot, state, serials  # ✅ TUZATILGAN
-#from utils.menu_builder import create_inline_buttons
-# from utils.admin_utils import is_admin
-# from config.settings import ADMIN_ID
-
-#     create_serial, add_season, add_episode, add_full_files,
-#     get_serial, # get_season, delete_serial,
-#     #delete_season, delete_episode,  # ✅ QOSHILDI
-#     check_serial_code_exists,
-#     check_episode_exists
-# )
-# from serial.serial_states import (
-#     set_serial_state, clear_serial_state, get_serial_state,
-#     get_serial_code_from_state,
-#     is_waiting_for
-# )
-
-
-
-# Flask setup
 app = Flask(__name__)
 
 #kanal_link = "https://t.me/DubHDkinolar"
@@ -69,14 +41,14 @@ app = Flask(__name__)
 #state = {}  # ✅ UNCOMMENTED
 
 user_clicks = {}
-album_buffer = {}  # ✅ UNCOMMENTED
-album_sending = {}  # ✅ UNCOMMENTED
+album_buffer = {}  
+album_sending = {}  
 
 movie_pages = {}
 user_pages = {}
-search_cache = {}  # ✅ UNCOMMENTED
+search_cache = {}  
 
-# ...  QOLGAN KOD ... 
+# ...
 
 
 
@@ -1532,7 +1504,7 @@ def delete_content_menu(msg):
 def delete_type_kino(call):
     """Kino o'chirish - eski logika"""
     bot.delete_message(call.message.chat.id, call.message.message_id)
-    bot.send_message(call.message.chat.id, "❌ O'chirilgan kinoning kodini kiriting.")
+    bot.send_message(call.message.chat.id, "❌ O'chiriladigan kinoning kodini kiriting.")
     state[str(call.from_user.id)] = ["waiting_for_delete_kino"]
 
 
@@ -1700,7 +1672,7 @@ def delete_serial_selected(call):
 
 # ============================================
 # SERIAL O'CHIRISH - TO'LIQ TUZATILGAN
-# HDKinolarBot.py da Line 1550 atrofidagi MAVJUD kodlarni ALMASHTIRING
+# HDKinolarBot.py da 
 # ============================================
 
 @bot.callback_query_handler(func=lambda call: call.data == "delete_type_serial")
@@ -2117,6 +2089,7 @@ def show_statistics(msg):
     # MongoDB Atlas bazasidan foydalanuvchilar va kinolar sonini olib kelish
     user_count = users_collection.count_documents({})  # Foydalanuvchilar soni
     movie_count = movies.count_documents({})  # Kinolar soni
+    serial_count = serials.count_documents({})
     # Adminlar soni va nomlarini olish
     admins = list(admins_collection.find({}, {"_id": 0, "user_id": 1, "name": 1}))  # Tayinlangan adminlar
     admin_count = len(admins)
@@ -2126,11 +2099,12 @@ def show_statistics(msg):
         f"📊 *Statistika:*\n\n"
         f"👤 Foydalanuvchilar soni: *{user_count}*\n"
         f"🎬 Kinolar soni: *{movie_count}*\n"
+        f"🎞️ Mavjud seriallar: *{serial_count}*\n"
     )
     markup = types.InlineKeyboardMarkup()
     # Super Admin uchun tayinlangan adminlar sonini ko‘rsatish
     if str(msg.from_user.id) == ADMIN_ID:  # Foydalanuvchi Super Admin bo'lsa
-        stats_text += f"🏷 Tayinlangan adminlar soni: *{admin_count}*\n"
+        stats_text += f"🏷 Tayinlangan adminlar soni: *{admin_count}*\n\n"
         if admins:
             stats_text += "📋 Adminlar ro'yxati:\n"
             for admin in admins:
@@ -2149,13 +2123,12 @@ def show_statistics(msg):
                 
 
 # ====================== UMUMIY HANDLER ========================
-# =================== UNIVERSAL HANDLER - ✅ YANGILANGAN VA TUZATILGAN ===================
 
 @bot.message_handler(func=lambda msg:   True)
 def universal_handler(msg):
     """Umumiy handler - kino/serial qidirish VA admin kino o'chirish"""
     user = str(msg.  from_user. id)
-    text = msg.text.  strip()
+    text = msg.text.strip()
     
     # 1️⃣ ADMIN KINO O'CHIRAYAPTI
     if user in state and state[user][0] == "waiting_for_delete_kino":
