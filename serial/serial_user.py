@@ -31,7 +31,7 @@ def show_serial_for_user(chat_id, serial_code):
     
     markup.add(types.InlineKeyboardButton("🔙", callback_data="user_back"))
     
-    caption = f"🎞 *{serial['name']}*\n{serial['description']}\n\nFaslni tanlang:"
+    caption = f"🎞 *{serial['name']}*\n\n{serial['description']}\n\nFaslni tanlang:"
     
     bot.send_photo(
         chat_id,
@@ -43,6 +43,95 @@ def show_serial_for_user(chat_id, serial_code):
 
 
 # ===== *** Qismlar xabari =======
+
+# @bot.callback_query_handler(func=lambda call: call.data.startswith("user_season_"))
+# def show_episodes_for_user(call):
+#     parts = call.data.split("_")
+#     serial_code = parts[2]
+#     season_number = int(parts[3])
+#     page = int(parts[5]) if "page" in call.data else 0
+
+#     serial = get_serial(serial_code)
+#     season = get_season(serial_code, season_number)
+
+#     if not season:
+#         bot.answer_callback_query(call.id, "❌ Fasl topilmadi!")
+#         return
+
+#     bot.delete_message(call.message.chat.id, call.message.message_id)
+
+#     episodes = season.get("episodes", [])
+#     full_files = season.get("full_files", [])
+#     total = episodes or list(range(1, len(full_files) + 1))
+
+#     PER_PAGE = 25
+#     PER_ROW = 5
+
+#     start = page * PER_PAGE
+#     end = start + PER_PAGE
+#     page_items = total[start:end]
+
+#     markup = types.InlineKeyboardMarkup()
+
+#     # 🔢 QISMLAR (5 tadan qatorda)
+#     row = []
+#     for item in page_items:
+#         ep_num = item["episode_number"] if isinstance(item, dict) else item
+#         row.append(
+#             types.InlineKeyboardButton(
+#                 str(ep_num),
+#                 callback_data=f"user_episode_{serial_code}_{season_number}_{ep_num}"
+#             )
+#         )
+#         if len(row) == PER_ROW:
+#             markup.row(*row)
+#             row = []
+
+#     if row:
+#         markup.row(*row)
+
+#     # 🔁 PAGINATION
+#     nav = []
+#     if page > 0:
+#         nav.append(
+#             types.InlineKeyboardButton(
+#                 "⬅️ Oldingi",
+#                 callback_data=f"user_season_{serial_code}_{season_number}_page_{page-1}"
+#             )
+#         )
+#     if end < len(total):
+#         nav.append(
+#             types.InlineKeyboardButton(
+#                 "Keyingi ➡️",
+#                 callback_data=f"user_season_{serial_code}_{season_number}_page_{page+1}"
+#             )
+#         )
+
+#     if nav:
+#         markup.row(*nav)
+
+#     markup.add(
+#         types.InlineKeyboardButton("🔙 Ortga", callback_data=f"user_serial_{serial_code}")
+#     )
+
+#     text = (
+#         f"\t\t\t\t📺 *{serial['name']} — {season_number}-fasl*\n\n"
+#         f"Qismlar: {len(total)}\t\t||\t\t"
+#         f"Sahifa: {page + 1}/{(len(total) + PER_PAGE - 1)//PER_PAGE}\n\n"
+#         "Qismni tanlang:"
+#     )
+
+#     bot.send_message(
+#         call.message.chat.id,
+#         text,
+#         parse_mode="Markdown",
+#         reply_markup=markup
+#     )
+
+
+
+# ❗ Global dictionary har bir foydalanuvchi uchun tanlangan epizodni saqlash
+user_selected_episode = {}  # {chat_id: {serial_code_season: episode_number}}
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith("user_season_"))
 def show_episodes_for_user(call):
@@ -75,11 +164,19 @@ def show_episodes_for_user(call):
 
     # 🔢 QISMLAR (5 tadan qatorda)
     row = []
+
+    # Tanlangan epizodni olish
+    chat_id = call.message.chat.id
+    key = f"{serial_code}_{season_number}"
+    selected_ep = user_selected_episode.get(chat_id, {}).get(key)
+
     for item in page_items:
         ep_num = item["episode_number"] if isinstance(item, dict) else item
+        # ✅ qo'yish sharti
+        text = f"✅ {ep_num}" if ep_num == selected_ep else str(ep_num)
         row.append(
             types.InlineKeyboardButton(
-                str(ep_num),
+                text,
                 callback_data=f"user_episode_{serial_code}_{season_number}_{ep_num}"
             )
         )
@@ -106,7 +203,6 @@ def show_episodes_for_user(call):
                 callback_data=f"user_season_{serial_code}_{season_number}_page_{page+1}"
             )
         )
-
     if nav:
         markup.row(*nav)
 
@@ -122,11 +218,35 @@ def show_episodes_for_user(call):
     )
 
     bot.send_message(
-        call.message.chat.id,
+        chat_id,
         text,
         parse_mode="Markdown",
         reply_markup=markup
     )
+
+# ✅ Epizodni tanlash callback
+@bot.callback_query_handler(func=lambda call: call.data.startswith("user_episode_"))
+def select_episode(call):
+    parts = call.data.split("_")
+    serial_code = parts[2]
+    season_number = int(parts[3])
+    ep_num = int(parts[4])
+
+    chat_id = call.message.chat.id
+    key = f"{serial_code}_{season_number}"
+
+    # Global dictionary yangilash
+    if chat_id not in user_selected_episode:
+        user_selected_episode[chat_id] = {}
+    user_selected_episode[chat_id][key] = ep_num
+
+    # Keyboardni yangilash uchun faslni qayta chaqirish
+    show_episodes_for_user(call)
+    bot.answer_callback_query(call.id, f"Tanlandi: Qism {ep_num}")
+
+
+
+
 
 
 
@@ -170,12 +290,24 @@ def send_episode_to_user(call):
         bot.answer_callback_query(call.id, "❌ Qism topilmadi!")
         return
     
+    chat_id = call.message.chat.id
+    key = f"{serial_code}_{season_number}"
+
+    # Global dictionary yangilash
+    if chat_id not in user_selected_episode:
+        user_selected_episode[chat_id] = {}
+    user_selected_episode[chat_id][key] = episode_number
+
+    # Keyboardni yangilash uchun faslni qayta chaqirish
+    show_episodes_for_user(call)
+    bot.answer_callback_query(call.id, f"Tanlandi: Qism {episode_number}")
+    
     serial = get_serial(serial_code)
     
     markup = types.InlineKeyboardMarkup()
     markup.add(types.InlineKeyboardButton("❌", callback_data="delete_seria"))
     
-    caption = f"🎞 *{serial['name']}*\n\t\t\t\t{season_number}-fasl, {episode_number}-qism\n\n🤖 *Yuklovchi*\: @DubKinoBot"
+    caption = f"🎞 *{serial['name']}*\n\t\t\t\t{season_number}-fasl, {episode_number}-qism\n\n🤖 *Yuklovchi*: @DubKinoBot"
     
     bot.send_video(
         call.message.chat.id,
