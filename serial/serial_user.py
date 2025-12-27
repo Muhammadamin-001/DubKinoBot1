@@ -115,9 +115,9 @@ def show_episodes_for_user(call):
     )
 
     text = (
-        f"📺 *{serial['name']} — {season_number}-fasl*\n\n"
-        f"Qismlar: {len(total)}\n"
-        f"Sahifa: {page + 1}\n\n"
+        f"\t\t\t\t📺 *{serial['name']} — {season_number}-fasl*\n\n"
+        f"Qismlar: {len(total)}\t\t||\t\t"
+        f"Sahifa: {page + 1}/{(len(total) + PER_PAGE - 1)//PER_PAGE}\n\n"
         "Qismni tanlang:"
     )
 
@@ -175,7 +175,7 @@ def send_episode_to_user(call):
     markup = types.InlineKeyboardMarkup()
     markup.add(types.InlineKeyboardButton("❌", callback_data="delete_seria"))
     
-    caption = f"🎞 *{serial['name']}*\n\t\t\t\t{season_number}-fasl, {episode_number}-qism\n\n🤖 *Yukladi*\\: @DubKinoBot"
+    caption = f"🎞 *{serial['name']}*\n\t\t\t\t{season_number}-fasl, {episode_number}-qism\n\n🤖 *Yuklovchi*\: @DubKinoBot"
     
     bot.send_video(
         call.message.chat.id,
