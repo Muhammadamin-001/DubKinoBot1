@@ -147,7 +147,7 @@ def show_episodes_for_user(call):
         bot.answer_callback_query(call.id, "❌ Fasl topilmadi!")
         return
 
-    bot.delete_message(call.message.chat.id, call.message.message_id)
+    # ❌ O'chirmaymiz, shunchaki keyboardni yangilaymiz
 
     episodes = season.get("episodes", [])
     full_files = season.get("full_files", [])
@@ -172,7 +172,6 @@ def show_episodes_for_user(call):
 
     for item in page_items:
         ep_num = item["episode_number"] if isinstance(item, dict) else item
-        # ✅ qo'yish sharti
         text = f"✅ {ep_num}" if ep_num == selected_ep else str(ep_num)
         row.append(
             types.InlineKeyboardButton(
@@ -217,47 +216,28 @@ def show_episodes_for_user(call):
         "Qismni tanlang:"
     )
 
-    bot.send_message(
-        chat_id,
-        text,
-        parse_mode="Markdown",
-        reply_markup=markup
-    )
-
-# ✅ Epizodni tanlash callback
-@bot.callback_query_handler(func=lambda call: call.data.startswith("user_episode_"))
-def select_episode(call):
-    parts = call.data.split("_")
-    serial_code = parts[2]
-    season_number = int(parts[3])
-    ep_num = int(parts[4])
-
-    chat_id = call.message.chat.id
-    key = f"{serial_code}_{season_number}"
-
-    # Global dictionary yangilash
-    if chat_id not in user_selected_episode:
-        user_selected_episode[chat_id] = {}
-    user_selected_episode[chat_id][key] = ep_num
-
-    # Keyboardni yangilash uchun faslni qayta chaqirish
-    show_episodes_for_user(call)
-    bot.answer_callback_query(call.id, f"Tanlandi: Qism {ep_num}")
-
-
-
-
-
-
-
-
-
+    # ❗ Edit qilish: xabarni o'chirmay, keyboardni yangilaymiz
+    if call.message:
+        bot.edit_message_text(
+            chat_id=chat_id,
+            message_id=call.message.message_id,
+            text=text,
+            parse_mode="Markdown",
+            reply_markup=markup
+        )
+    else:
+        bot.send_message(
+            chat_id,
+            text,
+            parse_mode="Markdown",
+            reply_markup=markup
+        )
 
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith("user_episode_"))
 def send_episode_to_user(call):
     """Qismning videosini yuborish"""
-    parts = call. data.split("_")
+    parts = call.data.split("_")
     serial_code = parts[2]
     season_number = int(parts[3])
     episode_number = int(parts[4])
@@ -298,7 +278,7 @@ def send_episode_to_user(call):
         user_selected_episode[chat_id] = {}
     user_selected_episode[chat_id][key] = episode_number
 
-    # Keyboardni yangilash uchun faslni qayta chaqirish
+    # ✅ Keyboardni faqat yangilash, xabarni o'chirmasdan
     show_episodes_for_user(call)
     bot.answer_callback_query(call.id, f"Tanlandi: Qism {episode_number}")
     
@@ -310,12 +290,13 @@ def send_episode_to_user(call):
     caption = f"🎞 *{serial['name']}*\n\t\t\t\t{season_number}-fasl, {episode_number}-qism\n\n🤖 *Yuklovchi*: @DubKinoBot"
     
     bot.send_video(
-        call.message.chat.id,
+        chat_id,
         episode["file_id"],
         caption=caption,
         parse_mode="Markdown",
         reply_markup=markup
     )
+
     
 
 #======== Foydalanuvchi kinoni O'chirib yuborsa======
