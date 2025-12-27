@@ -2135,13 +2135,12 @@ def delete_type_kino(call):
     bot.delete_message(call.message.chat.id, call.message.message_id)
     markup = InlineKeyboardMarkup()
     markup.add(
-        InlineKeyboardButton("⛔️ Exit", callback_data="exit_delete_movie")
+        InlineKeyboardButton("⛔️", callback_data="exit_delete_movie")
     )
     bot.send_message(
         call.message.chat.id,
-        "🎬 O'chiriladigan kinoning kodini kiriting.\n"
-        "Boshqa kino o'chirish uchun yana kod kiriting.\n"
-        "Chiqish uchun /admin buyrug'ini yuboring.",
+        "🚨 *O'chiriladigan kinoning kodini kiriting*\n\n"
+        "Jarayonni to'xtatish uchun ⛔️ *STOP* tugmasini bosing",
         parse_mode="Markdown",
         reply_markup=markup
     )
@@ -2181,7 +2180,8 @@ def confirm_delete_kino(call):
         bot.send_message(
             call.message.chat.id,
             f"✅ Kino (kod: `{kino_code}`) o'chirildi.\n\n"
-            f"Boshqa kino kodini kiriting yoki /admin buyrug'ini yuboring.",
+            f"Boshqa kino kodini kiriting yoki\n"
+            "Jarayonni to'xtatish uchun ⛔️ *STOP* tugmasini bosing",
             parse_mode="Markdown"
         )
         # STATE GA BIR VAQT QOLADI - boshqa kinoni o'chirish uchun
@@ -2198,7 +2198,8 @@ def cancel_delete_kino(call):
     bot.send_message(
         call.message.chat.id,
         "❌ O'chirish bekor qilindi.\n\n"
-        "Boshqa kino kodini kiriting yoki /admin buyrug'ini yuboring.",
+        "Boshqa kino kodini kiriting yoki\n "
+        "Jarayonni to'xtatish uchun ⛔️ *STOP* tugmasini bosing",
         parse_mode="Markdown"
     )
     # STATE GA BIR VAQT QOLADI - boshqa kinoni o'chirish uchun
@@ -2208,24 +2209,6 @@ def cancel_delete_kino(call):
                 
 
 # ====================== UMUMIY HANDLER ========================
-
-# @bot.message_handler(func=lambda msg:   True)
-# def universal_handler(msg):
-#     """Umumiy handler - kino/serial qidirish VA admin kino o'chirish"""
-#     user = str(msg.  from_user. id)
-#     text = msg.text.strip()
-    
-#     # 1️⃣ ADMIN KINO O'CHIRAYAPTI
-#     if user in state and state[user][0] == "waiting_for_delete_kino":
-#         result = movies.delete_one({"code": text})
-        
-#         if result.  deleted_count > 0:
-#             bot.send_message(msg.chat.id, f"✔ Kino o'chirildi!\nKino kodi: {text}")
-#         else:
-#             bot.send_message(msg.chat.id, "❌ Bunday kod mavjud emas.")
-        
-#         del state[user]
-#         return
 
 # =================== KINO O'CHIRISH (DAVOMLI) ===================
 @bot.message_handler(func=lambda msg: True)
@@ -2242,7 +2225,7 @@ def universal_handler(msg):
             bot.send_message(
                 msg.chat.id,
                 f"❌ Bunday kod mavjud emas: `{text}`\n\n"
-                f"Boshqa kino kodini kiriting yoki /admin buyrug'ini yuboring.",
+                f"Boshqa kino kodini kiriting yoki ⛔️ STOP tugmasini bosing",
                 parse_mode="Markdown"
             )
            
@@ -2255,17 +2238,12 @@ def universal_handler(msg):
             types.InlineKeyboardButton("❌ Yo'q", callback_data="cancel_delete_kino")
         )
         
-        # Kino ma'lumotlari
-        # duration = movie.get('duration', 'Noma\'lum')
-        # year = movie.get('genre', 'Noma\'lum')
         
         bot.send_message(
             msg.chat.id,
             f"⚠️ *Tasdiqlash*\n\n"
             f"Kino: *{movie['name']}*\n"
             f"Kod: `{text}`\n\n"
-            # f"Yil: {year}\n"
-            # f"Davomiyligi: {duration}\n\n"
             f"Aniq o'chirmoqchisiz?",
             reply_markup=markup,
             parse_mode="Markdown"
