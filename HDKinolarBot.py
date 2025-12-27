@@ -1500,12 +1500,12 @@ def delete_content_menu(msg):
         parse_mode="Markdown"
     )
 
-@bot.callback_query_handler(func=lambda call: call.data == "delete_type_kino")
-def delete_type_kino(call):
-    """Kino o'chirish - eski logika"""
-    bot.delete_message(call.message.chat.id, call.message.message_id)
-    bot.send_message(call.message.chat.id, "❌ O'chiriladigan kinoning kodini kiriting.")
-    state[str(call.from_user.id)] = ["waiting_for_delete_kino"]
+# @bot.callback_query_handler(func=lambda call: call.data == "delete_type_kino")
+# def delete_type_kino(call):
+#     """Kino o'chirish - eski logika"""
+#     bot.delete_message(call.message.chat.id, call.message.message_id)
+#     bot.send_message(call.message.chat.id, "❌ O'chiriladigan kinoning kodini kiriting.")
+#     state[str(call.from_user.id)] = ["waiting_for_delete_kino"]
 
 
 @bot.callback_query_handler(func=lambda call: call.data == "delete_back_to_admin")
@@ -2120,26 +2120,157 @@ def show_statistics(msg):
 
         
 
+
+
+# =================== KINO O'CHIRISH BOSHLASH ===================
+@bot.callback_query_handler(func=lambda call: call.data == "delete_type_kino")
+def delete_type_kino(call):
+    """Kino o'chirish - kod kiritish usuli"""
+    user_id = call.from_user.id
+    
+    if not (str(user_id) == ADMIN_ID or is_admin(user_id)):
+        bot.answer_callback_query(call.id, "❌ Ruxsat yo'q!")
+        return
+    
+    bot.delete_message(call.message.chat.id, call.message.message_id)
+    markup = InlineKeyboardMarkup()
+    markup.add(
+        InlineKeyboardButton("⛔️ Exit", callback_data="exit_delete_movie")
+    )
+    bot.send_message(
+        call.message.chat.id,
+        "🎬 O'chiriladigan kinoning kodini kiriting.\n"
+        "Boshqa kino o'chirish uchun yana kod kiriting.\n"
+        "Chiqish uchun /admin buyrug'ini yuboring.",
+        parse_mode="Markdown",
+        reply_markup=markup
+    )
+    state[str(user_id)] = ["waiting_for_delete_kino"]
+
+
+@bot.callback_query_handler(func=lambda call: call.data == "exit_delete_movie")
+def exit_delete_button(call):
+    user_id = str(call.from_user.id)
+
+    if user_id in state:
+        del state[user_id]
+
+    bot.answer_callback_query(call.id)
+    bot.send_message(
+        call.message.chat.id,
+        "⛔️ Jarayon to'xtadi",
+        parse_mode="Markdown",
+    )
+
+# =================== KINO O'CHIRISH TASDIQLASH ===================
+@bot.callback_query_handler(func=lambda call: call.data.startswith("confirm_delete_kino_"))
+def confirm_delete_kino(call):
+    """Kino o'chirishni tasdiqlash"""
+    kino_code = call.data.replace("confirm_delete_kino_", "")
+    user_id = call.from_user.id
+    
+    if not (str(user_id) == ADMIN_ID or is_admin(user_id)):
+        bot.answer_callback_query(call.id, "❌ Ruxsat yo'q!")
+        return
+    
+    result = movies.delete_one({"code": kino_code})
+    
+    if result.deleted_count > 0:
+        bot.answer_callback_query(call.id, "✅ Kino o'chirildi!")
+        bot.delete_message(call.message.chat.id, call.message.message_id)
+        bot.send_message(
+            call.message.chat.id,
+            f"✅ Kino (kod: `{kino_code}`) o'chirildi.\n\n"
+            f"Boshqa kino kodini kiriting yoki /admin buyrug'ini yuboring.",
+            parse_mode="Markdown"
+        )
+        # STATE GA BIR VAQT QOLADI - boshqa kinoni o'chirish uchun
+    else:
+        bot.answer_callback_query(call.id, "❌ Xatolik!")
+
+
+# =================== KINO O'CHIRISHNI BEKOR QILISH ===================
+@bot.callback_query_handler(func=lambda call: call.data == "cancel_delete_kino")
+def cancel_delete_kino(call):
+    """O'chirish operatsiyasini bekor qilish"""
+    #user_id = call.from_user.id
+    bot.delete_message(call.message.chat.id, call.message.message_id)
+    bot.send_message(
+        call.message.chat.id,
+        "❌ O'chirish bekor qilindi.\n\n"
+        "Boshqa kino kodini kiriting yoki /admin buyrug'ini yuboring.",
+        parse_mode="Markdown"
+    )
+    # STATE GA BIR VAQT QOLADI - boshqa kinoni o'chirish uchun
+
+
+
                 
 
 # ====================== UMUMIY HANDLER ========================
 
-@bot.message_handler(func=lambda msg:   True)
+# @bot.message_handler(func=lambda msg:   True)
+# def universal_handler(msg):
+#     """Umumiy handler - kino/serial qidirish VA admin kino o'chirish"""
+#     user = str(msg.  from_user. id)
+#     text = msg.text.strip()
+    
+#     # 1️⃣ ADMIN KINO O'CHIRAYAPTI
+#     if user in state and state[user][0] == "waiting_for_delete_kino":
+#         result = movies.delete_one({"code": text})
+        
+#         if result.  deleted_count > 0:
+#             bot.send_message(msg.chat.id, f"✔ Kino o'chirildi!\nKino kodi: {text}")
+#         else:
+#             bot.send_message(msg.chat.id, "❌ Bunday kod mavjud emas.")
+        
+#         del state[user]
+#         return
+
+# =================== KINO O'CHIRISH (DAVOMLI) ===================
+@bot.message_handler(func=lambda msg: True)
 def universal_handler(msg):
     """Umumiy handler - kino/serial qidirish VA admin kino o'chirish"""
-    user = str(msg.  from_user. id)
+    user = str(msg.from_user.id)
     text = msg.text.strip()
     
-    # 1️⃣ ADMIN KINO O'CHIRAYAPTI
+    # 1️⃣ ADMIN KINO O'CHIRAYAPTI (DAVOMLI)
     if user in state and state[user][0] == "waiting_for_delete_kino":
-        result = movies.delete_one({"code": text})
+        movie = movies.find_one({"code": text})
         
-        if result.  deleted_count > 0:
-            bot.send_message(msg.chat.id, f"✔ Kino o'chirildi!\nKino kodi: {text}")
-        else:
-            bot.send_message(msg.chat.id, "❌ Bunday kod mavjud emas.")
+        if not movie:
+            bot.send_message(
+                msg.chat.id,
+                f"❌ Bunday kod mavjud emas: `{text}`\n\n"
+                f"Boshqa kino kodini kiriting yoki /admin buyrug'ini yuboring.",
+                parse_mode="Markdown"
+            )
+           
+            return
         
-        del state[user]
+        # Tasdiqlash tugmalari
+        markup = types.InlineKeyboardMarkup()
+        markup.add(
+            types.InlineKeyboardButton("✅ Ha, o'chir", callback_data=f"confirm_delete_kino_{text}"),
+            types.InlineKeyboardButton("❌ Yo'q", callback_data="cancel_delete_kino")
+        )
+        
+        # Kino ma'lumotlari
+        # duration = movie.get('duration', 'Noma\'lum')
+        # year = movie.get('genre', 'Noma\'lum')
+        
+        bot.send_message(
+            msg.chat.id,
+            f"⚠️ *Tasdiqlash*\n\n"
+            f"Kino: *{movie['name']}*\n"
+            f"Kod: `{text}`\n\n"
+            # f"Yil: {year}\n"
+            # f"Davomiyligi: {duration}\n\n"
+            f"Aniq o'chirmoqchisiz?",
+            reply_markup=markup,
+            parse_mode="Markdown"
+        )
+        # STATE GA BIR VAQT QOLADI - boshqa kinoni o'chirish uchun
         return
     
     # 2️⃣ OBUNANI TEKSHIRISH
