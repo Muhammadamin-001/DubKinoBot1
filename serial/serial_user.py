@@ -159,7 +159,7 @@ def send_episode_to_user(call):
     markup = types.InlineKeyboardMarkup()
     markup.add(types.InlineKeyboardButton("❌", callback_data="delete_seria"))
     
-    caption = f"🎞 *{serial['name']}*\n{season_number}-fasl, {episode_number}-qism\n\n🤖 Bot manzili: @DubKinoBot"
+    caption = f"🎞 *{serial['name']}*\n\t\t\t\t{season_number}-fasl, {episode_number}-qism\n\n🤖 *Yukladi*\\: @DubKinoBot"
     
     bot.send_video(
         call.message.chat.id,
@@ -180,7 +180,7 @@ def delete_movie_warning(call):
 
     bot.answer_callback_query(
         call.id,
-        "⚠️ Rostdan ham kinoni o‘chirmoqchimisiz?\n\nYana bir marta bosing ...❌",
+        "⚠️ Rostdan ham videoni o‘chirmoqchimisiz?\n\nYana bir marta bosing ...❌",
         show_alert=True
     )
 
@@ -196,7 +196,7 @@ def delete_movie_warning(call):
 def delete_movie_confirm(call):
     try:
         bot.delete_message(call.message.chat.id, call.message.message_id)
-        bot.answer_callback_query(call.id, "✅ Kino o‘chirildi")
+        bot.answer_callback_query(call.id, "✅ Video o‘chirildi")
     except Exception as e:
         print(e)
         bot.answer_callback_query(call.id, "❌ Xatolik yuz berdi")
