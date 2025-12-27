@@ -615,7 +615,7 @@ def upload_type_kino(call):
     bot.delete_message(call.message.chat.id, call.message.message_id)
     
     bot.send_message(call.message.chat.id,
-                     "🎬 *Video yuboring (video fayl ko'rinishida).*")
+                     "🎬 *Video yuboring (video fayl ko'rinishida)*")
     state[str(call.from_user.id)] = ["waiting_for_video"]
     
 
@@ -814,7 +814,7 @@ def save_serial_name(msg):
     # ✅ RASM SO'RASH
     bot.send_message(
         msg.chat.id,
-        "🖼 *Serial rasmini yuboring*\n\n(Rasm yoki foto ko'rinishida)",
+        "ℹ️ *Serial haqida tavsif yozing*\n\nBu Xabar orqali serial haqida ma'lumot berasiz!",
         parse_mode="Markdown"
     )
     
@@ -2063,7 +2063,7 @@ def show_user_serials(msg):
         parse_mode="Markdown"
     )
 
-@bot.callback_query_handler(func=lambda call: call.data. startswith("user_view_serial_"))
+@bot.callback_query_handler(func=lambda call: call.data.startswith("user_view_serial_"))
 def user_view_serial(call):
     """Foydalanuvchi serialni tanlaganda"""
     serial_code = call.data.replace("user_view_serial_", "")

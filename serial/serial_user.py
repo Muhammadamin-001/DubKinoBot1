@@ -11,7 +11,7 @@ from .serial_db import get_serial, get_season#, get_episode, get_all_serials
 # =================== FOYDALANUVCHI UCHUN SERIAL KO'RISH ===================
 
 def show_serial_for_user(chat_id, serial_code):
-    """Serialni ko'rsatish (rasm + nomi + fasllar)"""
+    """Serialni ko'rsatish (rasm + nomi + tavsif + fasllar)"""
     serial = get_serial(serial_code)
     
     if not serial: 
@@ -31,7 +31,7 @@ def show_serial_for_user(chat_id, serial_code):
     
     markup.add(types.InlineKeyboardButton("🔙", callback_data="user_back"))
     
-    caption = f"🎞 *{serial['name']}*\n\nFaslni tanlang:"
+    caption = f"🎞 *{serial['name']}*\n{serial['description']}\n\nFaslni tanlang:"
     
     bot.send_photo(
         chat_id,
