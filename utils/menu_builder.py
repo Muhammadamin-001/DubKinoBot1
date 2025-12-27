@@ -5,6 +5,11 @@ Tugmalar va menyu generatsiyasi
 """
 
 from telebot import types
+from .db_config import movies, serials
+
+def code_exists(code):
+    return movies.find_one({"code": code}) or serials.find_one({"code": code})
+
 
 def create_inline_buttons(buttons_data):
     """

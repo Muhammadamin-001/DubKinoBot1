@@ -34,8 +34,7 @@ Kinolarni yuklash, o'chirish va boshqarish
 
 # ✅ ANIQ IMPORT (Star o'rniga)
 from .movie_handler import (
-    code,
-    upload_movie,
+    #upload_movie,
     catch_video,
     movie_code,
     movie_name,
@@ -53,11 +52,13 @@ from .movie_db import (
     get_all_movies,
     check_movie_code_exists,
 )
+from utils.menu_builder import code_exists
 
 __all__ = [
     # movie_handler.py
-    "code",
-    'upload_movie',
+    
+    #'upload_movie',
+    "code_exists",
     'catch_video',
     'movie_code',
     'movie_name',
