@@ -208,11 +208,20 @@ def check(call):
             bot.delete_message(chat_id, message_id)
         except:
             pass
-        
+        if (str(user_id) == ADMIN_ID or is_admin(user_id)):
+            markup = admin_panel()
+            text = "✔ Obuna tasdiqlandi! ✅\n\n🔐 *Admin paneli*"
+        else:
+            markup=user_panel()
+            text = "✔ Obuna tasdiqlandi! ✅\n\n🆔 Film kodini yuboring:\n\t(🔍 Yoki film nomi orqali toping:)"
+    
         bot.send_message(
             chat_id, 
-            "✔ Obuna tasdiqlandi! ✅\n\n🎬 Film kodini yuboring:\n\t(🔍 Yoki film nomi orqali toping:)"
-        )
+            text,
+            parse_mode="Markdown",
+            reply_markup=markup
+            )
+        
         bot.answer_callback_query(call.id, "✅ Tasdiqlandi!")
     
     else:
