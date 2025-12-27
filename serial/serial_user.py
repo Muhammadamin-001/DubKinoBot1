@@ -42,96 +42,7 @@ def show_serial_for_user(chat_id, serial_code):
     )
 
 
-# ===== *** Qismlar xabari =======
-
-# @bot.callback_query_handler(func=lambda call: call.data.startswith("user_season_"))
-# def show_episodes_for_user(call):
-#     parts = call.data.split("_")
-#     serial_code = parts[2]
-#     season_number = int(parts[3])
-#     page = int(parts[5]) if "page" in call.data else 0
-
-#     serial = get_serial(serial_code)
-#     season = get_season(serial_code, season_number)
-
-#     if not season:
-#         bot.answer_callback_query(call.id, "❌ Fasl topilmadi!")
-#         return
-
-#     bot.delete_message(call.message.chat.id, call.message.message_id)
-
-#     episodes = season.get("episodes", [])
-#     full_files = season.get("full_files", [])
-#     total = episodes or list(range(1, len(full_files) + 1))
-
-#     PER_PAGE = 25
-#     PER_ROW = 5
-
-#     start = page * PER_PAGE
-#     end = start + PER_PAGE
-#     page_items = total[start:end]
-
-#     markup = types.InlineKeyboardMarkup()
-
-#     # 🔢 QISMLAR (5 tadan qatorda)
-#     row = []
-#     for item in page_items:
-#         ep_num = item["episode_number"] if isinstance(item, dict) else item
-#         row.append(
-#             types.InlineKeyboardButton(
-#                 str(ep_num),
-#                 callback_data=f"user_episode_{serial_code}_{season_number}_{ep_num}"
-#             )
-#         )
-#         if len(row) == PER_ROW:
-#             markup.row(*row)
-#             row = []
-
-#     if row:
-#         markup.row(*row)
-
-#     # 🔁 PAGINATION
-#     nav = []
-#     if page > 0:
-#         nav.append(
-#             types.InlineKeyboardButton(
-#                 "⬅️ Oldingi",
-#                 callback_data=f"user_season_{serial_code}_{season_number}_page_{page-1}"
-#             )
-#         )
-#     if end < len(total):
-#         nav.append(
-#             types.InlineKeyboardButton(
-#                 "Keyingi ➡️",
-#                 callback_data=f"user_season_{serial_code}_{season_number}_page_{page+1}"
-#             )
-#         )
-
-#     if nav:
-#         markup.row(*nav)
-
-#     markup.add(
-#         types.InlineKeyboardButton("🔙 Ortga", callback_data=f"user_serial_{serial_code}")
-#     )
-
-#     text = (
-#         f"\t\t\t\t📺 *{serial['name']} — {season_number}-fasl*\n\n"
-#         f"Qismlar: {len(total)}\t\t||\t\t"
-#         f"Sahifa: {page + 1}/{(len(total) + PER_PAGE - 1)//PER_PAGE}\n\n"
-#         "Qismni tanlang:"
-#     )
-
-#     bot.send_message(
-#         call.message.chat.id,
-#         text,
-#         parse_mode="Markdown",
-#         reply_markup=markup
-#     )
-
-
-
-# ❗ Global dictionary har bir foydalanuvchi uchun tanlangan epizodni saqlash
-user_selected_episode = {}  # {chat_id: {serial_code_season: episode_number}}
+#===== *** Qismlar xabari =======
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith("user_season_"))
 def show_episodes_for_user(call):
@@ -147,6 +58,8 @@ def show_episodes_for_user(call):
         bot.answer_callback_query(call.id, "❌ Fasl topilmadi!")
         return
 
+    bot.delete_message(call.message.chat.id, call.message.message_id)
+
     episodes = season.get("episodes", [])
     full_files = season.get("full_files", [])
     total = episodes or list(range(1, len(full_files) + 1))
@@ -160,39 +73,46 @@ def show_episodes_for_user(call):
 
     markup = types.InlineKeyboardMarkup()
 
+    # 🔢 QISMLAR (5 tadan qatorda)
     row = []
-    chat_id = call.message.chat.id
-    # ✅ faqat qism tugmasida ishlaydi, faslda selected_ep bo‘lmaydi
-    #key = f"{serial_code}_{season_number}"
-    #selected_ep = user_selected_episode.get(chat_id, {}).get(key)
-
     for item in page_items:
         ep_num = item["episode_number"] if isinstance(item, dict) else item
-        text = str(ep_num)  # Faslni bosganda ✅ qo‘yilmaydi
         row.append(
             types.InlineKeyboardButton(
-                text,
+                str(ep_num),
                 callback_data=f"user_episode_{serial_code}_{season_number}_{ep_num}"
             )
         )
         if len(row) == PER_ROW:
             markup.row(*row)
             row = []
+
     if row:
         markup.row(*row)
 
-    # PAGINATION
+    # 🔁 PAGINATION
     nav = []
     if page > 0:
-        nav.append(types.InlineKeyboardButton("⬅️ Oldingi",
-            callback_data=f"user_season_{serial_code}_{season_number}_page_{page-1}"))
+        nav.append(
+            types.InlineKeyboardButton(
+                "⬅️ Oldingi",
+                callback_data=f"user_season_{serial_code}_{season_number}_page_{page-1}"
+            )
+        )
     if end < len(total):
-        nav.append(types.InlineKeyboardButton("Keyingi ➡️",
-            callback_data=f"user_season_{serial_code}_{season_number}_page_{page+1}"))
+        nav.append(
+            types.InlineKeyboardButton(
+                "Keyingi ➡️",
+                callback_data=f"user_season_{serial_code}_{season_number}_page_{page+1}"
+            )
+        )
+
     if nav:
         markup.row(*nav)
 
-    markup.add(types.InlineKeyboardButton("🔙 Ortga", callback_data=f"user_serial_{serial_code}"))
+    markup.add(
+        types.InlineKeyboardButton("🔙 Ortga", callback_data=f"user_serial_{serial_code}")
+    )
 
     text = (
         f"\t\t\t\t📺 *{serial['name']} — {season_number}-fasl*\n\n"
@@ -201,111 +121,67 @@ def show_episodes_for_user(call):
         "Qismni tanlang:"
     )
 
-    if call.message:
-        bot.edit_message_text(
-            chat_id=chat_id,
-            message_id=call.message.message_id,
-            text=text,
-            parse_mode="Markdown",
-            reply_markup=markup
-        )
-    else:
-        bot.send_message(
-            chat_id,
-            text,
-            parse_mode="Markdown",
-            reply_markup=markup
-        )
-
-@bot.callback_query_handler(func=lambda call: call.data.startswith("user_episode_"))
-def select_episode(call):
-    parts = call.data.split("_")
-    serial_code = parts[2]
-    season_number = int(parts[3])
-    ep_num = int(parts[4])
-
-    chat_id = call.message.chat.id
-    key = f"{serial_code}_{season_number}"
-
-    if chat_id not in user_selected_episode:
-        user_selected_episode[chat_id] = {}
-    user_selected_episode[chat_id][key] = ep_num
-
-    # ✅ Keyboardni faqat yangilaymiz, xabarni o'chirmaymiz
-    # show_episodes_for_user funksiyasini faqat qism uchun selected_ep bilan chaqiramiz
-    parts_call = call  # shu call dan foydalanamiz
-    show_episodes_for_user_episode_only(parts_call)
-
-    bot.answer_callback_query(call.id, f"Tanlandi: Qism {ep_num}")
-
-def show_episodes_for_user_episode_only(call):
-    """✅ faqat qism tugmasida pitichka qo'yish uchun"""
-    parts = call.data.split("_")
-    serial_code = parts[2]
-    season_number = int(parts[3])
-    page = int(parts[5]) if "page" in call.data else 0
-
-    serial = get_serial(serial_code)
-    season = get_season(serial_code, season_number)
-    episodes = season.get("episodes", [])
-    full_files = season.get("full_files", [])
-    total = episodes or list(range(1, len(full_files) + 1))
-
-    PER_PAGE = 25
-    PER_ROW = 5
-    start = page * PER_PAGE
-    end = start + PER_PAGE
-    page_items = total[start:end]
-
-    markup = types.InlineKeyboardMarkup()
-    row = []
-    chat_id = call.message.chat.id
-    key = f"{serial_code}_{season_number}"
-    selected_ep = user_selected_episode.get(chat_id, {}).get(key)
-
-    for item in page_items:
-        ep_num = item["episode_number"] if isinstance(item, dict) else item
-        text = f"✅ {ep_num}" if ep_num == selected_ep else str(ep_num)
-        row.append(
-            types.InlineKeyboardButton(
-                text,
-                callback_data=f"user_episode_{serial_code}_{season_number}_{ep_num}"
-            )
-        )
-        if len(row) == PER_ROW:
-            markup.row(*row)
-            row = []
-    if row:
-        markup.row(*row)
-
-    # Pagination
-    nav = []
-    if page > 0:
-        nav.append(types.InlineKeyboardButton("⬅️ Oldingi",
-            callback_data=f"user_season_{serial_code}_{season_number}_page_{page-1}"))
-    if end < len(total):
-        nav.append(types.InlineKeyboardButton("Keyingi ➡️",
-            callback_data=f"user_season_{serial_code}_{season_number}_page_{page+1}"))
-    if nav:
-        markup.row(*nav)
-
-    markup.add(types.InlineKeyboardButton("🔙 Ortga", callback_data=f"user_serial_{serial_code}"))
-
-    text = (
-        f"\t\t\t\t📺 *{serial['name']} — {season_number}-fasl*\n\n"
-        f"Qismlar: {len(total)}\t\t||\t\t"
-        f"Sahifa: {page + 1}/{(len(total) + PER_PAGE - 1)//PER_PAGE}\n\n"
-        "Qismni tanlang:"
-    )
-
-    bot.edit_message_text(
-        chat_id=chat_id,
-        message_id=call.message.message_id,
-        text=text,
+    bot.send_message(
+        call.message.chat.id,
+        text,
         parse_mode="Markdown",
         reply_markup=markup
     )
 
+
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith("user_episode_"))
+def send_episode_to_user(call):
+    """Qismning videosini yuborish"""
+    parts = call. data.split("_")
+    serial_code = parts[2]
+    season_number = int(parts[3])
+    episode_number = int(parts[4])
+    
+    season = get_season(serial_code, season_number)
+    
+    if not season:
+        bot.answer_callback_query(call.id, "❌ Fasl topilmadi!")
+        return
+    
+    # Qismni topish
+    episode = None
+    episodes = season.get("episodes", [])
+    
+    for ep in episodes:
+        if ep["episode_number"] == episode_number: 
+            episode = ep
+            break
+    
+    # Agar episode yo'q bo'lsa, full_files'dan olish
+    if not episode: 
+        full_files = season.get("full_files", [])
+        if episode_number <= len(full_files):
+            episode = {
+                "episode_number": episode_number,
+                "file_id": full_files[episode_number - 1]
+            }
+    
+    if not episode:
+        bot.answer_callback_query(call.id, "❌ Qism topilmadi!")
+        return
+    
+
+    
+    serial = get_serial(serial_code)
+    
+    markup = types.InlineKeyboardMarkup()
+    markup.add(types.InlineKeyboardButton("❌", callback_data="delete_seria"))
+    
+    caption = f"🎞 *{serial['name']}*\n\t\t\t\t{season_number}-fasl, {episode_number}-qism\n\n🤖 *Yuklovchi*: @DubKinoBot"
+    
+    bot.send_video(
+        call.message.chat.id,
+        episode["file_id"],
+        caption=caption,
+        parse_mode="Markdown",
+        reply_markup=markup
+    )
 
 
 
