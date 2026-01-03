@@ -2008,7 +2008,7 @@ def movie_list(msg):
         code = m['code']
         text += f"{c}.   {m['name']}\n"
         text += f"🆔 Kod: `{code}`\n"
-        text += f"[▶️ Yuklab olish](https://t.me/DubKinoBot?start={code})\n"
+        text += f"[▶️ Yuklab olish](https://t.me/Saboq_kinolar_bot?start={code})\n"
         text += f"*{'─' * 10}*\n"
         c += 1
     
@@ -2312,11 +2312,11 @@ def universal_handler(msg):
             if "seasons" in item:  # Serial
                 text_result += f"{c}.  🎞 {item['name']}\n"
                 text_result += f"🆔 Kod: `{item['code']}`\n"
-                text_result += f"[▶️ Serial](https://t.me/Saboq_kinolar_bot?start={item['code']})\n"
+                text_result += f"[▶️ Serialni yuklash](https://t.me/Saboq_kinolar_bot?start={item['code']})\n"
             else:  # Kino
                 text_result += f"{c}. 🎬 {item['name']}\n"
                 text_result += f"🆔 Kod: `{item['code']}`\n"
-                text_result += f"[▶️ Yuklab olish](https://t.me/Saboq_kinolar_bot?start={item['code']})\n"
+                text_result += f"[▶️ Kinoni yuklash](https://t.me/Saboq_kinolar_bot?start={item['code']})\n"
             
             text_result += f"*{'─' * 30}*\n"
             c += 1
