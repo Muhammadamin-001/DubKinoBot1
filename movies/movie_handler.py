@@ -146,6 +146,7 @@ def movie_url(msg):
             "name": name,       
             "formati": formati,    
             "genre": genre,
+            "url": "@Saboq_kinolar",
             "urlbot": "@Saboq_kinolar_bot"
         }},
         upsert=True
