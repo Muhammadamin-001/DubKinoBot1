@@ -145,8 +145,7 @@ def movie_url(msg):
             "file_id": file_id,
             "name": name,       
             "formati": formati,    
-            "genre": genre,      
-            "url": "@Saboq_kinolar",
+            "genre": genre,
             "urlbot": "@Saboq_kinolar_bot"
         }},
         upsert=True
