@@ -324,7 +324,7 @@ def page_switch(call):
             code = m['code']
             text += f"{c}.   {m['name']}\n"
             text += f"🆔 Kod: `{code}`\n"
-            text += f"[▶️ Kinoni yuklash](https://t.me/DubKinoBot?start={code})\n"
+            text += f"[▶️ Kinoni yuklash](https://t.me/Saboq_kinolar_bot?start={code})\n"
             text += f"*{'─' * 10}*\n"
             c += 1
         
@@ -367,7 +367,7 @@ def search_page_switch(call):
         page = int(parts[1])
         
         if user_id not in search_cache: 
-            bot.answer_callback_query(call.id, "❌ Qidirush natijalari o'chirib yuborildi.")
+            bot.answer_callback_query(call.id, "❌ Qidiruv natijalari o'chirib yuborildi.")
             return
         
         cached = search_cache[user_id]
@@ -390,11 +390,11 @@ def search_page_switch(call):
             if "seasons" in item:  # Serial
                 text += f"{c}.  🎞 {item['name']}\n"
                 text += f"🆔 Kod: `{item['code']}`\n"
-                text += f"[▶️ Serial](https://t.me/DubKinoBot?start={item['code']})\n"
+                text += f"[▶️ Serialni yuklash](https://t.me/Saboq_kinolar_bot?start={item['code']})\n"
             else:  # Kino
                 text += f"{c}. 🎬 {item['name']}\n"
                 text += f"🆔 Kod: `{item['code']}`\n"
-                text += f"[▶️ Yulab olish](https://t.me/DubKinoBot?start={item['code']})\n"
+                text += f"[▶️ Kinoni yuklash](https://t.me/Saboq_kinolar_bot?start={item['code']})\n"
             
             text += f"*{'─' * 30}*\n"
             c += 1
@@ -1977,7 +1977,7 @@ def delete_serial_menu_callback(call):
     
 
 
-# =================== FILM KODLARI (Admin uchun) ===================
+# =================== KINOLAR RO'YXATI ===================
 
 @bot.message_handler(func=lambda msg: msg.text == "📂 Kinolar")
 def movie_list(msg):
@@ -2008,7 +2008,7 @@ def movie_list(msg):
         code = m['code']
         text += f"{c}.   {m['name']}\n"
         text += f"🆔 Kod: `{code}`\n"
-        text += f"[▶️ Kinoni yuklash](https://t.me/DubKinoBot?start={code})\n"
+        text += f"[▶️ Yuklab olish](https://t.me/DubKinoBot?start={code})\n"
         text += f"*{'─' * 10}*\n"
         c += 1
     
@@ -2280,7 +2280,7 @@ def universal_handler(msg):
     if result[0] == "too_short":
         bot.send_message(
             msg.chat.id,
-            "❌ Kamina 3 ta belgi kiriting!\n\t(🔍 Film nomini topishga yordam bering.)"
+            "❌ Kamida 3 ta belgi kiriting!\n\t(🔍 Film nomini topishga yordam bering.)"
         )
         return
     
@@ -2312,11 +2312,11 @@ def universal_handler(msg):
             if "seasons" in item:  # Serial
                 text_result += f"{c}.  🎞 {item['name']}\n"
                 text_result += f"🆔 Kod: `{item['code']}`\n"
-                text_result += f"[▶️ Serial](https://t.me/DubKinoBot?start={item['code']})\n"
+                text_result += f"[▶️ Serial](https://t.me/Saboq_kinolar_bot?start={item['code']})\n"
             else:  # Kino
                 text_result += f"{c}. 🎬 {item['name']}\n"
                 text_result += f"🆔 Kod: `{item['code']}`\n"
-                text_result += f"[▶️ Yuklab olish](https://t.me/DubKinoBot?start={item['code']})\n"
+                text_result += f"[▶️ Yuklab olish](https://t.me/Saboq_kinolar_bot?start={item['code']})\n"
             
             text_result += f"*{'─' * 30}*\n"
             c += 1

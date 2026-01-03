@@ -13,7 +13,7 @@ from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 from utils.menu_builder import code_exists
 #import time
 
-kanal_link = "https://t.me/DubHDkinolar"
+kanal_link = "https://t.me/Saboq_kinolar"
 
 # =================== KINO YUKLASH ===================
 
@@ -146,8 +146,8 @@ def movie_url(msg):
             "name": name,       
             "formati": formati,    
             "genre": genre,      
-            "url": "@DubHDkinolar",
-            "urlbot": "@DubKinoBot"
+            "url": "@Saboq_kinolar",
+            "urlbot": "@Saboq_kinolar_bot"
         }},
         upsert=True
     )
