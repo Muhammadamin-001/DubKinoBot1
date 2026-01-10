@@ -1643,28 +1643,35 @@ def delete_serial_all(call):
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith("delete_serial_seasons_"))
 def delete_serial_seasons(call):
-    """Serialning fasllarini ko'rsatish - o'chirish uchun"""
+    """Serialning fasllarini ko'rsatish (o'chirish uchun, index-based)"""
+
     serial_code = call.data.replace("delete_serial_seasons_", "")
     user_id = call.from_user.id
-    
-    if not (str(user_id) == ADMIN_ID or is_admin(user_id)):
+
+    # 🔐 Ruxsat
+    if not(user_id == ADMIN_ID or is_admin(user_id)):
         bot.answer_callback_query(call.id, "❌ Ruxsat yo'q!")
         return
-    
+
     serial = serials.find_one({"code": serial_code})
-    
+
     if not serial:
         bot.answer_callback_query(call.id, "❌ Serial topilmadi!")
         return
-    
+
     bot.delete_message(call.message.chat.id, call.message.message_id)
-    
+
     markup = types.InlineKeyboardMarkup()
-    
     seasons = serial.get("seasons", [])
-    
+
+    # ❌ Agar fasl yo‘q bo‘lsa
     if not seasons:
-        markup.add(types.InlineKeyboardButton("🔙 Ortga", callback_data=f"delete_serial_{serial_code}"))
+        markup.add(
+            types.InlineKeyboardButton(
+                "🔙 Ortga",
+                callback_data=f"delete_serial_{serial_code}"
+            )
+        )
         bot.send_message(
             call.message.chat.id,
             f"🎞 *{serial['name']}*\n\n❌ Hech qanday mavsum yo'q.",
@@ -1672,24 +1679,40 @@ def delete_serial_seasons(call):
             parse_mode="Markdown"
         )
         return
-    
-    for season in seasons:
-        season_num = season["season_number"]
+
+    # 📺 Fasllar ro‘yxati
+    for idx, season in enumerate(seasons):
+        season_num = season.get("season_number")
+        season_name = season.get("season_name")
         episodes_count = len(season.get("episodes", []))
-        
-        markup.add(types.InlineKeyboardButton(
-            f"📺 {season_num}-Mavsum ({episodes_count} qism)",
-            callback_data=f"delete_season_select_{serial_code}_{season_num}"
-        ))
-    
-    markup.add(types.InlineKeyboardButton("🔙 Ortga", callback_data=f"delete_serial_{serial_code}"))
-    
+
+        if season_num:
+            display = f"📺 {season_num}-Mavsum ({episodes_count} qism)"
+        else:
+            display = f"📺 {season_name} ({episodes_count} qism)"
+
+        # ❗ MUHIM: callback’da faqat index
+        markup.add(
+            types.InlineKeyboardButton(
+                display,
+                callback_data=f"delete_season_select_{serial_code}_{idx}"
+            )
+        )
+
+    markup.add(
+        types.InlineKeyboardButton(
+            "🔙 Ortga",
+            callback_data=f"delete_serial_{serial_code}"
+        )
+    )
+
     bot.send_message(
         call.message.chat.id,
         f"🎞 *{serial['name']}*\n\n📺 Mavsumni tanlang:",
         reply_markup=markup,
         parse_mode="Markdown"
     )
+
 
 
 
