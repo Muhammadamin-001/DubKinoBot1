@@ -382,7 +382,7 @@ def search_page_switch(call):
         page_items = filtered_items[boshlash:end]
         
         # Matn
-        text = f"🎬 **Qidirush natijalari:  '{search_query}'**\n\n"
+        text = f"🎬 **Qidiruv natijalari:  '{search_query}'**\n\n"
         text += f"📊 Topildi: {total} ta | Sahifa: {page}/{pages}\n\n"
         
         c = boshlash + 1

@@ -8,6 +8,8 @@ from telebot import types
 from utils.db_config import bot
 from .serial_db import get_serial, get_season#, get_episode, get_all_serials
 
+kanal_link = "https://t.me/Saboq_kinolar"
+
 # =================== FOYDALANUVCHI UCHUN SERIAL KO'RISH ===================
 
 def show_serial_for_user(chat_id, serial_code):
@@ -28,10 +30,10 @@ def show_serial_for_user(chat_id, serial_code):
                 f"📺 {season_num}-fasl",
                 callback_data=f"user_season_{serial_code}_{season_num}"
             ))
-    
+    markup.add(types.InlineKeyboardButton("🎬 Kanalimiz", url=kanal_link))
     markup.add(types.InlineKeyboardButton("🔙", callback_data="user_back"))
     
-    caption = f"🎞 *{serial['name']}*\n\n{serial['description']}\n\nFaslni tanlang:"
+    caption = f"🎞 *{serial['name']}*\n\n🆔 Serial kodi: `{serial['serial_code']}`\n{serial['description']}\n\nFaslni tanlang:"
     
     bot.send_photo(
         chat_id,
@@ -173,7 +175,7 @@ def send_episode_to_user(call):
     markup = types.InlineKeyboardMarkup()
     markup.add(types.InlineKeyboardButton("❌", callback_data="delete_seria"))
     
-    caption = f"🎞 *{serial['name']}*\n\t\t\t\t{season_number}-fasl, {episode_number}-qism\n\n🤖 *Yuklovchi*: @DubKinoBot"
+    caption = f"🎞 *{serial['name']}*\n\t\t\t\t{season_number}-fasl, {episode_number}-qism\n\n🤖 *Yuklovchi*: @Saboq_kinolar_bot"
     
     bot.send_video(
         call.message.chat.id,
