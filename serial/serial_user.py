@@ -30,8 +30,10 @@ def show_serial_for_user(chat_id, serial_code):
                 f"📺 {season_num}-fasl",
                 callback_data=f"user_season_{serial_code}_{season_num}"
             ))
-    markup.add(types.InlineKeyboardButton("🎬 Kanalimiz", url=kanal_link))
-    markup.add(types.InlineKeyboardButton("🔙", callback_data="user_back"))
+    markup.add(
+        types.InlineKeyboardButton("🎬 Kanalimiz", url=kanal_link),
+        types.InlineKeyboardButton("🔙", callback_data="user_back")
+    )
     
     caption = f"🎞 *{serial['name']}*\n\n🆔 Serial kodi: `{serial_code}`\n{serial['description']}\n\nFaslni tanlang:"
     
