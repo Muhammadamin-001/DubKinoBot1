@@ -68,8 +68,8 @@ def show_episodes_for_user(call):
     full_files = season.get("full_files", [])
     total = episodes or list(range(1, len(full_files) + 1))
 
-    PER_PAGE = 25
-    PER_ROW = 5
+    PER_PAGE = 24
+    PER_ROW = 4
 
     start = page * PER_PAGE
     end = start + PER_PAGE
@@ -77,7 +77,7 @@ def show_episodes_for_user(call):
 
     markup = types.InlineKeyboardMarkup()
 
-    # 🔢 QISMLAR (5 tadan qatorda)
+    # 🔢 QISMLAR (4 tadan qatorda)
     row = []
     for item in page_items:
         ep_num = item["episode_number"] if isinstance(item, dict) else item
@@ -120,8 +120,8 @@ def show_episodes_for_user(call):
 
     text = (
         f"\t\t\t\t📺 *{serial['name']} — {season_number}-fasl*\n\n"
-        f"Qismlar: {len(total)}\t\t||\t\t"
-        f"Sahifa: {page + 1}/{(len(total) + PER_PAGE - 1)//PER_PAGE}\n\n"
+        f"Qismlar: {len(total)}\t\t\t\t\t||\t\t"
+        f"Sahifa: {page + 1}/{(len(total) + PER_PAGE - 1)//PER_PAGE}\t\t\t\n\n"
         "Qismni tanlang:"
     )
 
