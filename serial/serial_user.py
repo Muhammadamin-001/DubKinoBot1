@@ -14,29 +14,47 @@ kanal_link = "https://t.me/Saboq_kinolar"
 
 def show_serial_for_user(chat_id, serial_code):
     """Serialni ko'rsatish (rasm + nomi + tavsif + fasllar)"""
+
     serial = get_serial(serial_code)
-    
-    if not serial: 
+
+    if not serial:
         bot.send_message(chat_id, "❌ Serial topilmadi!")
         return
-    
+
     markup = types.InlineKeyboardMarkup()
-    
     seasons = serial.get("seasons", [])
+
     if seasons:
-        for season in seasons:
-            season_num = season["season_number"]
-            markup.add(types.InlineKeyboardButton(
-                f"📺 {season_num}-fasl",
-                callback_data=f"user_season_{serial_code}_{season_num}"
-            ))
+        for idx, season in enumerate(seasons):
+            season_num = season.get("season_number")
+            season_name = season.get("season_name")
+
+            # 🏷 Foydalanuvchiga ko‘rinadigan nom
+            if season_num:
+                display = f"📺 {season_num}-fasl"
+            else:
+                display = f"📺 {season_name}"
+
+            # ❗ MUHIM: faqat index
+            markup.add(
+                types.InlineKeyboardButton(
+                    display,
+                    callback_data=f"user_season_{serial_code}_{idx}"
+                )
+            )
+
     markup.add(
         types.InlineKeyboardButton("🎬 Kanalimiz", url=kanal_link),
         types.InlineKeyboardButton("🔙", callback_data="user_back")
     )
-    
-    caption = f"🎞 *{serial['name']}*\n\n🆔 Serial kodi: `{serial_code}`\n{serial['description']}\n\nFaslni tanlang:"
-    
+
+    caption = (
+        f"🎞 *{serial['name']}*\n\n"
+        f"🆔 Serial kodi: `{serial_code}`\n"
+        f"{serial['description']}\n\n"
+        f"Faslni tanlang:"
+    )
+
     bot.send_photo(
         chat_id,
         serial["image"],
@@ -44,6 +62,7 @@ def show_serial_for_user(chat_id, serial_code):
         parse_mode="Markdown",
         reply_markup=markup
     )
+
 
 
 #===== *** Qismlar xabari =======
