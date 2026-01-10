@@ -175,7 +175,7 @@ def send_episode_to_user(call):
     markup = types.InlineKeyboardMarkup()
     markup.add(types.InlineKeyboardButton("❌", callback_data="delete_seria"))
     
-    caption = f"🎞 *{serial['name']}*\n\t\t\t\t{season_number}-fasl, {episode_number}-qism\n\n🤖 *Yuklovchi*: @Saboq/_kinolar/_bot"
+    caption = f"🎞 *{serial['name']}*\n\t\t\t\t{season_number}-fasl, {episode_number}-qism\n\n🤖 *Yuklovchi*: @Saboq\_kinolar\_bot"
     
     bot.send_video(
         call.message.chat.id,
