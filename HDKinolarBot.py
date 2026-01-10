@@ -1902,7 +1902,7 @@ def delete_season_all(call):
     user_id = call.from_user.id
 
     # 🔐 Ruxsat tekshiruvi
-    if user_id != ADMIN_ID and not is_admin(user_id):
+    if not (user_id == ADMIN_ID or is_admin(user_id)):
         bot.answer_callback_query(call.id, "❌ Ruxsat yo'q!")
         return
 
@@ -1997,7 +1997,7 @@ def delete_episode_confirm(call):
     user_id = call.from_user.id
 
     # 🔐 Ruxsat
-    if user_id != ADMIN_ID and not is_admin(user_id):
+    if not(user_id == ADMIN_ID or is_admin(user_id)):
         bot.answer_callback_query(call.id, "❌ Ruxsat yo'q!")
         return
 
