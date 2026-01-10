@@ -748,7 +748,7 @@ def create_new_serial_from_list(call):
     try:
         bot.send_message(
             call.message.chat.id,
-            "🆔 *Serial kodini kiriting:*\n\n(Masalan: SER001 yoki Breaking\\_Bad)",
+            "🆔 *Serial kodini kiriting:*\n\n(Masalan: 123 yoki Yusuf\\_Qissasi)",
             parse_mode="Markdown"
         )
     except Exception as e:
@@ -883,12 +883,22 @@ def select_serial_menu(call):
     markup = types.InlineKeyboardMarkup()
     
     # Mavjud mavsumlarga qism qo'shish
-    for season in serial.get('seasons', []):
-        season_num = season['season_number']
+    for idx, season in enumerate(serial.get('seasons', [])):
+        # Fasl nomini aniqlash
+        if season.get('season_number'):
+            season_display = f"{season['season_number']}-Mavsum"
+            season_id = season['season_number']
+        elif season.get('season_name'):
+            season_display = season['season_name']
+            season_id = idx  # index ishlatamiz
+        else:
+            season_display = f"Mavsum {idx + 1}"
+            season_id = idx
+        
         episode_count = len(season.get('episodes', []))
         markup.add(types.InlineKeyboardButton(
-            f"🎬 {season_num}-Mavsum ({episode_count} qism)",
-            callback_data=f"add_episode_{serial_code}_{season_num}"
+            f"🎬 {season_display} ({episode_count} qism)",
+            callback_data=f"add_episode_{serial_code}_{season_id}"
         ))
     
     # Yangi mavsum qo'shish
@@ -923,6 +933,7 @@ def ask_new_season_number(call):
     )
     
     state[user_id] = ["waiting_season_number", serial_code]
+    
 
 @bot.message_handler(func=lambda msg: str(msg.from_user.id) in state 
                      and state[str(msg.from_user.id)][0] == "waiting_season_number")
@@ -931,36 +942,59 @@ def save_new_season(msg):
     user_id = str(msg.from_user.id)
     serial_code = state[user_id][1]
     
+    season_input = msg.text.strip()
+    
+    # Raqam yoki matn ekanligini tekshirish
     try:
-        season_num = int(msg.text.strip())
+        season_num = int(season_input)
+        season_name = None
+        season_display = str(season_num)
     except ValueError:
-        bot.send_message(msg.chat.id, "❌ Faqat raqam kiriting (masalan: 1)")
-        return
+        # Agar raqam bo'lmasa, matn sifatida qabul qilamiz
+        season_num = None
+        season_name = season_input
+        season_display = season_input
     
     serial = serials.find_one({"code": serial_code})
     
-    # Mavsum allaqachon bormi?
+    # Mavsum allaqachon bormi tekshirish?
     existing_seasons = serial.get('seasons', [])
-    if any(s['season_number'] == season_num for s in existing_seasons):
-        bot.send_message(
-            msg.chat.id,
-            f"⚠️ *{season_num}-Mavsum allaqachon mavjud!*\n\nBoshqa raqam kiriting:",
-            parse_mode="Markdown"
-        )
-        return
+    
+    # Raqam bo'yicha yoki nom bo'yicha tekshirish
+    for s in existing_seasons:
+        if season_num and s.get('season_number') == season_num:
+            bot.send_message(
+                msg.chat.id,
+                f"⚠️ *{season_num}-Mavsum allaqachon mavjud!*\n\nBoshqa raqam yoki nom kiriting:",
+                parse_mode="Markdown"
+            )
+            return
+        if season_name and s.get('season_name') == season_name:
+            bot.send_message(
+                msg.chat.id,
+                f"⚠️ *'{season_name}' mavjud!*\n\nBoshqa nom kiriting:",
+                parse_mode="Markdown"
+            )
+            return
     
     # Yangi mavsum qo'shish
+    new_season = {
+        "episodes": []
+    }
+    
+    if season_num:
+        new_season["season_number"] = season_num
+    if season_name:
+        new_season["season_name"] = season_name
+    
     serials.update_one(
         {"code": serial_code},
-        {"$push": {"seasons": {
-            "season_number": season_num,
-            "episodes": []
-        }}}
+        {"$push": {"seasons": new_season}}
     )
     
     bot.send_message(
         msg.chat.id,
-        f"✅ *{season_num}-Mavsum qo'shildi!*\n\n"
+        f"✅ *{season_display}-Mavsum qo'shildi!*\n\n"
         f"📺 Serial: {serial['name']}\n\n"
         f"Endi bu mavsumga qismlar qo'shishingiz mumkin.\n"
         f"/panel → 🎞 Serial yuklash → 📺 Mavjud Seriallar",
@@ -976,14 +1010,36 @@ def ask_episode_video(call):
     """Qism videosini so'rash"""
     parts = call.data.split("_")
     serial_code = parts[2]
-    season_num = int(parts[3])
+    season_id = parts[3]  # Bu raqam yoki index bo'lishi mumkin
     user_id = str(call.from_user.id)
+    
+    serial = serials.find_one({"code": serial_code})
+    
+    # Season topish (raqam yoki index bo'yicha)
+    try:
+        season_num_or_idx = int(season_id)
+        # Avval season_number bo'yicha qidiramiz
+        season = next((s for s in serial['seasons'] if s.get('season_number') == season_num_or_idx), None)
+        
+        # Agar topilmasa, index sifatida ishlatamiz
+        if not season and season_num_or_idx < len(serial['seasons']):
+            season = serial['seasons'][season_num_or_idx]
+            season_identifier = f"idx_{season_num_or_idx}"  # index ekanligini belgilaymiz
+        else:
+            season_identifier = str(season_num_or_idx)  # season_number
+    except:
+        bot.answer_callback_query(call.id, "❌ Mavsum topilmadi!", show_alert=True)
+        return
+    
+    if not season:
+        bot.answer_callback_query(call.id, "❌ Mavsum topilmadi!", show_alert=True)
+        return
     
     bot.delete_message(call.message.chat.id, call.message.message_id)
     
     markup = InlineKeyboardMarkup()
     markup.add(
-    InlineKeyboardButton("⛔️ Exit", callback_data="exit_upload")
+        InlineKeyboardButton("⛔️ Exit", callback_data="exit_upload")
     )
 
     bot.send_message(
@@ -994,7 +1050,7 @@ def ask_episode_video(call):
         reply_markup=markup
     )
 
-    state[user_id] = ["waiting_episode_video", serial_code, season_num]
+    state[user_id] = ["waiting_episode_video", serial_code, season_identifier]
 
 
 #==========*** Jarayonni to'xtatish uchun ***====
@@ -1041,7 +1097,7 @@ def save_episode_video(msg):
     """Qism videosini saqlash"""
     user_id = str(msg.from_user.id)
     serial_code = state[user_id][1]
-    season_num = state[user_id][2]
+    season_identifier = state[user_id][2]  # raqam yoki "idx_X"
     file_id = msg.video.file_id
     
     bot.send_message(
@@ -1049,7 +1105,8 @@ def save_episode_video(msg):
         "🔢 *Qism raqamini kiriting*\n\n(Masalan: 1, 2, 3...)",
         parse_mode="Markdown"
     )
-    state[user_id] = ["waiting_episode_number", serial_code, season_num, file_id]
+    state[user_id] = ["waiting_episode_number", serial_code, season_identifier, file_id]
+    
 
 @bot.message_handler(func=lambda msg: str(msg.from_user.id) in state 
                      and state[str(msg.from_user.id)][0] == "waiting_episode_number")
@@ -1057,7 +1114,7 @@ def save_episode_number(msg):
     """Qism raqamini saqlash va bazaga qo'shish"""
     user_id = str(msg.from_user.id)
     serial_code = state[user_id][1]
-    season_num = state[user_id][2]
+    season_identifier = state[user_id][2]
     file_id = state[user_id][3]
     
     try:
@@ -1069,7 +1126,21 @@ def save_episode_number(msg):
     serial = serials.find_one({"code": serial_code})
     
     # Mavsumni topish
-    season = next((s for s in serial.get('seasons', []) if s['season_number'] == season_num), None)
+    # Season topish
+    if season_identifier.startswith("idx_"):
+        # Index bo'yicha
+        idx = int(season_identifier.split("_")[1])
+        season = serial['seasons'][idx]
+        #season_query = {"code": serial_code}
+        #season_update_path = f"seasons.{idx}.episodes"
+    else:
+        # season_number bo'yicha
+        season_num = int(season_identifier)
+        season_idx = next(i for i, s in enumerate(serial['seasons']) 
+                         if s.get('season_number') == season_num)
+        season = serial['seasons'][season_idx]
+        # season_query = {"code": serial_code}
+        # season_update_path = f"seasons.{season_idx}.episodes"
     
     if not season:
         bot.send_message(msg.chat.id, "❌ Mavsum topilmadi!")
