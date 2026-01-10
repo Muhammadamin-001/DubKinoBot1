@@ -33,7 +33,7 @@ def show_serial_for_user(chat_id, serial_code):
     markup.add(types.InlineKeyboardButton("🎬 Kanalimiz", url=kanal_link))
     markup.add(types.InlineKeyboardButton("🔙", callback_data="user_back"))
     
-    caption = f"🎞 *{serial['name']}*\n\n🆔 Serial kodi: `{serial[serial_code]}`\n{serial['description']}\n\nFaslni tanlang:"
+    caption = f"🎞 *{serial['name']}*\n\n🆔 Serial kodi: `{serial_code}`\n{serial['description']}\n\nFaslni tanlang:"
     
     bot.send_photo(
         chat_id,
